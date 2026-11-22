@@ -1,0 +1,281 @@
+# Canonical Seed Dictionary for LLM Architecture Knowledge Graph Entity Resolution
+# Maps canonical entity definitions to their known surface aliases across 2017-2025 papers.
+
+entities:
+  # --- Architectural Components (Attention) ---
+  - entity_id: "arch_component::multi_head_attention"
+    entity_type: "ArchComponent"
+    canonical_name: "Multi-Head Attention"
+    category: "attention"
+    aliases:
+      - "MHA"
+      - "Multi-Head Self-Attention"
+      - "Scaled Dot-Product Multi-Head Attention"
+      - "Standard Multi-Head Attention"
+
+  - entity_id: "arch_component::multi_query_attention"
+    entity_type: "ArchComponent"
+    canonical_name: "Multi-Query Attention"
+    category: "attention"
+    aliases:
+      - "MQA"
+      - "Multi-query attention"
+      - "Multi Query Attention"
+
+  - entity_id: "arch_component::grouped_query_attention"
+    entity_type: "ArchComponent"
+    canonical_name: "Grouped-Query Attention"
+    category: "attention"
+    aliases:
+      - "GQA"
+      - "Grouped Query Attention"
+      - "Grouped-query attention"
+
+  - entity_id: "arch_component::multi_head_latent_attention"
+    entity_type: "ArchComponent"
+    canonical_name: "Multi-head Latent Attention"
+    category: "attention"
+    aliases:
+      - "MLA"
+      - "Multi-Head Latent Attention"
+      - "Low-Rank Key-Value Joint Compression Attention"
+
+  - entity_id: "arch_component::paged_attention"
+    entity_type: "ArchComponent"
+    canonical_name: "PagedAttention"
+    category: "kv_cache"
+    aliases:
+      - "Paged Attention"
+      - "vLLM PagedAttention"
+
+  # --- Architectural Components (Positional Encodings) ---
+  - entity_id: "arch_component::rope"
+    entity_type: "ArchComponent"
+    canonical_name: "Rotary Position Embedding"
+    category: "positional"
+    aliases:
+      - "RoPE"
+      - "Rotary Positional Embedding"
+      - "Rotary Position Embeddings"
+      - "Rotary Positional Embeddings"
+      - "Rotary Embedding"
+
+  - entity_id: "arch_component::alibi"
+    entity_type: "ArchComponent"
+    canonical_name: "Attention with Linear Biases"
+    category: "positional"
+    aliases:
+      - "ALiBi"
+      - "Linear Biases Attention"
+
+  - entity_id: "arch_component::decoupled_rope"
+    entity_type: "ArchComponent"
+    canonical_name: "Decoupled Rotary Position Embedding"
+    category: "positional"
+    aliases:
+      - "Decoupled RoPE"
+      - "MLA Decoupled RoPE"
+
+  # --- Architectural Components (Normalizations & Activations) ---
+  - entity_id: "arch_component::rmsnorm"
+    entity_type: "ArchComponent"
+    canonical_name: "RMSNorm"
+    category: "norm"
+    aliases:
+      - "Root Mean Square Layer Normalization"
+      - "RMS LayerNorm"
+      - "Root Mean Square Normalization"
+
+  - entity_id: "arch_component::layernorm"
+    entity_type: "ArchComponent"
+    canonical_name: "LayerNorm"
+    category: "norm"
+    aliases:
+      - "Layer Normalization"
+      - "Standard LayerNorm"
+
+  - entity_id: "arch_component::swiglu"
+    entity_type: "ArchComponent"
+    canonical_name: "SwiGLU"
+    category: "activation"
+    aliases:
+      - "Swish-Gated Linear Unit"
+      - "SwiGLU FFN"
+      - "SwiGLU Activation"
+
+  - entity_id: "arch_component::geglu"
+    entity_type: "ArchComponent"
+    canonical_name: "GeGLU"
+    category: "activation"
+    aliases:
+      - "GELU-Gated Linear Unit"
+      - "GEGLU"
+
+  # --- Mixture of Experts & State Space ---
+  - entity_id: "arch_component::deepseek_moe"
+    entity_type: "ArchComponent"
+    canonical_name: "DeepSeekMoE"
+    category: "moe_routing"
+    aliases:
+      - "Fine-Grained Expert Segmentation with Shared Experts"
+      - "DeepSeek MoE Architecture"
+
+  - entity_id: "arch_component::auxiliary_loss_free_load_balancing"
+    entity_type: "ArchComponent"
+    canonical_name: "Auxiliary-Loss-Free Load Balancing"
+    category: "moe_routing"
+    aliases:
+      - "Aux-Loss-Free Load Balancing"
+      - "Bias-Based Expert Load Balancing"
+
+  # --- Training & Mid-Training Methods ---
+  - entity_id: "training_method::yarn"
+    entity_type: "TrainingMethod"
+    canonical_name: "YaRN"
+    stage: "mid_training"
+    aliases:
+      - "Yet another RoPE extensioN"
+      - "YaRN Context Extension"
+
+  - entity_id: "training_method::position_interpolation"
+    entity_type: "TrainingMethod"
+    canonical_name: "Position Interpolation"
+    stage: "mid_training"
+    aliases:
+      - "PI"
+      - "Linear Position Interpolation"
+      - "RoPE Position Interpolation"
+
+  - entity_id: "training_method::dpo"
+    entity_type: "TrainingMethod"
+    canonical_name: "Direct Preference Optimization"
+    stage: "post_training"
+    aliases:
+      - "DPO"
+
+  - entity_id: "training_method::grpo"
+    entity_type: "TrainingMethod"
+    canonical_name: "Group Relative Policy Optimization"
+    stage: "post_training"
+    aliases:
+      - "GRPO"
+
+  - entity_id: "training_method::ppo"
+    entity_type: "TrainingMethod"
+    canonical_name: "Proximal Policy Optimization"
+    stage: "post_training"
+    aliases:
+      - "PPO"
+      - "RLHF-PPO"
+
+  # --- Inference & Systems Techniques ---
+  - entity_id: "inference_technique::flash_attention"
+    entity_type: "InferenceTechnique"
+    canonical_name: "FlashAttention"
+    target_regime: "prefill"
+    aliases:
+      - "FlashAttention-1"
+      - "Flash Attention"
+
+  - entity_id: "inference_technique::flash_attention_2"
+    entity_type: "InferenceTechnique"
+    canonical_name: "FlashAttention-2"
+    target_regime: "prefill"
+    aliases:
+      - "Flash Attention 2"
+
+  - entity_id: "inference_technique::flash_attention_3"
+    entity_type: "InferenceTechnique"
+    canonical_name: "FlashAttention-3"
+    target_regime: "prefill"
+    aliases:
+      - "Flash Attention 3"
+
+  - entity_id: "inference_technique::speculative_decoding"
+    entity_type: "InferenceTechnique"
+    canonical_name: "Speculative Decoding"
+    target_regime: "decode"
+    aliases:
+      - "Speculative Sampling"
+      - "Draft-and-Verify Decoding"
+
+  - entity_id: "inference_technique::awq"
+    entity_type: "InferenceTechnique"
+    canonical_name: "Activation-aware Weight Quantization"
+    target_regime: "quantization"
+    aliases:
+      - "AWQ"
+
+  # --- Model Families (Explicit Version Separation) ---
+  - entity_id: "model_family::gpt_3"
+    entity_type: "ModelFamily"
+    canonical_name: "GPT-3"
+    aliases:
+      - "GPT3"
+      - "Generative Pre-trained Transformer 3"
+
+  - entity_id: "model_family::llama_1"
+    entity_type: "ModelFamily"
+    canonical_name: "LLaMA-1"
+    aliases:
+      - "LLaMA"
+      - "LLaMA 1"
+      - "Meta LLaMA (2023)"
+
+  - entity_id: "model_family::llama_2"
+    entity_type: "ModelFamily"
+    canonical_name: "LLaMA-2"
+    aliases:
+      - "Llama 2"
+      - "LLaMA 2"
+
+  - entity_id: "model_family::llama_3"
+    entity_type: "ModelFamily"
+    canonical_name: "Llama-3"
+    aliases:
+      - "LLaMA-3"
+      - "Llama 3"
+      - "Llama 3.1"
+
+  - entity_id: "model_family::deepseek_v2"
+    entity_type: "ModelFamily"
+    canonical_name: "DeepSeek-V2"
+    aliases:
+      - "DeepSeek V2"
+
+  - entity_id: "model_family::deepseek_v3"
+    entity_type: "ModelFamily"
+    canonical_name: "DeepSeek-V3"
+    aliases:
+      - "DeepSeek V3"
+
+  - entity_id: "model_family::deepseek_r1"
+    entity_type: "ModelFamily"
+    canonical_name: "DeepSeek-R1"
+    aliases:
+      - "DeepSeek R1"
+      - "DeepSeek-R1-Zero"
+
+  # --- Key Bottlenecks ---
+  - entity_id: "bottleneck::kv_cache_memory_bandwidth"
+    entity_type: "Bottleneck"
+    canonical_name: "KV Cache Memory Bandwidth Bottleneck"
+    aliases:
+      - "KV Cache Bottleneck"
+      - "Key-Value Cache Memory Footprint"
+      - "KV Cache HBM Bandwidth Overhead"
+
+  - entity_id: "bottleneck::quadratic_attention_complexity"
+    entity_type: "Bottleneck"
+    canonical_name: "Quadratic Self-Attention Complexity"
+    aliases:
+      - "O(N^2) Attention Complexity"
+      - "Quadratic Sequence Length Scaling"
+      - "HBM Read/Write Materialization Overhead"
+
+  - entity_id: "bottleneck::critic_model_memory_overhead"
+    entity_type: "Bottleneck"
+    canonical_name: "RLHF Critic Value Model Overhead"
+    aliases:
+      - "PPO Critic Memory Overhead"
+      - "Value Function Model Cost"

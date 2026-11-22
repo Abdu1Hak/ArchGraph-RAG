@@ -1,0 +1,323 @@
+# Curated 50-Paper LLM Evolution Corpus across the 5 Pillars (2017 - 2025)
+# Papers with `seed_set: true` (12 papers) form the Golden Micro-Corpus for Phase 1-4 rapid validation.
+
+papers:
+  # ============================================================================
+  # PILLAR 1: Pre-Training Scaling & Foundational Architectures (10 Papers)
+  # ============================================================================
+  - paper_id: "vaswani_2017_transformer"
+    arxiv_id: "1706.03762"
+    title: "Attention Is All You Need"
+    year: 2017
+    pillar: "pre_training"
+    seed_set: true
+  - paper_id: "radford_2019_gpt2"
+    arxiv_id: "1901.00001"
+    title: "Language Models are Unsupervised Multitask Learners (GPT-2)"
+    year: 2019
+    pillar: "pre_training"
+    seed_set: false
+  - paper_id: "brown_2020_gpt3"
+    arxiv_id: "2005.14165"
+    title: "Language Models are Few-Shot Learners (GPT-3)"
+    year: 2020
+    pillar: "pre_training"
+    seed_set: false
+  - paper_id: "kaplan_2020_scaling"
+    arxiv_id: "2001.08361"
+    title: "Scaling Laws for Neural Language Models"
+    year: 2020
+    pillar: "pre_training"
+    seed_set: false
+  - paper_id: "hoffmann_2022_chinchilla"
+    arxiv_id: "2203.15556"
+    title: "Training Compute-Optimal Large Language Models (Chinchilla)"
+    year: 2022
+    pillar: "pre_training"
+    seed_set: true
+  - paper_id: "touvron_2023_llama1"
+    arxiv_id: "2302.13971"
+    title: "LLaMA: Open and Efficient Foundation Language Models"
+    year: 2023
+    pillar: "pre_training"
+    seed_set: true
+  - paper_id: "touvron_2023_llama2"
+    arxiv_id: "2307.09288"
+    title: "Llama 2: Open Foundation and Fine-Tuned Chat Models"
+    year: 2023
+    pillar: "pre_training"
+    seed_set: false
+  - paper_id: "dubey_2024_llama3"
+    arxiv_id: "2407.21783"
+    title: "The Llama 3 Herd of Models"
+    year: 2024
+    pillar: "pre_training"
+    seed_set: true
+  - paper_id: "olmo_2024_olmo2"
+    arxiv_id: "2501.00656"
+    title: "2 OLMo 2 Furious"
+    year: 2024
+    pillar: "pre_training"
+    seed_set: false
+  - paper_id: "deepseek_2024_v3"
+    arxiv_id: "2412.19437"
+    title: "DeepSeek-V3 Technical Report"
+    year: 2024
+    pillar: "pre_training"
+    seed_set: true
+
+  # ============================================================================
+  # PILLAR 2: Architecture Optimizations - Attention, Pos, Norm, FFN, MoE (14 Papers)
+  # ============================================================================
+  - paper_id: "shazeer_2019_mqa"
+    arxiv_id: "1911.02150"
+    title: "Fast Transformer Decoding: One Write-Head is All You Need (MQA)"
+    year: 2019
+    pillar: "architecture"
+    seed_set: false
+  - paper_id: "zhang_2019_rmsnorm"
+    arxiv_id: "1910.07467"
+    title: "Root Mean Square Layer Normalization (RMSNorm)"
+    year: 2019
+    pillar: "architecture"
+    seed_set: false
+  - paper_id: "shazeer_2020_glu"
+    arxiv_id: "2002.05202"
+    title: "GLU Variants Improve Transformer (SwiGLU)"
+    year: 2020
+    pillar: "architecture"
+    seed_set: false
+  - paper_id: "su_2021_rope"
+    arxiv_id: "2104.09864"
+    title: "RoFormer: Enhanced Transformer with Rotary Position Embedding (RoPE)"
+    year: 2021
+    pillar: "architecture"
+    seed_set: true
+  - paper_id: "press_2021_alibi"
+    arxiv_id: "2108.12409"
+    title: "Train Short, Test Long: Attention with Linear Biases (ALiBi)"
+    year: 2021
+    pillar: "architecture"
+    seed_set: false
+  - paper_id: "fedus_2021_switch"
+    arxiv_id: "2101.03961"
+    title: "Switch Transformers: Scaling to Trillion Parameter Models"
+    year: 2021
+    pillar: "architecture"
+    seed_set: false
+  - paper_id: "ainslie_2023_gqa"
+    arxiv_id: "2305.13245"
+    title: "GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints"
+    year: 2023
+    pillar: "architecture"
+    seed_set: true
+  - paper_id: "gu_2023_mamba"
+    arxiv_id: "2312.00752"
+    title: "Mamba: Linear-Time Sequence Modeling with Selective State Spaces"
+    year: 2023
+    pillar: "architecture"
+    seed_set: false
+  - paper_id: "jiang_2024_mixtral"
+    arxiv_id: "2401.04088"
+    title: "Mixtral of Experts"
+    year: 2024
+    pillar: "architecture"
+    seed_set: false
+  - paper_id: "dai_2024_deepseekmoe"
+    arxiv_id: "2401.06066"
+    title: "DeepSeekMoE: Towards Ultimate Expert Specialization in Mixture-of-Experts"
+    year: 2024
+    pillar: "architecture"
+    seed_set: false
+  - paper_id: "deepseek_2024_v2"
+    arxiv_id: "2405.04434"
+    title: "DeepSeek-V2: A Strong, Economical, and Efficient Mixture-of-Experts Language Model (MLA)"
+    year: 2024
+    pillar: "architecture"
+    seed_set: true
+  - paper_id: "lieber_2024_jamba"
+    arxiv_id: "2403.19887"
+    title: "Jamba: A Hybrid Transformer-Mamba Language Model"
+    year: 2024
+    pillar: "architecture"
+    seed_set: false
+  - paper_id: "xiong_2020_preln"
+    arxiv_id: "2002.04745"
+    title: "On Layer Normalization in the Transformer Architecture (Pre-LN vs Post-LN)"
+    year: 2020
+    pillar: "architecture"
+    seed_set: false
+  - paper_id: "dehghani_2023_qk_norm"
+    arxiv_id: "2302.05442"
+    title: "Scaling Vision Transformers to 22 Billion Parameters (QK-Norm)"
+    year: 2023
+    pillar: "architecture"
+    seed_set: false
+
+  # ============================================================================
+  # PILLAR 3: Mid-Training Adaptation & Context Extension (8 Papers)
+  # ============================================================================
+  - paper_id: "chen_2023_pi"
+    arxiv_id: "2306.15595"
+    title: "Extending Context Window of Large Language Models via Positional Interpolation"
+    year: 2023
+    pillar: "mid_training"
+    seed_set: false
+  - paper_id: "peng_2023_yarn"
+    arxiv_id: "2309.00071"
+    title: "YaRN: Efficient Context Window Extension of Large Language Models"
+    year: 2023
+    pillar: "mid_training"
+    seed_set: true
+  - paper_id: "liu_2023_ring_attention"
+    arxiv_id: "2310.01889"
+    title: "Ring Attention with Blockwise Transformers for Near-Infinite Context"
+    year: 2023
+    pillar: "mid_training"
+    seed_set: false
+  - paper_id: "ding_2024_longrope"
+    arxiv_id: "2402.13753"
+    title: "LongRoPE: Extending LLM Context Window Beyond 2 Million Tokens"
+    year: 2024
+    pillar: "mid_training"
+    seed_set: false
+  - paper_id: "hsieh_2024_ruler"
+    arxiv_id: "2404.06654"
+    title: "RULER: What's the Real Context Size of Your Long-Context Language Models?"
+    year: 2024
+    pillar: "mid_training"
+    seed_set: false
+  - paper_id: "gao_2024_prolong"
+    arxiv_id: "2410.02660"
+    title: "How to Train Long-Context Language Models (Effectively) - ProLong"
+    year: 2024
+    pillar: "mid_training"
+    seed_set: false
+  - paper_id: "xiao_2023_streamingllm"
+    arxiv_id: "2309.17453"
+    title: "Efficient Streaming Language Models with Attention Sinks"
+    year: 2023
+    pillar: "mid_training"
+    seed_set: false
+  - paper_id: "ibrahim_2024_continual"
+    arxiv_id: "2403.08763"
+    title: "Simple and Scalable Strategies to Continually Pre-train Large Language Models"
+    year: 2024
+    pillar: "mid_training"
+    seed_set: false
+
+  # ============================================================================
+  # PILLAR 4: Post-Training, Reward Modeling & Reasoning RL (9 Papers)
+  # ============================================================================
+  - paper_id: "ouyang_2022_instructgpt"
+    arxiv_id: "2203.02155"
+    title: "Training language models to follow instructions with human feedback (InstructGPT)"
+    year: 2022
+    pillar: "post_training"
+    seed_set: false
+  - paper_id: "bai_2022_constitutional"
+    arxiv_id: "2212.08073"
+    title: "Constitutional AI: Harmlessness from AI Feedback"
+    year: 2022
+    pillar: "post_training"
+    seed_set: false
+  - paper_id: "rafailov_2023_dpo"
+    arxiv_id: "2305.18290"
+    title: "Direct Preference Optimization: Your Language Model is Secretly a Reward Model"
+    year: 2023
+    pillar: "post_training"
+    seed_set: true
+  - paper_id: "lightman_2023_prm"
+    arxiv_id: "2305.20050"
+    title: "Let's Verify Step by Step (Process Reward Models)"
+    year: 2023
+    pillar: "post_training"
+    seed_set: false
+  - paper_id: "zhou_2023_lima"
+    arxiv_id: "2305.11206"
+    title: "LIMA: Less Is More for Alignment"
+    year: 2023
+    pillar: "post_training"
+    seed_set: false
+  - paper_id: "shao_2024_grpo"
+    arxiv_id: "2402.03300"
+    title: "DeepSeekMath: Pushing the Limits of Mathematical Reasoning in Open Language Models (GRPO)"
+    year: 2024
+    pillar: "post_training"
+    seed_set: false
+  - paper_id: "meng_2024_simpo"
+    arxiv_id: "2405.14734"
+    title: "SimPO: Simple Preference Optimization with a Reference-Free Reward"
+    year: 2024
+    pillar: "post_training"
+    seed_set: false
+  - paper_id: "lambert_2024_tulu3"
+    arxiv_id: "2411.15124"
+    title: "Tulu 3: Pushing Frontiers in Open Language Model Post-Training"
+    year: 2024
+    pillar: "post_training"
+    seed_set: false
+  - paper_id: "deepseek_2025_r1"
+    arxiv_id: "2501.12948"
+    title: "DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via Reinforcement Learning"
+    year: 2025
+    pillar: "post_training"
+    seed_set: true
+
+  # ============================================================================
+  # PILLAR 5: Inference & Systems Optimization (9 Papers)
+  # ============================================================================
+  - paper_id: "dao_2022_flashattention"
+    arxiv_id: "2205.14135"
+    title: "FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness"
+    year: 2022
+    pillar: "inference"
+    seed_set: false
+  - paper_id: "dao_2023_flashattention2"
+    arxiv_id: "2307.08691"
+    title: "FlashAttention-2: Faster Attention with Better Parallelism and Work Partitioning"
+    year: 2023
+    pillar: "inference"
+    seed_set: false
+  - paper_id: "shah_2024_flashattention3"
+    arxiv_id: "2407.08608"
+    title: "FlashAttention-3: Fast and Accurate Attention with Asynchrony and Low-precision"
+    year: 2024
+    pillar: "inference"
+    seed_set: false
+  - paper_id: "kwon_2023_pagedattention"
+    arxiv_id: "2309.06180"
+    title: "Efficient Memory Management for Large Language Model Serving with PagedAttention (vLLM)"
+    year: 2023
+    pillar: "inference"
+    seed_set: true
+  - paper_id: "leviathan_2023_speculative"
+    arxiv_id: "2211.17192"
+    title: "Fast Inference from Transformers via Speculative Decoding"
+    year: 2023
+    pillar: "inference"
+    seed_set: false
+  - paper_id: "cai_2024_medusa"
+    arxiv_id: "2401.10774"
+    title: "Medusa: Simple LLM Inference Acceleration Framework with Multiple Decoding Heads"
+    year: 2024
+    pillar: "inference"
+    seed_set: false
+  - paper_id: "frantar_2022_gptq"
+    arxiv_id: "2210.17323"
+    title: "GPTQ: Accurate Post-Training Quantization for Generative Pre-trained Transformers"
+    year: 2022
+    pillar: "inference"
+    seed_set: false
+  - paper_id: "lin_2023_awq"
+    arxiv_id: "2306.00978"
+    title: "AWQ: Activation-aware Weight Quantization for LLM Compression and Acceleration"
+    year: 2023
+    pillar: "inference"
+    seed_set: false
+  - paper_id: "liu_2024_kivi"
+    arxiv_id: "2402.02750"
+    title: "KIVI: A Tuning-Free Asymmetric 2bit Quantization for KV Cache"
+    year: 2024
+    pillar: "inference"
+    seed_set: false

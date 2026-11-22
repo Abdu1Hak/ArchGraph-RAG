@@ -1,0 +1,74 @@
+{
+  "benchmark": "phase1a_gold_cases",
+  "version": "1.0",
+  "description": "Gold cases for Phase 1A entity resolution, cross-type edge survival, chunk mention tagging and chunker equation detection. Expectations encode the intended policy, not current behavior.",
+  "policy_notes": [
+    "Parameter-scale suffixes (7B, 70B, 8B) identify a checkpoint of the same model family and should merge into the family node.",
+    "Version, generation, precision bit-width and routing k-value tokens identify distinct entities and must never merge.",
+    "A bare name with no version merges only with its explicit v1 form (FlashAttention == FlashAttention-1).",
+    "Entity identity is (entity_type, name): a Paper and the ModelFamily it introduces are different nodes."
+  ],
+  "buckets": {
+    "synonym_merges": [
+      {"id": "SYN-01", "entity_type": "ArchComponent", "surface_a": "RoPE", "surface_b": "Rotary Position Embedding", "notes": "Seeded acronym and full name."},
+      {"id": "SYN-02", "entity_type": "ArchComponent", "surface_a": "GQA", "surface_b": "Grouped-Query Attention (GQA)", "notes": "Seeded acronym vs full name with trailing parenthetical acronym."},
+      {"id": "SYN-03", "entity_type": "ArchComponent", "surface_a": "NSA", "surface_b": "Native Sparse Attention (NSA)", "notes": "Unseeded acronym; only the parenthetical links the two surfaces."},
+      {"id": "SYN-04", "entity_type": "InferenceTechnique", "surface_a": "FlashAttention", "surface_b": "FlashAttention-1", "notes": "Implicit v1: bare name equals explicit -1."},
+      {"id": "SYN-05", "entity_type": "ModelFamily", "surface_a": "LLaMA", "surface_b": "LLaMA-1", "notes": "Implicit v1 for a model family."},
+      {"id": "SYN-06", "entity_type": "ModelFamily", "surface_a": "GPT-3", "surface_b": "GPT3", "notes": "Glued version number; GPT3 is also a seeded alias of model_family::gpt_3."},
+      {"id": "SYN-07", "entity_type": "ModelFamily", "surface_a": "LLaMA-2", "surface_b": "Llama 2 (70B)", "notes": "Parameter-scale suffix in parentheses."},
+      {"id": "SYN-08", "entity_type": "ModelFamily", "surface_a": "Llama-3", "surface_b": "Llama 3 8B", "notes": "Bare parameter-scale suffix."},
+      {"id": "SYN-09", "entity_type": "ArchComponent", "surface_a": "SwiGLU", "surface_b": "Swish-Gated Linear Unit", "notes": "Seeded expansion of a non-initialism name."},
+      {"id": "SYN-10", "entity_type": "ArchComponent", "surface_a": "MLA", "surface_b": "Multi-head Latent Attention", "notes": "Seeded acronym."},
+      {"id": "SYN-11", "entity_type": "ArchComponent", "surface_a": "RMSNorm", "surface_b": "Root Mean Square Layer Normalization", "notes": "Seeded expansion."},
+      {"id": "SYN-12", "entity_type": "TrainingMethod", "surface_a": "DPO", "surface_b": "Direct Preference Optimization", "notes": "Seeded acronym."},
+      {"id": "SYN-13", "entity_type": "TrainingMethod", "surface_a": "GRPO", "surface_b": "Group Relative Policy Optimization (GRPO)", "notes": "Seeded acronym vs full name with parenthetical."},
+      {"id": "SYN-14", "entity_type": "ArchComponent", "surface_a": "Rotary Positional Embeddings (Su et al., 2021)", "surface_b": "RoPE", "notes": "Inline citation noise plus plural."},
+      {"id": "SYN-15", "entity_type": "ArchComponent", "surface_a": "grouped query attention", "surface_b": "GQA", "notes": "Lower-case, unhyphenated surface."},
+      {"id": "SYN-16", "entity_type": "ArchComponent", "surface_a": "Sliding Window Attention (SWA)", "surface_b": "SWA", "notes": "Unseeded; parenthetical acronym first, bare acronym second."},
+      {"id": "SYN-17", "entity_type": "InferenceTechnique", "surface_a": "Speculative Decoding", "surface_b": "Speculative Sampling", "notes": "Seeded synonym with different head word."},
+      {"id": "SYN-18", "entity_type": "ModelFamily", "surface_a": "DeepSeek V3", "surface_b": "DeepSeek-V3", "notes": "Space vs hyphen before a v-prefixed version."},
+      {"id": "SYN-19", "entity_type": "ModelFamily", "surface_a": "Mixtral 8x7B", "surface_b": "Mixtral-8x7B", "notes": "Unseeded; expert-count scale token with space vs hyphen."},
+      {"id": "SYN-20", "entity_type": "ModelFamily", "surface_a": "Qwen2.5", "surface_b": "Qwen-2.5", "notes": "Glued vs hyphenated decimal version."}
+    ],
+    "adversarial_splits": [
+      {"id": "ADV-01", "entity_type": "ModelFamily", "surface_a": "LLaMA-1", "surface_b": "LLaMA-2", "notes": "Version progression."},
+      {"id": "ADV-02", "entity_type": "ModelFamily", "surface_a": "DeepSeek-V2", "surface_b": "DeepSeek-V3", "notes": "Version progression."},
+      {"id": "ADV-03", "entity_type": "ModelFamily", "surface_a": "DeepSeek-V3", "surface_b": "DeepSeek-R1", "notes": "Different model line (V vs R) from the same lab."},
+      {"id": "ADV-04", "entity_type": "ModelFamily", "surface_a": "GPT-3", "surface_b": "GPT-3.5", "notes": "Decimal version progression."},
+      {"id": "ADV-05", "entity_type": "InferenceTechnique", "surface_a": "FlashAttention", "surface_b": "FlashAttention3", "notes": "Glued version digit vs implicit v1."},
+      {"id": "ADV-06", "entity_type": "ModelFamily", "surface_a": "Qwen2", "surface_b": "Qwen2.5", "notes": "Glued version digits on both sides."},
+      {"id": "ADV-07", "entity_type": "ArchComponent", "surface_a": "Mamba", "surface_b": "Mamba2", "notes": "Glued version digit vs bare name."},
+      {"id": "ADV-08", "entity_type": "InferenceTechnique", "surface_a": "INT8 Quantization", "surface_b": "INT4 Quantization", "notes": "Integer bit-width."},
+      {"id": "ADV-09", "entity_type": "TrainingMethod", "surface_a": "FP16 Training", "surface_b": "FP8 Training", "notes": "Floating-point precision, short names."},
+      {"id": "ADV-10", "entity_type": "TrainingMethod", "surface_a": "FP16 Mixed Precision Training", "surface_b": "FP8 Mixed Precision Training", "notes": "Floating-point precision, long shared suffix inflates lexical similarity."},
+      {"id": "ADV-11", "entity_type": "InferenceTechnique", "surface_a": "4-bit Quantization", "surface_b": "8-bit Quantization", "notes": "Separated bit-width tokens."},
+      {"id": "ADV-12", "entity_type": "ArchComponent", "surface_a": "Top-1 Routing", "surface_b": "Top-K Routing", "notes": "Routing k-value; k=1 is not 'unversioned'."},
+      {"id": "ADV-13", "entity_type": "ArchComponent", "surface_a": "Top-1 Routing", "surface_b": "Top-2 Routing", "notes": "Routing k-value."},
+      {"id": "ADV-14", "entity_type": "TrainingMethod", "surface_a": "Method A (ours)", "surface_b": "Method B (ours)", "notes": "Parenthetical trap word 'ours' is not an acronym."},
+      {"id": "ADV-15", "entity_type": "ModelFamily", "surface_a": "Model X (70B)", "surface_b": "Model Y (70B)", "notes": "Shared parenthetical scale token across unrelated models."},
+      {"id": "ADV-16", "entity_type": "ModelFamily", "surface_a": "DeepSeek-R1", "surface_b": "DeepSeek-R1-Zero", "notes": "R1-Zero is a distinct RL-only model; currently a seeded alias of R1."},
+      {"id": "ADV-17", "entity_type": "ModelFamily", "surface_a": "Mixtral 8x7B", "surface_b": "Mixtral 8x22B", "notes": "Distinct sparse MoE releases."},
+      {"id": "ADV-18", "entity_type": "ArchComponent", "surface_a": "Multi-Head Attention", "surface_b": "Multi-Query Attention", "notes": "Seeded siblings with high lexical overlap."},
+      {"id": "ADV-19", "entity_type": "ArchComponent", "surface_a": "RoPE", "surface_b": "Decoupled RoPE", "notes": "Variant that contains the base acronym."},
+      {"id": "ADV-20", "entity_type": "InferenceTechnique", "surface_a": "FlashAttention-2", "surface_b": "FlashAttention-3", "notes": "Seeded version progression."}
+    ],
+    "cross_type_edges": [
+      {"id": "XTE-01", "source_name": "DeepSeek-V2", "source_type": "Paper", "relation_type": "INTRODUCES", "target_name": "DeepSeek-V2", "target_type": "ModelFamily", "evidence_quote": "We present DeepSeek-V2, a strong Mixture-of-Experts language model.", "notes": "Target is seeded as ModelFamily."},
+      {"id": "XTE-02", "source_name": "FlashAttention-2", "source_type": "Paper", "relation_type": "INTRODUCES", "target_name": "FlashAttention-2", "target_type": "InferenceTechnique", "evidence_quote": "We propose FlashAttention-2, with better work partitioning.", "notes": "Target is seeded as InferenceTechnique."},
+      {"id": "XTE-03", "source_name": "Mamba", "source_type": "Paper", "relation_type": "INTRODUCES", "target_name": "Mamba", "target_type": "ArchComponent", "evidence_quote": "We introduce Mamba, a selective state space model architecture.", "notes": "Neither side seeded; source is minted first."},
+      {"id": "XTE-04", "source_name": "YaRN", "source_type": "Paper", "relation_type": "INTRODUCES", "target_name": "YaRN", "target_type": "TrainingMethod", "evidence_quote": "We present YaRN, a compute-efficient method to extend context.", "notes": "Target is seeded as TrainingMethod."},
+      {"id": "XTE-05", "source_name": "DeepSeekMoE", "source_type": "ModelFamily", "relation_type": "ADOPTS_COMPONENT", "target_name": "DeepSeekMoE", "target_type": "ArchComponent", "evidence_quote": "The DeepSeekMoE 16B model adopts the DeepSeekMoE architecture in every FFN layer.", "notes": "Non-Paper source; target is seeded as ArchComponent."}
+    ],
+    "chunk_and_mention_cases": [
+      {"id": "CHM-01", "kind": "mention", "text": "We apply RoPE.", "expected_entity_ids": ["arch_component::rope"], "forbidden_entity_ids": [], "notes": "Acronym followed by a sentence-final period."},
+      {"id": "CHM-02", "kind": "mention", "text": "We use Rotary Position Embeddings in all layers.", "expected_entity_ids": ["arch_component::rope"], "forbidden_entity_ids": [], "notes": "Plural surface in mid-sentence."},
+      {"id": "CHM-03", "kind": "mention", "text": "Llama 2 uses GQA.", "expected_entity_ids": ["model_family::llama_2"], "forbidden_entity_ids": ["model_family::llama_1"], "notes": "Shorter alias 'LLaMA' must not fire inside 'Llama 2'."},
+      {"id": "CHM-04", "kind": "mention", "text": "We compare GPT-3 and FlashAttention-2 throughput on A100 GPUs.", "expected_entity_ids": ["model_family::gpt_3", "inference_technique::flash_attention_2"], "forbidden_entity_ids": ["inference_technique::flash_attention"], "notes": "Shorter alias 'FlashAttention' must not fire inside 'FlashAttention-2'."},
+      {"id": "CHM-05", "kind": "equation", "text": "Training cost was $2M on cloud GPUs.", "expected_contains_equation": false, "notes": "Single currency dollar sign."},
+      {"id": "CHM-06", "kind": "equation", "text": "API pricing is $0.14 per million input tokens versus $0.55 for the baseline.", "expected_contains_equation": false, "notes": "Two currency amounts; a naive inline-math regex would pair the dollar signs."},
+      {"id": "CHM-07", "kind": "equation", "text": "Complexity is $O(N^2)$ in sequence length.", "expected_contains_equation": true, "notes": "Inline math."},
+      {"id": "CHM-08", "kind": "equation", "text": "The latent vector is computed as:\n\n$$ c_t^{KV} = W h_t $$", "expected_contains_equation": true, "notes": "Display math block."}
+    ]
+  }
+}
