@@ -235,7 +235,6 @@ entities:
     aliases:
       - "LLaMA-3"
       - "Llama 3"
-      - "Llama 3.1"
 
   - entity_id: "model_family::deepseek_v2"
     entity_type: "ModelFamily"
@@ -254,7 +253,13 @@ entities:
     canonical_name: "DeepSeek-R1"
     aliases:
       - "DeepSeek R1"
-      - "DeepSeek-R1-Zero"
+
+  - entity_id: "model_family::deepseek_r1_zero"
+    entity_type: "ModelFamily"
+    canonical_name: "DeepSeek-R1-Zero"
+    aliases:
+      - "DeepSeek R1 Zero"
+      - "R1-Zero"
 
   # --- Key Bottlenecks ---
   - entity_id: "bottleneck::kv_cache_memory_bandwidth"
@@ -271,7 +276,13 @@ entities:
     aliases:
       - "O(N^2) Attention Complexity"
       - "Quadratic Sequence Length Scaling"
-      - "HBM Read/Write Materialization Overhead"
+
+  - entity_id: "bottleneck::hbm_io_materialization_overhead"
+    entity_type: "Bottleneck"
+    canonical_name: "HBM Read/Write Materialization Overhead"
+    aliases:
+      - "HBM IO Materialization Overhead"
+      - "Attention Matrix HBM Materialization"
 
   - entity_id: "bottleneck::critic_model_memory_overhead"
     entity_type: "Bottleneck"

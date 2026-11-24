@@ -11,9 +11,9 @@ papers:
     year: 2017
     pillar: "pre_training"
     seed_set: true
-  - paper_id: "radford_2019_gpt2"
-    arxiv_id: "1901.00001"
-    title: "Language Models are Unsupervised Multitask Learners (GPT-2)"
+  - paper_id: "raffel_2019_t5"
+    arxiv_id: "1910.10683"
+    title: "Exploring the Limits of Transfer Learning with a Unified Text-to-Text Transformer (T5)"
     year: 2019
     pillar: "pre_training"
     seed_set: false

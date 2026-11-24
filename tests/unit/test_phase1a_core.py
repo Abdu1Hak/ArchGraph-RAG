@@ -221,9 +221,11 @@ def test_entity_resolver_tier2_unseeded_acronym_collapse() -> None:
         paper_id="nsa_2025",
     )
 
-    assert first.entity_id == "arch_component::native_sparse_attention"
+    # The ID anchors on the acronym so the bare-acronym-first order mints the same ID.
+    assert first.entity_id == "arch_component::nsa"
     assert second.entity_id == first.entity_id
     assert third.entity_id == first.entity_id
+    assert resolver.nodes[first.entity_id].canonical_name == "Native Sparse Attention"
     assert "NSA" in resolver.nodes[first.entity_id].aliases
 
 

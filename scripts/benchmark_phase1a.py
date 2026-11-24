@@ -12,8 +12,10 @@ Test modes:
   so aliases learned by earlier cases can leak into later ones. Results are reported as
   order effects and do not change the bucket scores.
 
-Tier 3 (embedding similarity) is not exercised because no embed_fn is configured, so
-results reflect seed aliases, Tier 1, Tier 2 and the version guard only.
+The main buckets run with Tier 3 (embedding similarity) OFF, so they reflect seed aliases,
+Tier 1, Tier 2 and the hard guards only. A separate Tier-3 Mock Embedding Stress Check then
+re-runs every adversarial_splits pair with embed_fn returning identical vectors (cosine
+similarity 1.0 for every pair), proving the splits hold on the guards alone.
 """
 
 from __future__ import annotations
@@ -25,7 +27,7 @@ import sys
 from dataclasses import dataclass, field
 from difflib import SequenceMatcher
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Callable, Dict, List, Optional, Tuple
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(PROJECT_ROOT) not in sys.path:
@@ -114,15 +116,24 @@ class CaseResult:
 # ---------------------------------------------------------------------------
 
 
+EmbedFn = Callable[[List[str]], List[List[float]]]
+
+
+def identical_vector_embed_fn(texts: List[str]) -> List[List[float]]:
+    """Tier-3 stress mock: every text gets the same vector, so every cosine similarity is 1.0."""
+    return [[1.0, 0.0] for _ in texts]
+
+
 class ResolverFactory:
-    def __init__(self, seeds_path: Path) -> None:
+    def __init__(self, seeds_path: Path, embed_fn: Optional[EmbedFn] = None) -> None:
         self.seeds_path = seeds_path
+        self.embed_fn = embed_fn
         baseline = self.fresh()
         # key -> entity_id for every surface defined by the seed file (global index)
         self.seed_global_keys: Dict[str, str] = dict(baseline.global_alias_index)
 
     def fresh(self) -> EntityResolver:
-        return EntityResolver(seed_aliases_path=self.seeds_path)
+        return EntityResolver(seed_aliases_path=self.seeds_path, embed_fn=self.embed_fn)
 
 
 def resolve(resolver: EntityResolver, etype: EntityType, surface: str, chunk_id: str) -> Resolution:
@@ -151,11 +162,11 @@ def probe_tier1(resolver: EntityResolver, etype: EntityType, surface: str) -> Li
         if not key:
             continue
         typed = resolver.alias_index.get((etype, key))
-        glob = resolver.global_alias_index.get(key)
+        compact = resolver.compact_alias_index.get((etype, key.replace(" ", "")))
         if typed:
             hits.append(Tier1Hit(surf, key, typed, "typed", surf in paren))
-        elif glob:
-            hits.append(Tier1Hit(surf, key, glob, "global", surf in paren))
+        elif compact:
+            hits.append(Tier1Hit(surf, key, compact, "compact", surf in paren))
     return hits
 
 
@@ -365,7 +376,7 @@ def run_cross_type_bucket(cases: List[dict], factory: ResolverFactory) -> List[C
                 t = tgt_node.entity_type.value
                 wrong.append(f"target '{case['target_name']}' ({ttype.value}) resolved to {article(t)} {t} node")
             hint = (
-                "Tier 1 falls back to global_alias_index, which ignores entity_type, so "
+                "Resolution crossed entity types, so "
                 + " and ".join(wrong)
                 + (f" (expected prefixes {exp_src_prefix}:: / {exp_tgt_prefix}::)" if wrong else "")
                 + ("; resolve_relationship() then sees src == tgt and returns None." if edge is None else ".")
@@ -460,6 +471,24 @@ def run_chunk_mention_bucket(cases: List[dict], factory: ResolverFactory) -> Lis
 # ---------------------------------------------------------------------------
 
 
+def print_stress_report(stress_results: List[CaseResult]) -> None:
+    passed, total = sum(r.passed for r in stress_results), len(stress_results)
+    pct = 100.0 * passed / total if total else 0.0
+    print()
+    print(" TIER-3 MOCK EMBEDDING STRESS CHECK")
+    print(" embed_fn = lambda texts: [[1.0, 0.0] for _ in texts]  (cosine similarity 1.0 for every pair)")
+    print(LINE)
+    verdict = "PASS" if passed == total else "FAIL"
+    print(f" {'adversarial_splits (Tier 3 ON)':<34}{f'{passed} / {total}':>10}{pct:>11.1f}%   {verdict}")
+    for r in stress_results:
+        if not r.passed:
+            print(f"  [{r.case_id}] {r.title}")
+            for line in r.actual_lines:
+                print(f"      {line}")
+            print(f"      Root Cause Hint: {r.hint}")
+    print(LINE)
+
+
 def print_report(gold_path: Path, seeds_path: Path, by_bucket: Dict[str, List[CaseResult]], seq_diffs: List[str]) -> None:
     def rel(p: Path) -> str:
         try:
@@ -535,6 +564,10 @@ def main() -> int:
     seq_diffs = run_sequential(buckets["synonym_merges"], buckets["adversarial_splits"], factory, isolated)
 
     print_report(args.gold, args.seeds, by_bucket, seq_diffs)
+
+    stress_factory = ResolverFactory(args.seeds, embed_fn=identical_vector_embed_fn)
+    stress = run_pair_bucket("adversarial_splits", buckets["adversarial_splits"], stress_factory, expect_merge=False)
+    print_stress_report(stress)
     return 0
 
 

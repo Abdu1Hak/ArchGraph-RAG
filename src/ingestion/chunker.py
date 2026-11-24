@@ -26,6 +26,8 @@ import hashlib
 import re
 from typing import List, Tuple
 
+from src.schema.ontology import EXTRACTION_PROMPT_VERSION, EXTRACTION_SCHEMA_VERSION
+
 
 @dataclass(frozen=True)
 class DocumentChunk:
@@ -48,17 +50,51 @@ class DocumentChunk:
     mentioned_entity_ids: Tuple[str, ...] = field(default_factory=tuple)
 
 
-_HEADING_RE = re.compile(r"^(#{1,4})\s+(.+)$", re.MULTILINE)
+_HEADING_LINE_RE = re.compile(r"^(#{1,6})\s+(.+?)\s*#*\s*$")
+_FENCE_RE = re.compile(r"^\s*(```|~~~)")
+_FENCED_BLOCK_RE = re.compile(r"^[ \t]*(```|~~~)[^\n]*\n[\s\S]*?^[ \t]*\1[ \t]*$", re.MULTILINE)
 _EQUATION_BLOCK_RE = re.compile(
     r"(\$\$[\s\S]*?\$\$|\\begin\{(?:equation\*?|align\*?|gather\*?)\}[\s\S]*?\\end\{(?:equation\*?|align\*?|gather\*?)\})",
     re.MULTILINE,
 )
+# LaTeX \( ... \) and \[ ... \] delimiters are unambiguous math.
+_LATEX_DELIM_RE = re.compile(r"\\\((?:.|\n)+?\\\)|\\\[(?:.|\n)+?\\\]")
+# Pandoc-style inline math: the opening '$' is followed by a non-space, the closing '$' is
+# preceded by a non-space and NOT followed by a digit. This already rejects
+# '$0.14 per million ... versus $0.55' (closing '$' preceded by a space).
+_INLINE_MATH_RE = re.compile(r"(?<![\\$\w])\$(?=\S)(?P<body>[^$\n]{1,300}?)(?<=\S)\$(?!\d)")
+_MATH_SIGNAL_RE = re.compile(r"[\\^_{}=<>|]|[A-Za-z]\(|\([A-Za-z]")
+_SHORT_VARIABLE_RE = re.compile(r"[A-Za-z][A-Za-z0-9']{0,2}")
+_CURRENCY_BODY_RE = re.compile(r"[\d.,]+\s*[KMBkmb]?")
 
 
-def compute_content_hash(text: str, schema_version: str = "v1") -> str:
-    """Return deterministic SHA-256 hex digest for extraction caching."""
+def contains_equation(text: str) -> bool:
+    """Return True for display/inline math, False for currency amounts like '$2M' or '$100,000'.
+
+    True:  '$$ c_t^{KV} = W h_t $$', '\\begin{equation}...', '$O(N^2)$', '$d_k$', '$N$'.
+    False: 'cost was $2M', '$0.14 per million input tokens versus $0.55', 'a $100,000 budget'.
+    """
+    if not text or ("$" not in text and "\\" not in text):
+        return False
+    if _EQUATION_BLOCK_RE.search(text) or _LATEX_DELIM_RE.search(text):
+        return True
+    for m in _INLINE_MATH_RE.finditer(text):
+        body = m.group("body").strip()
+        if _CURRENCY_BODY_RE.fullmatch(body):
+            continue
+        if _MATH_SIGNAL_RE.search(body) or _SHORT_VARIABLE_RE.fullmatch(body):
+            return True
+    return False
+
+
+def compute_content_hash(
+    text: str,
+    schema_version: str = EXTRACTION_SCHEMA_VERSION,
+    prompt_version: str = EXTRACTION_PROMPT_VERSION,
+) -> str:
+    """Return the extraction cache key: sha256(schema_version + prompt_version + normalized text)."""
     normalized = re.sub(r"\s+", " ", text.strip())
-    payload = f"{schema_version}::{normalized}".encode("utf-8")
+    payload = f"{schema_version}::{prompt_version}::{normalized}".encode("utf-8")
     return hashlib.sha256(payload).hexdigest()
 
 
@@ -77,8 +113,13 @@ def _split_into_sections(markdown_text: str) -> List[Tuple[str, str]]:
     current_path = "Abstract & Introduction"
     current_lines: List[str] = []
 
+    in_fence = False
     for line in lines:
-        m = re.match(r"^(#{1,4})\s+(.+)$", line.strip())
+        if _FENCE_RE.match(line):
+            in_fence = not in_fence
+            current_lines.append(line)
+            continue
+        m = None if in_fence else _HEADING_LINE_RE.match(line.strip())
         if m:
             # Flush previous section if it has substantive text
             body_text = "\n".join(current_lines).strip()
@@ -110,7 +151,9 @@ def _tokenize_atomic_blocks(section_body: str) -> List[str]:
         protected_equations.append(match.group(0))
         return f"__ATOMIC_EQ_{idx}__"
 
-    stashed_text = _EQUATION_BLOCK_RE.sub(_stash_eq, section_body)
+    # Fenced code blocks are atomic too (blank lines inside them must not split the block)
+    stashed_text = _FENCED_BLOCK_RE.sub(_stash_eq, section_body)
+    stashed_text = _EQUATION_BLOCK_RE.sub(_stash_eq, stashed_text)
 
     # Group contiguous markdown table rows (`| ... |`) into single atomic blocks
     raw_lines = stashed_text.splitlines()
@@ -163,7 +206,7 @@ class StructureAwareChunker:
         self,
         target_chars: int = 1800,
         max_chars: int = 2600,
-        overlap_blocks: int = 1,
+        overlap_blocks: int = 0,
     ) -> None:
         self.target_chars = target_chars
         self.max_chars = max_chars
@@ -236,9 +279,7 @@ class StructureAwareChunker:
                     f"Pillar: {pillar} | Section: {section_path}]"
                 )
                 context_prefixed = f"{header}\n{raw_text}"
-                has_eq = bool(
-                    _EQUATION_BLOCK_RE.search(raw_text) or "$" in raw_text
-                )
+                has_eq = contains_equation(raw_text)
                 has_tbl = bool(
                     re.search(r"^\|.*\|$", raw_text, flags=re.MULTILINE)
                 )

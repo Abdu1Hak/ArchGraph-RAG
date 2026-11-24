@@ -13,9 +13,20 @@ our queryable ontology before touching Neo4j.
 """
 
 from enum import Enum
+import json
+import logging
 import re
-from typing import List, Optional
-from pydantic import BaseModel, Field, field_validator, model_validator
+from typing import Any, Dict, List, Optional, Union
+from pydantic import BaseModel, Field, ValidationError, field_validator, model_validator
+
+
+logger = logging.getLogger(__name__)
+
+# Bump EXTRACTION_SCHEMA_VERSION whenever the ontology/payload schema changes and
+# EXTRACTION_PROMPT_VERSION whenever the extraction system prompt changes: both are part of
+# every chunk's content_hash, so a bump invalidates the extraction cache automatically.
+EXTRACTION_SCHEMA_VERSION = "kg-schema-v1"
+EXTRACTION_PROMPT_VERSION = "kg-prompt-v1"
 
 
 class PillarType(str, Enum):
@@ -184,6 +195,10 @@ class ResolvedEntityNode(BaseModel):
     source_chunk_ids: List[str] = Field(default_factory=list)
     paper_ids: List[str] = Field(default_factory=list)
     confidence: float = 1.0
+    parameter_scales: List[str] = Field(
+        default_factory=list,
+        description="Dense checkpoint sizes seen for a ModelFamily (e.g. ['8B', '70B']); metadata, not identity.",
+    )
 
 
 class ResolvedGraphEdge(BaseModel):
@@ -214,3 +229,88 @@ def filter_extractions_by_confidence(
         entities=valid_entities,
         relationships=valid_relationships,
     )
+
+
+class ExtractionParseError(ValueError):
+    """Raised when an LLM response is not a parseable JSON object (the whole chunk is unusable)."""
+
+
+_JSON_FENCE_RE = re.compile(r"^\s*```(?:json)?\s*(?P<body>[\s\S]*?)\s*```\s*$", re.IGNORECASE)
+
+
+def _coerce_to_dict(raw: Union[str, bytes, Dict[str, Any], "ChunkExtractionPayload", None]) -> Dict[str, Any]:
+    if isinstance(raw, ChunkExtractionPayload):
+        return raw.model_dump(mode="json")
+    if isinstance(raw, dict):
+        return raw
+    if isinstance(raw, bytes):
+        raw = raw.decode("utf-8", errors="replace")
+    if not isinstance(raw, str) or not raw.strip():
+        raise ExtractionParseError("Empty or non-text extraction response")
+    text = raw.strip()
+    fence = _JSON_FENCE_RE.match(text)
+    if fence:
+        text = fence.group("body")
+    try:
+        parsed = json.loads(text)
+    except json.JSONDecodeError as exc:
+        raise ExtractionParseError(f"Malformed JSON at line {exc.lineno} col {exc.colno}: {exc.msg}") from exc
+    if not isinstance(parsed, dict):
+        raise ExtractionParseError(f"Expected a JSON object, got {type(parsed).__name__}")
+    return parsed
+
+
+def sanitize_and_filter_extraction(
+    raw_dict_or_json: Union[str, bytes, Dict[str, Any], ChunkExtractionPayload, None],
+    min_confidence: float = 0.65,
+    dropped: Optional[List[Dict[str, Any]]] = None,
+) -> ChunkExtractionPayload:
+    """Validate an extraction item by item, dropping only the items that fail.
+
+    A single malformed entity, an out-of-ontology type (e.g. a prompt-injected
+    `"entity_type": "SystemOverride"`), a self-loop, or a low-confidence item is logged and
+    dropped; its valid siblings in the same chunk survive. Only a response that is not a JSON
+    object at all raises `ExtractionParseError` (callers may retry on that).
+
+    If `dropped` is given, one `{"kind", "index", "reason", "item"}` record is appended per
+    dropped item for auditing.
+    """
+    data = _coerce_to_dict(raw_dict_or_json)
+
+    def _drop(kind: str, index: int, reason: str, item: Any) -> None:
+        logger.warning("Dropping extracted %s #%d: %s", kind, index, reason)
+        if dropped is not None:
+            dropped.append({"kind": kind, "index": index, "reason": reason, "item": item})
+
+    def _items(key: str) -> List[Any]:
+        value = data.get(key) or []
+        if not isinstance(value, list):
+            _drop(key, -1, f"'{key}' is {type(value).__name__}, expected list", value)
+            return []
+        return value
+
+    entities: List[ExtractedEntity] = []
+    for i, item in enumerate(_items("entities")):
+        try:
+            ent = ExtractedEntity.model_validate(item)
+        except ValidationError as exc:
+            _drop("entity", i, exc.errors()[0].get("msg", str(exc)), item)
+            continue
+        if ent.confidence < min_confidence:
+            _drop("entity", i, f"confidence {ent.confidence} < {min_confidence}", item)
+            continue
+        entities.append(ent)
+
+    relationships: List[ExtractedRelationship] = []
+    for i, item in enumerate(_items("relationships")):
+        try:
+            rel = ExtractedRelationship.model_validate(item)
+        except ValidationError as exc:
+            _drop("relationship", i, exc.errors()[0].get("msg", str(exc)), item)
+            continue
+        if rel.confidence < min_confidence:
+            _drop("relationship", i, f"confidence {rel.confidence} < {min_confidence}", item)
+            continue
+        relationships.append(rel)
+
+    return ChunkExtractionPayload(entities=entities, relationships=relationships)
