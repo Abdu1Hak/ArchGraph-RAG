@@ -1,0 +1,27 @@
+paper_id: fedus_2021_switch
+markdown: |
+  # Switch Transformers: Scaling to Trillion Parameter Models with Simple and Efficient Sparsity
+
+  {BANNER}
+
+  ## Abstract
+
+  Switch Transformer simplifies the Mixture-of-Experts routing algorithm: each token is routed to only a single expert (top-1 routing), reducing computation and communication costs.
+
+  ## 2 Switch Transformer
+
+  Switch Transformer is built on the T5 encoder-decoder architecture, replacing its dense feed-forward layers with sparse expert layers.
+
+  A differentiable auxiliary load balancing loss encourages a uniform distribution of tokens across experts.
+
+  Selective precision casts the router computation to float32 while the rest of the model trains in bfloat16, which avoids training instability.
+
+  ## 4 Results
+
+  Switch Transformers achieve up to a 7x increase in pre-training speed over T5-Base with the same computational resources, and scale to 1.6 trillion parameters.
+relationships:
+  - [fedus_2021_switch, Paper, INTRODUCES, Switch Transformer, ModelFamily, "Switch Transformer simplifies the Mixture-of-Experts routing algorithm"]
+  - [Switch Transformer, ModelFamily, ADOPTS_COMPONENT, Top-1 Expert Routing, ArchComponent, "each token is routed to only a single expert (top-1 routing)"]
+  - [Top-1 Expert Routing, ArchComponent, EXTENDS, Mixture-of-Experts, ArchComponent, "Switch Transformer simplifies the Mixture-of-Experts routing algorithm: each token is routed to only a single expert"]
+  - [Switch Transformer, ModelFamily, ADOPTS_COMPONENT, Auxiliary Load Balancing Loss, ArchComponent, "A differentiable auxiliary load balancing loss encourages a uniform distribution of tokens across experts."]
+  - [Switch Transformer, ModelFamily, EXTENDS, T5, ModelFamily, "Switch Transformer is built on the T5 encoder-decoder architecture, replacing its dense feed-forward layers with sparse expert layers."]

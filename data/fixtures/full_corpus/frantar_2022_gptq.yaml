@@ -1,0 +1,21 @@
+paper_id: frantar_2022_gptq
+markdown: |
+  # GPTQ: Accurate Post-Training Quantization for Generative Pre-trained Transformers
+
+  {BANNER}
+
+  ## Abstract
+
+  GPTQ is a one-shot weight quantization method based on approximate second-order information that quantizes GPT models with 175 billion parameters in approximately four GPU hours.
+
+  ## 3 Method
+
+  GPTQ builds on the Optimal Brain Quantization (OBQ) framework but quantizes weights column by column, using the inverse Hessian of the layer reconstruction error to update the remaining weights and compensate for the quantization error.
+
+  ## 4 Results
+
+  GPTQ reduces the bitwidth to 3 or 4 bits per weight with negligible accuracy degradation, which allows OPT-175B to run on a single A100 GPU.
+relationships:
+  - [frantar_2022_gptq, Paper, INTRODUCES, GPTQ, InferenceTechnique, "GPTQ is a one-shot weight quantization method based on approximate second-order information"]
+  - [GPTQ, InferenceTechnique, EXTENDS, Optimal Brain Quantization (OBQ), InferenceTechnique, "GPTQ builds on the Optimal Brain Quantization (OBQ) framework but quantizes weights column by column"]
+  - [GPTQ, InferenceTechnique, MITIGATES, LLM Weight Memory Footprint, Bottleneck, "GPTQ reduces the bitwidth to 3 or 4 bits per weight with negligible accuracy degradation"]

@@ -1,0 +1,21 @@
+paper_id: zhou_2023_lima
+markdown: |
+  # LIMA: Less Is More for Alignment
+
+  {BANNER}
+
+  ## Abstract
+
+  LIMA is a 65B parameter LLaMA language model fine-tuned with the standard supervised loss on only 1,000 carefully curated prompts and responses, without any reinforcement learning or human preference modeling.
+
+  ## 2 Superficial Alignment Hypothesis
+
+  A model's knowledge and capabilities are learnt almost entirely during pretraining, while alignment teaches it which subdistribution of formats should be used when interacting with users.
+
+  ## 4 Results
+
+  In a controlled human study, responses from LIMA are either equivalent or strictly preferred to GPT-4 in 43% of cases.
+relationships:
+  - [zhou_2023_lima, Paper, INTRODUCES, LIMA, ModelFamily, "LIMA is a 65B parameter LLaMA language model fine-tuned with the standard supervised loss"]
+  - [LIMA, ModelFamily, REQUIRES, LLaMA, ModelFamily, "LIMA is a 65B parameter LLaMA language model"]
+  - [LIMA, ModelFamily, ADOPTS_COMPONENT, Supervised Fine-Tuning, TrainingMethod, "fine-tuned with the standard supervised loss on only 1,000 carefully curated prompts and responses"]

@@ -40,7 +40,13 @@ class PaperMeta(BaseModel):
     title: str
     year: int
     pillar: PillarType
+    pillar_group: Optional[str] = None
+    org: Optional[str] = None
     seed_set: bool = False
+
+    @property
+    def abs_url(self) -> str:
+        return f"https://arxiv.org/abs/{self.arxiv_id}"
 
     @property
     def pdf_url(self) -> str:
@@ -180,16 +186,24 @@ def load_or_synthesize_seed_markdown(
     paper: PaperMeta,
     markdown_dir: Optional[Path] = None,
     prefer_cached: bool = True,
+    full_corpus: bool = False,
 ) -> str:
     """Offline mode: cached real Markdown if present, else a deterministic synthetic fixture.
 
     Never uses the network and never writes synthetic text into the Markdown cache.
     `prefer_cached=False` always returns the synthetic fixture (used by `--offline-demo` and
-    benchmarks so recorded extractions line up with the text).
+    benchmarks so recorded extractions line up with the text). `full_corpus=True` uses the
+    50-paper fixtures (`data/fixtures/full_corpus`), which also append sections to some seed papers.
     """
     md_path = Path(markdown_dir or settings.markdown_cache_dir) / f"{paper.paper_id}.md"
     if prefer_cached and md_path.exists() and md_path.stat().st_size > 0:
         return md_path.read_text(encoding="utf-8")
+    if full_corpus:
+        from src.ingestion.full_corpus_fixtures import full_corpus_markdown
+
+        text = full_corpus_markdown(paper.paper_id, SYNTHETIC_SEED_MARKDOWN)
+        if text is not None:
+            return text
     fixture = SYNTHETIC_SEED_MARKDOWN.get(paper.paper_id)
     if fixture is not None:
         return fixture

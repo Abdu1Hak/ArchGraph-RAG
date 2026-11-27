@@ -1,0 +1,27 @@
+paper_id: raffel_2019_t5
+markdown: |
+  # Exploring the Limits of Transfer Learning with a Unified Text-to-Text Transformer
+
+  {BANNER}
+
+  ## Abstract
+
+  T5 casts every text processing problem as a text-to-text problem, feeding text as input and producing new text as output.
+
+  ## 3 Model
+
+  T5 is an encoder-decoder Transformer that uses a simplified relative position bias: each attention head adds a learned scalar bias that depends on the bucketed offset between key and query.
+
+  T5 places layer normalization before each subcomponent and uses a simplified layer norm with no additive bias.
+
+  ## 4 Pre-training
+
+  T5 is pre-trained with a span-corruption denoising objective on the Colossal Clean Crawled Corpus (C4), roughly 750 GB of cleaned English web text.
+
+  The largest T5 model has 11 billion parameters.
+relationships:
+  - [raffel_2019_t5, Paper, INTRODUCES, T5, ModelFamily, "T5 casts every text processing problem as a text-to-text problem"]
+  - [T5, ModelFamily, ADOPTS_COMPONENT, Relative Position Bias, ArchComponent, "T5 is an encoder-decoder Transformer that uses a simplified relative position bias"]
+  - [T5, ModelFamily, ADOPTS_COMPONENT, Pre-LN, ArchComponent, "T5 places layer normalization before each subcomponent"]
+  - [T5, ModelFamily, ADOPTS_COMPONENT, Span Corruption, TrainingMethod, "T5 is pre-trained with a span-corruption denoising objective"]
+  - [T5, ModelFamily, REQUIRES, C4, BenchmarkOrDataset, "pre-trained with a span-corruption denoising objective on the Colossal Clean Crawled Corpus (C4)"]

@@ -1,0 +1,21 @@
+paper_id: liu_2023_ring_attention
+markdown: |
+  # Ring Attention with Blockwise Transformers for Near-Infinite Context
+
+  {BANNER}
+
+  ## Abstract
+
+  Ring Attention distributes long sequences across multiple devices, computing self-attention and feedforward blockwise while overlapping the communication of key-value blocks with computation.
+
+  ## 3 Method
+
+  Each host holds one query block and passes its key-value blocks to the next host in a ring, so the memory per device is independent of the total sequence length.
+
+  ## 4 Results
+
+  Ring Attention enables training and inference on sequences up to device-count times longer than prior memory-efficient Transformers, exceeding 100 million tokens.
+relationships:
+  - [liu_2023_ring_attention, Paper, INTRODUCES, Ring Attention, InferenceTechnique, "Ring Attention distributes long sequences across multiple devices"]
+  - [Ring Attention, InferenceTechnique, REQUIRES, Blockwise Parallel Transformer, ArchComponent, "computing self-attention and feedforward blockwise while overlapping the communication of key-value blocks"]
+  - [Ring Attention, InferenceTechnique, MITIGATES, Long-Context Activation Memory, Bottleneck, "so the memory per device is independent of the total sequence length"]

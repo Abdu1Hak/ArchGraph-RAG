@@ -1,0 +1,26 @@
+paper_id: cai_2024_medusa
+markdown: |
+  # Medusa: Simple LLM Inference Acceleration Framework with Multiple Decoding Heads
+
+  {BANNER}
+
+  ## Abstract
+
+  Medusa augments LLM inference by adding extra decoding heads that predict multiple subsequent tokens in parallel.
+
+  Medusa is a speculative decoding framework that replaces the separate draft model with extra decoding heads on the target model itself.
+
+  ## 3 Method
+
+  Medusa uses a tree-based attention mechanism to construct multiple candidate continuations and verify them simultaneously in each decoding step.
+
+  Medusa-1 fine-tunes only the heads on top of a frozen backbone, while Medusa-2 trains the heads together with the backbone.
+
+  ## 4 Results
+
+  Medusa-1 achieves over 2.2x speedup without compromising generation quality, and Medusa-2 improves the speedup to 2.3-3.6x.
+relationships:
+  - [cai_2024_medusa, Paper, INTRODUCES, Medusa, InferenceTechnique, "Medusa augments LLM inference by adding extra decoding heads"]
+  - [Medusa, InferenceTechnique, EXTENDS, Speculative Decoding, InferenceTechnique, "Medusa is a speculative decoding framework that replaces the separate draft model"]
+  - [Medusa, InferenceTechnique, REPLACES_IN, Draft Model, InferenceTechnique, "replaces the separate draft model with extra decoding heads on the target model itself", Speculative Decoding]
+  - [Medusa, InferenceTechnique, REQUIRES, Tree Attention, ArchComponent, "Medusa uses a tree-based attention mechanism to construct multiple candidate continuations"]

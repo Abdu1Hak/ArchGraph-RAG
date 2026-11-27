@@ -1,0 +1,29 @@
+paper_id: ouyang_2022_instructgpt
+markdown: |
+  # Training language models to follow instructions with human feedback
+
+  {BANNER}
+
+  ## Abstract
+
+  InstructGPT models are GPT-3 models fine-tuned with reinforcement learning from human feedback (RLHF) to follow a broad class of written instructions.
+
+  ## 3 Methods
+
+  The RLHF pipeline has three steps: supervised fine-tuning on labeler demonstrations, training a reward model on human rankings of model outputs, and optimizing the policy against the reward model with PPO.
+
+  A per-token KL penalty from the supervised policy is added to the reward so the policy does not over-optimize the reward model.
+
+  Mixing pre-training gradients into the PPO updates (PPO-ptx) reduces performance regressions on public NLP datasets, the so-called alignment tax.
+
+  ## 4 Results
+
+  Outputs from the 1.3B parameter InstructGPT model are preferred to outputs from the 175B GPT-3, despite having 100x fewer parameters.
+relationships:
+  - [ouyang_2022_instructgpt, Paper, INTRODUCES, InstructGPT, ModelFamily, "InstructGPT models are GPT-3 models fine-tuned with reinforcement learning from human feedback (RLHF)"]
+  - [InstructGPT, ModelFamily, EXTENDS, GPT-3, ModelFamily, "InstructGPT models are GPT-3 models fine-tuned with reinforcement learning from human feedback (RLHF)"]
+  - [InstructGPT, ModelFamily, ADOPTS_COMPONENT, RLHF, TrainingMethod, "InstructGPT models are GPT-3 models fine-tuned with reinforcement learning from human feedback (RLHF)"]
+  - [RLHF, TrainingMethod, REQUIRES, Supervised Fine-Tuning, TrainingMethod, "supervised fine-tuning on labeler demonstrations"]
+  - [RLHF, TrainingMethod, REQUIRES, Reward Model, TrainingMethod, "training a reward model on human rankings of model outputs"]
+  - [RLHF, TrainingMethod, REQUIRES, PPO, TrainingMethod, "optimizing the policy against the reward model with PPO"]
+  - [PPO-ptx, TrainingMethod, MITIGATES, Alignment Tax, Bottleneck, "Mixing pre-training gradients into the PPO updates (PPO-ptx) reduces performance regressions on public NLP datasets"]

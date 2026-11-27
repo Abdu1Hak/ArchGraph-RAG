@@ -1,0 +1,3770 @@
+{
+ "systems": {
+  "S1": {
+   "label": "Plain Dense Vector RAG (top_k=3)",
+   "summary": {
+    "strict_by_stratum": {
+     "single_hop": 25.0,
+     "two_hop": 75.0,
+     "three_hop": 25.0,
+     "aggregation": 0.0,
+     "out_of_scope": 50.0
+    },
+    "concept_recall_by_stratum": {
+     "single_hop": 25.0,
+     "two_hop": 75.0,
+     "three_hop": 66.7,
+     "aggregation": 12.5
+    },
+    "strict_by_stress_type": {
+     "direct": 50.0,
+     "paraphrased": 0.0,
+     "implicit_bridge": 33.3,
+     "caveat_trap": 33.3,
+     "cross_pillar": 50.0,
+     "out_of_scope": 50.0
+    },
+    "strict_overall": 37.5,
+    "strict_answerable": 35.7,
+    "strict_multi_hop": 50.0,
+    "concept_recall_answerable": 49.4,
+    "evidence_recall_answerable": 41.7,
+    "citation_support_precision": 39.3,
+    "citation_gate_valid_rate": 100.0,
+    "false_refusal_rate_answerable": 0.0,
+    "latency_ms_p50": 3.04,
+    "latency_ms_p95": 4.36,
+    "projected_cost_per_query_usd": 0.002049,
+    "generator_calls_mean": 0.938,
+    "pathway_distribution": {
+     "VECTOR_DENSE": {
+      "questions": 16,
+      "passing": 6
+     }
+    },
+    "one_time_cost_usd": 0.001038
+   },
+   "per_question": [
+    {
+     "qid": "HS1",
+     "system": "S1",
+     "strict": 0.0,
+     "concept_recall": 0.0,
+     "groups_hit": [
+      false,
+      false
+     ],
+     "evidence_recall": 0.0,
+     "citation_support_precision": 0.0,
+     "gate_valid": true,
+     "refused_or_abstained": false,
+     "pathway": "VECTOR_DENSE",
+     "failure": "retrieval miss: required evidence never reached the context",
+     "missing_groups": [
+      {
+       "group": [
+        "64"
+       ],
+       "diagnosis": "not_retrieved"
+      },
+      {
+       "group": [
+        "8 parallel attention heads",
+        "h = 8"
+       ],
+       "diagnosis": "not_retrieved"
+      }
+     ],
+     "answer": "Based on the retrieved evidence:\n- Grouped-query attention extends multi-head attention by sharing each key-value head across a group of query heads [ainslie_2023_gqa::s02::c00].\n- Multi-query attention (MQA) uses only a single key-value head and drastically speeds up decoder inference [ainslie_2023_gqa::s01::c00].\n- We introduce grouped-query attention (GQA), a generalization of multi-query attention which uses an intermediate number of key-value heads [ainslie_2023_gqa::s01::c00].\n- Multi-head Latent Attention (MLA) extends the KV-sharing idea of Grouped-Query Attention (GQA) by jointly compressing keys and values into a low-rank latent vector [deepseek_2024_v2::s02::c00].",
+     "route": "VECTOR_ONLY",
+     "template": null,
+     "fallback_triggered": false,
+     "vector_seeded": false,
+     "context_chunk_ids": [
+      "ainslie_2023_gqa::s02::c00",
+      "ainslie_2023_gqa::s01::c00",
+      "deepseek_2024_v2::s02::c00"
+     ],
+     "cited_ids": [
+      "ainslie_2023_gqa::s02::c00",
+      "ainslie_2023_gqa::s01::c00",
+      "deepseek_2024_v2::s02::c00"
+     ],
+     "latency_ms": 3.0,
+     "projected_cost_usd": 0.0024525
+    },
+    {
+     "qid": "HS2",
+     "system": "S1",
+     "strict": 0.0,
+     "concept_recall": 0.0,
+     "groups_hit": [
+      false
+     ],
+     "evidence_recall": 0.0,
+     "citation_support_precision": 0.0,
+     "gate_valid": true,
+     "refused_or_abstained": false,
+     "pathway": "VECTOR_DENSE",
+     "failure": "retrieval miss: required evidence never reached the context",
+     "missing_groups": [
+      {
+       "group": [
+        "37b"
+       ],
+       "diagnosis": "not_retrieved"
+      }
+     ],
+     "answer": "Based on the retrieved evidence:\n- The full training of DeepSeek-V3 takes 2.788M H800 GPU hours, and its pre-training corpus contains 14.8T tokens [deepseek_2024_v3::s06::c00].\n- Chinchilla uses 70B parameters trained on 1.4 trillion tokens, roughly 20 tokens per parameter, and outperforms Gopher (280B) with the same compute budget [hoffmann_2022_chinchilla::s02::c00].\n- We find that for compute-optimal training, model size and the number of training tokens should be scaled equally: for every doubling of model size the number of training tokens should also be doubled [hoffmann_2022_chinchilla::s01::c00].",
+     "route": "VECTOR_ONLY",
+     "template": null,
+     "fallback_triggered": false,
+     "vector_seeded": false,
+     "context_chunk_ids": [
+      "deepseek_2024_v3::s06::c00",
+      "hoffmann_2022_chinchilla::s02::c00",
+      "hoffmann_2022_chinchilla::s01::c00"
+     ],
+     "cited_ids": [
+      "deepseek_2024_v3::s06::c00",
+      "hoffmann_2022_chinchilla::s02::c00",
+      "hoffmann_2022_chinchilla::s01::c00"
+     ],
+     "latency_ms": 1.754,
+     "projected_cost_usd": 0.0021047
+    },
+    {
+     "qid": "HS3",
+     "system": "S1",
+     "strict": 1.0,
+     "concept_recall": 1.0,
+     "groups_hit": [
+      true,
+      true
+     ],
+     "evidence_recall": 1.0,
+     "citation_support_precision": 0.5,
+     "gate_valid": true,
+     "refused_or_abstained": false,
+     "pathway": "VECTOR_DENSE",
+     "failure": "",
+     "missing_groups": [],
+     "answer": "Based on the retrieved evidence:\n- A self-attention layer connects all positions with a constant number of sequential operations, whereas a recurrent layer requires O(n) sequential operations [vaswani_2017_transformer::s05::c00].\n- The complexity of self-attention per layer is $O(n^2 \\cdot d)$ in the sequence length n, which becomes the dominant cost for very long sequences [vaswani_2017_transformer::s05::c00].\n- DeepSeek-V2 adopts Multi-head Latent Attention in every attention layer and the DeepSeekMoE architecture in its feed-forward networks [deepseek_2024_v2::s04::c00].",
+     "route": "VECTOR_ONLY",
+     "template": null,
+     "fallback_triggered": false,
+     "vector_seeded": false,
+     "context_chunk_ids": [
+      "deepseek_2024_v2::s04::c00",
+      "vaswani_2017_transformer::s05::c00",
+      "deepseek_2024_v3::s05::c00"
+     ],
+     "cited_ids": [
+      "vaswani_2017_transformer::s05::c00",
+      "deepseek_2024_v2::s04::c00"
+     ],
+     "latency_ms": 2.175,
+     "projected_cost_usd": 0.0021071
+    },
+    {
+     "qid": "HS4",
+     "system": "S1",
+     "strict": 0.0,
+     "concept_recall": 0.0,
+     "groups_hit": [
+      false
+     ],
+     "evidence_recall": 0.0,
+     "citation_support_precision": 0.0,
+     "gate_valid": true,
+     "refused_or_abstained": false,
+     "pathway": "VECTOR_DENSE",
+     "failure": "retrieval miss: required evidence never reached the context",
+     "missing_groups": [
+      {
+       "group": [
+        "attention mask"
+       ],
+       "diagnosis": "not_retrieved"
+      }
+     ],
+     "answer": "Based on the retrieved evidence:\n- We find that for compute-optimal training, model size and the number of training tokens should be scaled equally: for every doubling of model size the number of training tokens should also be doubled [hoffmann_2022_chinchilla::s01::c00].\n- Under Chinchilla-style compute-optimal scaling, an 8B model would need only about 200B training tokens, yet Llama 3 8B is trained on roughly 15T tokens because over-training a small model keeps improving quality and makes inference cheaper [dubey_2024_llama3::s02::c00].\n- Chinchilla uses 70B parameters trained on 1.4 trillion tokens, roughly 20 tokens per parameter, and outperforms Gopher (280B) with the same compute budget [hoffmann_2022_chinchilla::s02::c00].",
+     "route": "VECTOR_ONLY",
+     "template": null,
+     "fallback_triggered": false,
+     "vector_seeded": false,
+     "context_chunk_ids": [
+      "hoffmann_2022_chinchilla::s01::c00",
+      "hoffmann_2022_chinchilla::s02::c00",
+      "dubey_2024_llama3::s02::c00"
+     ],
+     "cited_ids": [
+      "hoffmann_2022_chinchilla::s01::c00",
+      "dubey_2024_llama3::s02::c00",
+      "hoffmann_2022_chinchilla::s02::c00"
+     ],
+     "latency_ms": 2.522,
+     "projected_cost_usd": 0.0024893
+    },
+    {
+     "qid": "HT1",
+     "system": "S1",
+     "strict": 1.0,
+     "concept_recall": 1.0,
+     "groups_hit": [
+      true,
+      true
+     ],
+     "evidence_recall": 1.0,
+     "citation_support_precision": 0.6666666666666666,
+     "gate_valid": true,
+     "refused_or_abstained": false,
+     "pathway": "VECTOR_DENSE",
+     "failure": "",
+     "missing_groups": [],
+     "answer": "Based on the retrieved evidence:\n- DeepSeek-V3 pioneers an auxiliary-loss-free load balancing strategy that adds a bias term to each expert's routing score instead of an auxiliary loss [deepseek_2024_v3::s02::c00].\n- The routing bias is only used to select experts; the gating value that multiplies each expert output is still computed from the original affinity score [deepseek_2024_v3::s05::c00].\n- DeepSeek-V3 adopts Multi-head Latent Attention (MLA) and the DeepSeekMoE architecture, both validated in DeepSeek-V2 [deepseek_2024_v3::s02::c00].\n- DeepSeek-V2 adopts Multi-head Latent Attention in every attention layer and the DeepSeekMoE architecture in its feed-forward networks [deepseek_2024_v2::s04::c00].",
+     "route": "VECTOR_ONLY",
+     "template": null,
+     "fallback_triggered": false,
+     "vector_seeded": false,
+     "context_chunk_ids": [
+      "deepseek_2024_v3::s05::c00",
+      "deepseek_2024_v2::s04::c00",
+      "deepseek_2024_v3::s02::c00"
+     ],
+     "cited_ids": [
+      "deepseek_2024_v3::s02::c00",
+      "deepseek_2024_v3::s05::c00",
+      "deepseek_2024_v2::s04::c00"
+     ],
+     "latency_ms": 5.409,
+     "projected_cost_usd": 0.0024338
+    },
+    {
+     "qid": "HT2",
+     "system": "S1",
+     "strict": 0.0,
+     "concept_recall": 0.0,
+     "groups_hit": [
+      false,
+      false
+     ],
+     "evidence_recall": 0.5,
+     "citation_support_precision": 0.3333333333333333,
+     "gate_valid": true,
+     "refused_or_abstained": false,
+     "pathway": "VECTOR_DENSE",
+     "failure": "retrieval miss: required evidence never reached the context",
+     "missing_groups": [
+      {
+       "group": [
+        "queries",
+        "query compression"
+       ],
+       "diagnosis": "not_retrieved"
+      },
+      {
+       "group": [
+        "does not shrink the kv cache"
+       ],
+       "diagnosis": "not_retrieved"
+      }
+     ],
+     "answer": "Based on the retrieved evidence:\n- Multi-head Latent Attention (MLA) extends the KV-sharing idea of Grouped-Query Attention (GQA) by jointly compressing keys and values into a low-rank latent vector [deepseek_2024_v2::s02::c00].\n- Compared with GQA, MLA reduces the KV cache by 93.3% while achieving stronger performance than MHA [deepseek_2024_v2::s02::c00].\n- GQA reduces the KV cache memory bandwidth bottleneck during autoregressive decoding [ainslie_2023_gqa::s02::c00].\n- c_t^{KV} = W^{DKV} h_t [deepseek_2024_v2::s02::c00].\n- Multi-query attention (MQA) uses only a single key-value head and drastically speeds up decoder inference [ainslie_2023_gqa::s01::c00].\n- We introduce grouped-query attention (GQA), a generalization of multi-query attention which uses an intermediate number of key-value heads [ainslie_2023_gqa::s01::c00].\n- Grouped-query attention extends multi-head attention by sharing each key-value head across a group of query heads [ainslie_2023_gqa::s02::c00].",
+     "route": "VECTOR_ONLY",
+     "template": null,
+     "fallback_triggered": false,
+     "vector_seeded": false,
+     "context_chunk_ids": [
+      "ainslie_2023_gqa::s02::c00",
+      "ainslie_2023_gqa::s01::c00",
+      "deepseek_2024_v2::s02::c00"
+     ],
+     "cited_ids": [
+      "deepseek_2024_v2::s02::c00",
+      "ainslie_2023_gqa::s02::c00",
+      "ainslie_2023_gqa::s01::c00"
+     ],
+     "latency_ms": 3.071,
+     "projected_cost_usd": 0.0032251
+    },
+    {
+     "qid": "HT3",
+     "system": "S1",
+     "strict": 1.0,
+     "concept_recall": 1.0,
+     "groups_hit": [
+      true,
+      true
+     ],
+     "evidence_recall": 0.5,
+     "citation_support_precision": 0.3333333333333333,
+     "gate_valid": true,
+     "refused_or_abstained": false,
+     "pathway": "VECTOR_DENSE",
+     "failure": "",
+     "missing_groups": [],
+     "answer": "Based on the retrieved evidence:\n- DeepSeek-R1-Zero is optimized with GRPO using rule-based accuracy and format rewards rather than a neural reward model, because neural reward models are prone to reward hacking at scale [deepseek_2025_r1::s03::c00].\n- DPO still needs a frozen reference policy: the log-probability ratios against the reference model appear directly in its loss, and beta controls how far the policy may drift from it [rafailov_2023_dpo::s04::c00].\n- Standard RLHF first fits a reward model to human preference data and then optimizes the language model with PPO against that learned reward, while a KL penalty keeps the policy close to a reference model [rafailov_2023_dpo::s03::c00].",
+     "route": "VECTOR_ONLY",
+     "template": null,
+     "fallback_triggered": false,
+     "vector_seeded": false,
+     "context_chunk_ids": [
+      "rafailov_2023_dpo::s04::c00",
+      "rafailov_2023_dpo::s03::c00",
+      "deepseek_2025_r1::s03::c00"
+     ],
+     "cited_ids": [
+      "deepseek_2025_r1::s03::c00",
+      "rafailov_2023_dpo::s04::c00",
+      "rafailov_2023_dpo::s03::c00"
+     ],
+     "latency_ms": 3.4,
+     "projected_cost_usd": 0.0024581
+    },
+    {
+     "qid": "HT4",
+     "system": "S1",
+     "strict": 1.0,
+     "concept_recall": 1.0,
+     "groups_hit": [
+      true
+     ],
+     "evidence_recall": 0.5,
+     "citation_support_precision": 0.3333333333333333,
+     "gate_valid": true,
+     "refused_or_abstained": false,
+     "pathway": "VECTOR_DENSE",
+     "failure": "",
+     "missing_groups": [],
+     "answer": "Based on the retrieved evidence:\n- We find that for compute-optimal training, model size and the number of training tokens should be scaled equally: for every doubling of model size the number of training tokens should also be doubled [hoffmann_2022_chinchilla::s01::c00].\n- Under Chinchilla-style compute-optimal scaling, an 8B model would need only about 200B training tokens, yet Llama 3 8B is trained on roughly 15T tokens because over-training a small model keeps improving quality and makes inference cheaper [dubey_2024_llama3::s02::c00].\n- Chinchilla uses 70B parameters trained on 1.4 trillion tokens, roughly 20 tokens per parameter, and outperforms Gopher (280B) with the same compute budget [hoffmann_2022_chinchilla::s02::c00].",
+     "route": "VECTOR_ONLY",
+     "template": null,
+     "fallback_triggered": false,
+     "vector_seeded": false,
+     "context_chunk_ids": [
+      "hoffmann_2022_chinchilla::s01::c00",
+      "hoffmann_2022_chinchilla::s02::c00",
+      "dubey_2024_llama3::s02::c00"
+     ],
+     "cited_ids": [
+      "hoffmann_2022_chinchilla::s01::c00",
+      "dubey_2024_llama3::s02::c00",
+      "hoffmann_2022_chinchilla::s02::c00"
+     ],
+     "latency_ms": 2.04,
+     "projected_cost_usd": 0.0024836
+    },
+    {
+     "qid": "HH1",
+     "system": "S1",
+     "strict": 0.0,
+     "concept_recall": 0.6666666666666666,
+     "groups_hit": [
+      true,
+      true,
+      false
+     ],
+     "evidence_recall": 0.6666666666666666,
+     "citation_support_precision": 1.0,
+     "gate_valid": true,
+     "refused_or_abstained": false,
+     "pathway": "VECTOR_DENSE",
+     "failure": "retrieval miss: required evidence never reached the context",
+     "missing_groups": [
+      {
+       "group": [
+        "quality degradation",
+        "training instability"
+       ],
+       "diagnosis": "not_retrieved"
+      }
+     ],
+     "answer": "Based on the retrieved evidence:\n- Grouped-query attention entered the Llama family with the 34B and 70B Llama 2 models; LLaMA-1 used standard multi-head attention throughout [dubey_2024_llama3::s03::c00].\n- Multi-query attention (MQA) uses only a single key-value head and drastically speeds up decoder inference [ainslie_2023_gqa::s01::c00].\n- Grouped-query attention extends multi-head attention by sharing each key-value head across a group of query heads [ainslie_2023_gqa::s02::c00].\n- GQA reduces the KV cache memory bandwidth bottleneck during autoregressive decoding [ainslie_2023_gqa::s02::c00].\n- We introduce grouped-query attention (GQA), a generalization of multi-query attention which uses an intermediate number of key-value heads [ainslie_2023_gqa::s01::c00].",
+     "route": "VECTOR_ONLY",
+     "template": null,
+     "fallback_triggered": false,
+     "vector_seeded": false,
+     "context_chunk_ids": [
+      "dubey_2024_llama3::s03::c00",
+      "ainslie_2023_gqa::s02::c00",
+      "ainslie_2023_gqa::s01::c00"
+     ],
+     "cited_ids": [
+      "dubey_2024_llama3::s03::c00",
+      "ainslie_2023_gqa::s01::c00",
+      "ainslie_2023_gqa::s02::c00"
+     ],
+     "latency_ms": 3.424,
+     "projected_cost_usd": 0.0026377
+    },
+    {
+     "qid": "HH2",
+     "system": "S1",
+     "strict": 0.0,
+     "concept_recall": 0.6666666666666666,
+     "groups_hit": [
+      false,
+      true,
+      true
+     ],
+     "evidence_recall": 0.3333333333333333,
+     "citation_support_precision": 0.3333333333333333,
+     "gate_valid": true,
+     "refused_or_abstained": false,
+     "pathway": "VECTOR_DENSE",
+     "failure": "retrieval miss: required evidence never reached the context",
+     "missing_groups": [
+      {
+       "group": [
+        "strong reasoning"
+       ],
+       "diagnosis": "not_retrieved"
+      }
+     ],
+     "answer": "Based on the retrieved evidence:\n- The full training of DeepSeek-V3 takes 2.788M H800 GPU hours, and its pre-training corpus contains 14.8T tokens [deepseek_2024_v3::s06::c00].\n- Under Chinchilla-style compute-optimal scaling, an 8B model would need only about 200B training tokens, yet Llama 3 8B is trained on roughly 15T tokens because over-training a small model keeps improving quality and makes inference cheaper [dubey_2024_llama3::s02::c00].\n- Chinchilla uses 70B parameters trained on 1.4 trillion tokens, roughly 20 tokens per parameter, and outperforms Gopher (280B) with the same compute budget [hoffmann_2022_chinchilla::s02::c00].",
+     "route": "VECTOR_ONLY",
+     "template": null,
+     "fallback_triggered": false,
+     "vector_seeded": false,
+     "context_chunk_ids": [
+      "dubey_2024_llama3::s02::c00",
+      "deepseek_2024_v3::s06::c00",
+      "hoffmann_2022_chinchilla::s02::c00"
+     ],
+     "cited_ids": [
+      "deepseek_2024_v3::s06::c00",
+      "dubey_2024_llama3::s02::c00",
+      "hoffmann_2022_chinchilla::s02::c00"
+     ],
+     "latency_ms": 3.125,
+     "projected_cost_usd": 0.0022213
+    },
+    {
+     "qid": "HH3",
+     "system": "S1",
+     "strict": 0.0,
+     "concept_recall": 0.3333333333333333,
+     "groups_hit": [
+      false,
+      true,
+      false
+     ],
+     "evidence_recall": 0.0,
+     "citation_support_precision": 0.5,
+     "gate_valid": true,
+     "refused_or_abstained": false,
+     "pathway": "VECTOR_DENSE",
+     "failure": "retrieval miss: required evidence never reached the context",
+     "missing_groups": [
+      {
+       "group": [
+        "identical to standard attention",
+        "outputs are identical"
+       ],
+       "diagnosis": "not_retrieved"
+      },
+      {
+       "group": [
+        "2-4x"
+       ],
+       "diagnosis": "not_retrieved"
+      }
+     ],
+     "answer": "Based on the retrieved evidence:\n- Existing serving systems waste 60% to 80% of KV cache memory because of fragmentation and over-reservation [kwon_2023_pagedattention::s01::c00].\n- PagedAttention lets parallel sampling and beam search candidates share KV blocks with copy-on-write, cutting their memory usage by up to 55% [kwon_2023_pagedattention::s03::c00].",
+     "route": "VECTOR_ONLY",
+     "template": null,
+     "fallback_triggered": false,
+     "vector_seeded": false,
+     "context_chunk_ids": [
+      "kwon_2023_pagedattention::s01::c00",
+      "kwon_2023_pagedattention::s03::c00",
+      "kwon_2023_pagedattention::s00::c00"
+     ],
+     "cited_ids": [
+      "kwon_2023_pagedattention::s01::c00",
+      "kwon_2023_pagedattention::s03::c00"
+     ],
+     "latency_ms": 1.884,
+     "projected_cost_usd": 0.0014845
+    },
+    {
+     "qid": "HH4",
+     "system": "S1",
+     "strict": 1.0,
+     "concept_recall": 1.0,
+     "groups_hit": [
+      true,
+      true,
+      true
+     ],
+     "evidence_recall": 0.6666666666666666,
+     "citation_support_precision": 1.0,
+     "gate_valid": true,
+     "refused_or_abstained": false,
+     "pathway": "VECTOR_DENSE",
+     "failure": "",
+     "missing_groups": [],
+     "answer": "Based on the retrieved evidence:\n- Because rotations preserve vector norms, RoPE can be combined with linear self-attention, unlike relative position biases that require the full attention matrix [su_2021_rope::s03::c00].\n- Unlike additive absolute position embeddings, RoPE multiplies queries and keys by position-dependent rotations, so their inner product depends only on the relative distance m - n [su_2021_rope::s02::c00].\n- Decoupled RoPE extends Rotary Position Embedding (RoPE) so that positional information survives low-rank key-value compression [deepseek_2024_v2::s03::c00].\n- RoPE is applied only to the query and key vectors; the value vectors are not rotated [su_2021_rope::s02::c00].",
+     "route": "VECTOR_ONLY",
+     "template": null,
+     "fallback_triggered": false,
+     "vector_seeded": false,
+     "context_chunk_ids": [
+      "su_2021_rope::s03::c00",
+      "su_2021_rope::s02::c00",
+      "deepseek_2024_v2::s03::c00"
+     ],
+     "cited_ids": [
+      "su_2021_rope::s03::c00",
+      "su_2021_rope::s02::c00",
+      "deepseek_2024_v2::s03::c00"
+     ],
+     "latency_ms": 3.542,
+     "projected_cost_usd": 0.0024038
+    },
+    {
+     "qid": "HA1",
+     "system": "S1",
+     "strict": 0.0,
+     "concept_recall": 0.25,
+     "groups_hit": [
+      true,
+      false,
+      false,
+      false
+     ],
+     "evidence_recall": 0.3333333333333333,
+     "citation_support_precision": 0.5,
+     "gate_valid": true,
+     "refused_or_abstained": false,
+     "pathway": "VECTOR_DENSE",
+     "failure": "retrieval miss: required evidence never reached the context",
+     "missing_groups": [
+      {
+       "group": [
+        "deepseek-v3"
+       ],
+       "diagnosis": "not_retrieved"
+      },
+      {
+       "group": [
+        "21b"
+       ],
+       "diagnosis": "not_retrieved"
+      },
+      {
+       "group": [
+        "37b"
+       ],
+       "diagnosis": "not_retrieved"
+      }
+     ],
+     "answer": "Based on the retrieved evidence:\n- We present DeepSeek-V2, a strong Mixture-of-Experts language model characterized by economical training and efficient inference [deepseek_2024_v2::s01::c00].\n- The routing bias is only used to select experts; the gating value that multiplies each expert output is still computed from the original affinity score [deepseek_2024_v3::s05::c00].",
+     "route": "VECTOR_ONLY",
+     "template": null,
+     "fallback_triggered": false,
+     "vector_seeded": false,
+     "context_chunk_ids": [
+      "deepseek_2024_v2::s01::c00",
+      "deepseek_2024_v2::s00::c00",
+      "deepseek_2024_v3::s05::c00"
+     ],
+     "cited_ids": [
+      "deepseek_2024_v2::s01::c00",
+      "deepseek_2024_v3::s05::c00"
+     ],
+     "latency_ms": 2.562,
+     "projected_cost_usd": 0.0015217
+    },
+    {
+     "qid": "HA2",
+     "system": "S1",
+     "strict": 0.0,
+     "concept_recall": 0.0,
+     "groups_hit": [
+      false,
+      false,
+      false
+     ],
+     "evidence_recall": 0.3333333333333333,
+     "citation_support_precision": 0.0,
+     "gate_valid": true,
+     "refused_or_abstained": false,
+     "pathway": "VECTOR_DENSE",
+     "failure": "mixed: some evidence not retrieved, some dropped by the generator",
+     "missing_groups": [
+      {
+       "group": [
+        "wmt 2014"
+       ],
+       "diagnosis": "in_context_dropped_by_generator"
+      },
+      {
+       "group": [
+        "mmlu"
+       ],
+       "diagnosis": "not_retrieved"
+      },
+      {
+       "group": [
+        "tl;dr"
+       ],
+       "diagnosis": "not_retrieved"
+      }
+     ],
+     "answer": "Based on the retrieved evidence:\n- LLaMA-13B outperforms GPT-3 (175B) on most benchmarks despite being more than 10x smaller [touvron_2023_llama1::s02::c00].",
+     "route": "VECTOR_ONLY",
+     "template": null,
+     "fallback_triggered": false,
+     "vector_seeded": false,
+     "context_chunk_ids": [
+      "deepseek_2024_v3::s00::c00",
+      "touvron_2023_llama1::s02::c00",
+      "vaswani_2017_transformer::s06::c00"
+     ],
+     "cited_ids": [
+      "touvron_2023_llama1::s02::c00"
+     ],
+     "latency_ms": 2.41,
+     "projected_cost_usd": 0.0008974
+    },
+    {
+     "qid": "HO1",
+     "system": "S1",
+     "strict": 1.0,
+     "concept_recall": 1.0,
+     "groups_hit": [],
+     "evidence_recall": null,
+     "citation_support_precision": null,
+     "gate_valid": false,
+     "refused_or_abstained": true,
+     "pathway": "VECTOR_DENSE",
+     "failure": "",
+     "missing_groups": [],
+     "answer": "The indexed corpus does not cover Claude 3, Claude, so I can't answer this without guessing. It covers 2017-2025 LLM architecture papers such as the Transformer, LLaMA, DeepSeek-V2/V3/R1, GQA, RoPE, YaRN, DPO, Chinchilla and PagedAttention.",
+     "route": "VECTOR_ONLY",
+     "template": null,
+     "fallback_triggered": false,
+     "vector_seeded": false,
+     "context_chunk_ids": [],
+     "cited_ids": [],
+     "latency_ms": 4.01,
+     "projected_cost_usd": 1.6e-06
+    },
+    {
+     "qid": "HO2",
+     "system": "S1",
+     "strict": 0.0,
+     "concept_recall": 0.0,
+     "groups_hit": [],
+     "evidence_recall": null,
+     "citation_support_precision": null,
+     "gate_valid": true,
+     "refused_or_abstained": false,
+     "pathway": "VECTOR_DENSE",
+     "failure": "answered an out-of-scope question instead of abstaining",
+     "missing_groups": [],
+     "answer": "Based on the retrieved evidence:\n- LLaMA applies pre-normalization with RMSNorm on the input of each transformer sub-layer [touvron_2023_llama1::s01::c00].\n- The routing bias is only used to select experts; the gating value that multiplies each expert output is still computed from the original affinity score [deepseek_2024_v3::s05::c00].\n- LLaMA replaces absolute positional embeddings with rotary positional embeddings (RoPE) at each layer of the network [touvron_2023_llama1::s01::c00].",
+     "route": "VECTOR_ONLY",
+     "template": null,
+     "fallback_triggered": false,
+     "vector_seeded": false,
+     "context_chunk_ids": [
+      "deepseek_2024_v3::s05::c00",
+      "touvron_2023_llama1::s01::c00",
+      "deepseek_2024_v2::s00::c00"
+     ],
+     "cited_ids": [
+      "touvron_2023_llama1::s01::c00",
+      "deepseek_2024_v3::s05::c00"
+     ],
+     "latency_ms": 3.113,
+     "projected_cost_usd": 0.0018551
+    }
+   ]
+  },
+  "S2": {
+   "label": "Tuned Hybrid Vector RAG (RRF + Reranker) (top_k=3)",
+   "summary": {
+    "strict_by_stratum": {
+     "single_hop": 100.0,
+     "two_hop": 75.0,
+     "three_hop": 75.0,
+     "aggregation": 50.0,
+     "out_of_scope": 50.0
+    },
+    "concept_recall_by_stratum": {
+     "single_hop": 100.0,
+     "two_hop": 87.5,
+     "three_hop": 83.3,
+     "aggregation": 50.0
+    },
+    "strict_by_stress_type": {
+     "direct": 100.0,
+     "paraphrased": 100.0,
+     "implicit_bridge": 33.3,
+     "caveat_trap": 100.0,
+     "cross_pillar": 75.0,
+     "out_of_scope": 50.0
+    },
+    "strict_overall": 75.0,
+    "strict_answerable": 78.6,
+    "strict_multi_hop": 75.0,
+    "concept_recall_answerable": 84.5,
+    "evidence_recall_answerable": 82.1,
+    "citation_support_precision": 54.8,
+    "citation_gate_valid_rate": 100.0,
+    "false_refusal_rate_answerable": 0.0,
+    "latency_ms_p50": 3.98,
+    "latency_ms_p95": 8.64,
+    "projected_cost_per_query_usd": 0.002375,
+    "generator_calls_mean": 0.938,
+    "pathway_distribution": {
+     "VECTOR_RRF_RERANK": {
+      "questions": 16,
+      "passing": 12
+     }
+    },
+    "one_time_cost_usd": 0.001038
+   },
+   "per_question": [
+    {
+     "qid": "HS1",
+     "system": "S2",
+     "strict": 1.0,
+     "concept_recall": 1.0,
+     "groups_hit": [
+      true,
+      true
+     ],
+     "evidence_recall": 1.0,
+     "citation_support_precision": 0.3333333333333333,
+     "gate_valid": true,
+     "refused_or_abstained": false,
+     "pathway": "VECTOR_RRF_RERANK",
+     "failure": "",
+     "missing_groups": [],
+     "answer": "Based on the retrieved evidence:\n- The base model uses h = 8 parallel attention heads with d_k = d_v = d_model / h = 64, so the total cost is similar to single-head attention with full dimensionality [vaswani_2017_transformer::s04::c00].\n- We compute attention as a weighted sum of the values, where each weight is the softmax of a query-key dot product divided by the square root of the key dimension d_k [vaswani_2017_transformer::s04::c00].\n- Grouped-query attention extends multi-head attention by sharing each key-value head across a group of query heads [ainslie_2023_gqa::s02::c00].\n- Llama 3 uses grouped query attention (GQA) with 8 key-value heads to improve inference speed and reduce the size of key-value caches during decoding [dubey_2024_llama3::s01::c00].\n- We increase the RoPE base frequency hyperparameter to 500,000, which enables better support for longer contexts [dubey_2024_llama3::s01::c00].",
+     "route": "VECTOR_ONLY",
+     "template": null,
+     "fallback_triggered": false,
+     "vector_seeded": false,
+     "context_chunk_ids": [
+      "vaswani_2017_transformer::s04::c00",
+      "dubey_2024_llama3::s01::c00",
+      "ainslie_2023_gqa::s02::c00"
+     ],
+     "cited_ids": [
+      "vaswani_2017_transformer::s04::c00",
+      "ainslie_2023_gqa::s02::c00",
+      "dubey_2024_llama3::s01::c00"
+     ],
+     "latency_ms": 11.471,
+     "projected_cost_usd": 0.0031337
+    },
+    {
+     "qid": "HS2",
+     "system": "S2",
+     "strict": 1.0,
+     "concept_recall": 1.0,
+     "groups_hit": [
+      true
+     ],
+     "evidence_recall": 1.0,
+     "citation_support_precision": 0.3333333333333333,
+     "gate_valid": true,
+     "refused_or_abstained": false,
+     "pathway": "VECTOR_RRF_RERANK",
+     "failure": "",
+     "missing_groups": [],
+     "answer": "Based on the retrieved evidence:\n- DeepSeek-V3 is a Mixture-of-Experts language model with 671B total parameters, of which 37B are activated for each token [deepseek_2024_v3::s01::c00].\n- Llama 3 uses a vocabulary with 128K tokens, and the flagship model has 405B parameters trained on about 15.6T tokens [dubey_2024_llama3::s01::c00].\n- DeepSeek-V3 pioneers an auxiliary-loss-free load balancing strategy that adds a bias term to each expert's routing score instead of an auxiliary loss [deepseek_2024_v3::s02::c00].\n- DeepSeek-V3 adopts Multi-head Latent Attention (MLA) and the DeepSeekMoE architecture, both validated in DeepSeek-V2 [deepseek_2024_v3::s02::c00].",
+     "route": "VECTOR_ONLY",
+     "template": null,
+     "fallback_triggered": false,
+     "vector_seeded": false,
+     "context_chunk_ids": [
+      "deepseek_2024_v3::s01::c00",
+      "deepseek_2024_v3::s02::c00",
+      "dubey_2024_llama3::s01::c00"
+     ],
+     "cited_ids": [
+      "deepseek_2024_v3::s01::c00",
+      "dubey_2024_llama3::s01::c00",
+      "deepseek_2024_v3::s02::c00"
+     ],
+     "latency_ms": 4.404,
+     "projected_cost_usd": 0.0023097
+    },
+    {
+     "qid": "HS3",
+     "system": "S2",
+     "strict": 1.0,
+     "concept_recall": 1.0,
+     "groups_hit": [
+      true,
+      true
+     ],
+     "evidence_recall": 1.0,
+     "citation_support_precision": 0.3333333333333333,
+     "gate_valid": true,
+     "refused_or_abstained": false,
+     "pathway": "VECTOR_RRF_RERANK",
+     "failure": "",
+     "missing_groups": [],
+     "answer": "Based on the retrieved evidence:\n- A self-attention layer connects all positions with a constant number of sequential operations, whereas a recurrent layer requires O(n) sequential operations [vaswani_2017_transformer::s05::c00].\n- The complexity of self-attention per layer is $O(n^2 \\cdot d)$ in the sequence length n, which becomes the dominant cost for very long sequences [vaswani_2017_transformer::s05::c00].\n- GQA is applied to decoder self-attention and cross-attention only; the encoder is left unchanged because encoder representations are computed in parallel and are not limited by memory bandwidth [ainslie_2023_gqa::s04::c00].\n- Multi-head attention allows the model to jointly attend to information from different representation subspaces at different positions [vaswani_2017_transformer::s02::c00].",
+     "route": "VECTOR_ONLY",
+     "template": null,
+     "fallback_triggered": false,
+     "vector_seeded": false,
+     "context_chunk_ids": [
+      "vaswani_2017_transformer::s05::c00",
+      "vaswani_2017_transformer::s02::c00",
+      "ainslie_2023_gqa::s04::c00"
+     ],
+     "cited_ids": [
+      "vaswani_2017_transformer::s05::c00",
+      "ainslie_2023_gqa::s04::c00",
+      "vaswani_2017_transformer::s02::c00"
+     ],
+     "latency_ms": 3.371,
+     "projected_cost_usd": 0.0027121
+    },
+    {
+     "qid": "HS4",
+     "system": "S2",
+     "strict": 1.0,
+     "concept_recall": 1.0,
+     "groups_hit": [
+      true
+     ],
+     "evidence_recall": 1.0,
+     "citation_support_precision": 0.3333333333333333,
+     "gate_valid": true,
+     "refused_or_abstained": false,
+     "pathway": "VECTOR_RRF_RERANK",
+     "failure": "",
+     "missing_groups": [],
+     "answer": "Based on the retrieved evidence:\n- An attention mask prevents self-attention across different documents packed into the same training sequence [dubey_2024_llama3::s04::c00].\n- Under Chinchilla-style compute-optimal scaling, an 8B model would need only about 200B training tokens, yet Llama 3 8B is trained on roughly 15T tokens because over-training a small model keeps improving quality and makes inference cheaper [dubey_2024_llama3::s02::c00].\n- DeepSeek-V3 adds a multi-token prediction (MTP) training objective that predicts several future tokens at each position, densifying the training signal [deepseek_2024_v3::s04::c00].\n- Llama 3 extends its context window from 8K to 128K tokens through continued pre-training on long documents in six gradual stages [dubey_2024_llama3::s04::c00].",
+     "route": "VECTOR_ONLY",
+     "template": null,
+     "fallback_triggered": false,
+     "vector_seeded": false,
+     "context_chunk_ids": [
+      "dubey_2024_llama3::s04::c00",
+      "deepseek_2024_v3::s04::c00",
+      "dubey_2024_llama3::s02::c00"
+     ],
+     "cited_ids": [
+      "dubey_2024_llama3::s04::c00",
+      "dubey_2024_llama3::s02::c00",
+      "deepseek_2024_v3::s04::c00"
+     ],
+     "latency_ms": 4.595,
+     "projected_cost_usd": 0.0026443
+    },
+    {
+     "qid": "HT1",
+     "system": "S2",
+     "strict": 1.0,
+     "concept_recall": 1.0,
+     "groups_hit": [
+      true,
+      true
+     ],
+     "evidence_recall": 1.0,
+     "citation_support_precision": 0.6666666666666666,
+     "gate_valid": true,
+     "refused_or_abstained": false,
+     "pathway": "VECTOR_RRF_RERANK",
+     "failure": "",
+     "missing_groups": [],
+     "answer": "Based on the retrieved evidence:\n- DeepSeek-V3 pioneers an auxiliary-loss-free load balancing strategy that adds a bias term to each expert's routing score instead of an auxiliary loss [deepseek_2024_v3::s02::c00].\n- The routing bias is only used to select experts; the gating value that multiplies each expert output is still computed from the original affinity score [deepseek_2024_v3::s05::c00].\n- DeepSeek-V3 adds a multi-token prediction (MTP) training objective that predicts several future tokens at each position, densifying the training signal [deepseek_2024_v3::s04::c00].\n- DeepSeek-V3 adopts Multi-head Latent Attention (MLA) and the DeepSeekMoE architecture, both validated in DeepSeek-V2 [deepseek_2024_v3::s02::c00].",
+     "route": "VECTOR_ONLY",
+     "template": null,
+     "fallback_triggered": false,
+     "vector_seeded": false,
+     "context_chunk_ids": [
+      "deepseek_2024_v3::s02::c00",
+      "deepseek_2024_v3::s05::c00",
+      "deepseek_2024_v3::s04::c00"
+     ],
+     "cited_ids": [
+      "deepseek_2024_v3::s02::c00",
+      "deepseek_2024_v3::s05::c00",
+      "deepseek_2024_v3::s04::c00"
+     ],
+     "latency_ms": 4.774,
+     "projected_cost_usd": 0.0024964
+    },
+    {
+     "qid": "HT2",
+     "system": "S2",
+     "strict": 1.0,
+     "concept_recall": 1.0,
+     "groups_hit": [
+      true,
+      true
+     ],
+     "evidence_recall": 1.0,
+     "citation_support_precision": 0.6666666666666666,
+     "gate_valid": true,
+     "refused_or_abstained": false,
+     "pathway": "VECTOR_RRF_RERANK",
+     "failure": "",
+     "missing_groups": [],
+     "answer": "Based on the retrieved evidence:\n- Multi-head Latent Attention (MLA) extends the KV-sharing idea of Grouped-Query Attention (GQA) by jointly compressing keys and values into a low-rank latent vector [deepseek_2024_v2::s02::c00].\n- MLA also compresses the queries into a low-rank latent to reduce activation memory during training, but query compression does not shrink the KV cache [deepseek_2024_v2::s05::c00].\n- Decoupled RoPE extends Rotary Position Embedding (RoPE) so that positional information survives low-rank key-value compression [deepseek_2024_v2::s03::c00].\n- Compared with GQA, MLA reduces the KV cache by 93.3% while achieving stronger performance than MHA [deepseek_2024_v2::s02::c00].\n- Standard RoPE is position-sensitive for both keys and queries, so the key up-projection matrix W^{UK} could no longer be absorbed into the query projection during inference; MLA therefore carries positional information in an additional shared key k_t^R [deepseek_2024_v2::s05::c00].\n- c_t^{KV} = W^{DKV} h_t [deepseek_2024_v2::s02::c00].",
+     "route": "VECTOR_ONLY",
+     "template": null,
+     "fallback_triggered": false,
+     "vector_seeded": false,
+     "context_chunk_ids": [
+      "deepseek_2024_v2::s02::c00",
+      "deepseek_2024_v2::s05::c00",
+      "deepseek_2024_v2::s03::c00"
+     ],
+     "cited_ids": [
+      "deepseek_2024_v2::s02::c00",
+      "deepseek_2024_v2::s05::c00",
+      "deepseek_2024_v2::s03::c00"
+     ],
+     "latency_ms": 4.214,
+     "projected_cost_usd": 0.0033613
+    },
+    {
+     "qid": "HT3",
+     "system": "S2",
+     "strict": 0.0,
+     "concept_recall": 0.5,
+     "groups_hit": [
+      true,
+      false
+     ],
+     "evidence_recall": 0.5,
+     "citation_support_precision": 0.3333333333333333,
+     "gate_valid": true,
+     "refused_or_abstained": false,
+     "pathway": "VECTOR_RRF_RERANK",
+     "failure": "retrieval miss: required evidence never reached the context",
+     "missing_groups": [
+      {
+       "group": [
+        "rule-based",
+        "accuracy and format rewards"
+       ],
+       "diagnosis": "not_retrieved"
+      }
+     ],
+     "answer": "Based on the retrieved evidence:\n- Both DeepSeek-R1-Zero and DeepSeek-R1 start from the DeepSeek-V3-Base checkpoint [deepseek_2025_r1::s05::c00].\n- DeepSeek-V2 Chat is aligned with supervised fine-tuning followed by reinforcement learning with GRPO [deepseek_2024_v2::s07::c00].\n- Unlike DeepSeek-R1-Zero, DeepSeek-R1 first fine-tunes the base model on thousands of long chain-of-thought cold-start examples before reasoning-oriented reinforcement learning [deepseek_2025_r1::s05::c00].\n- DeepSeek-V3 adopts Multi-head Latent Attention (MLA) and the DeepSeekMoE architecture, both validated in DeepSeek-V2 [deepseek_2024_v3::s02::c00].\n- DeepSeek-V3 pioneers an auxiliary-loss-free load balancing strategy that adds a bias term to each expert's routing score instead of an auxiliary loss [deepseek_2024_v3::s02::c00].",
+     "route": "VECTOR_ONLY",
+     "template": null,
+     "fallback_triggered": false,
+     "vector_seeded": false,
+     "context_chunk_ids": [
+      "deepseek_2024_v2::s07::c00",
+      "deepseek_2025_r1::s05::c00",
+      "deepseek_2024_v3::s02::c00"
+     ],
+     "cited_ids": [
+      "deepseek_2025_r1::s05::c00",
+      "deepseek_2024_v2::s07::c00",
+      "deepseek_2024_v3::s02::c00"
+     ],
+     "latency_ms": 3.38,
+     "projected_cost_usd": 0.0027081
+    },
+    {
+     "qid": "HT4",
+     "system": "S2",
+     "strict": 1.0,
+     "concept_recall": 1.0,
+     "groups_hit": [
+      true
+     ],
+     "evidence_recall": 1.0,
+     "citation_support_precision": 0.6666666666666666,
+     "gate_valid": true,
+     "refused_or_abstained": false,
+     "pathway": "VECTOR_RRF_RERANK",
+     "failure": "",
+     "missing_groups": [],
+     "answer": "Based on the retrieved evidence:\n- We find that for compute-optimal training, model size and the number of training tokens should be scaled equally: for every doubling of model size the number of training tokens should also be doubled [hoffmann_2022_chinchilla::s01::c00].\n- Chinchilla uses 70B parameters trained on 1.4 trillion tokens, roughly 20 tokens per parameter, and outperforms Gopher (280B) with the same compute budget [hoffmann_2022_chinchilla::s02::c00].\n- LLaMA is trained only on publicly available data, and the 65B model is trained on 1.4 trillion tokens [touvron_2023_llama1::s03::c00].",
+     "route": "VECTOR_ONLY",
+     "template": null,
+     "fallback_triggered": false,
+     "vector_seeded": false,
+     "context_chunk_ids": [
+      "hoffmann_2022_chinchilla::s02::c00",
+      "hoffmann_2022_chinchilla::s01::c00",
+      "touvron_2023_llama1::s03::c00"
+     ],
+     "cited_ids": [
+      "hoffmann_2022_chinchilla::s01::c00",
+      "hoffmann_2022_chinchilla::s02::c00",
+      "touvron_2023_llama1::s03::c00"
+     ],
+     "latency_ms": 2.228,
+     "projected_cost_usd": 0.0021061
+    },
+    {
+     "qid": "HH1",
+     "system": "S2",
+     "strict": 0.0,
+     "concept_recall": 0.3333333333333333,
+     "groups_hit": [
+      true,
+      false,
+      false
+     ],
+     "evidence_recall": 0.3333333333333333,
+     "citation_support_precision": 0.3333333333333333,
+     "gate_valid": true,
+     "refused_or_abstained": false,
+     "pathway": "VECTOR_RRF_RERANK",
+     "failure": "retrieval miss: required evidence never reached the context",
+     "missing_groups": [
+      {
+       "group": [
+        "multi-query attention",
+        "mqa"
+       ],
+       "diagnosis": "not_retrieved"
+      },
+      {
+       "group": [
+        "quality degradation",
+        "training instability"
+       ],
+       "diagnosis": "not_retrieved"
+      }
+     ],
+     "answer": "Based on the retrieved evidence:\n- Llama 3 uses grouped query attention (GQA) with 8 key-value heads to improve inference speed and reduce the size of key-value caches during decoding [dubey_2024_llama3::s01::c00].\n- Grouped-query attention entered the Llama family with the 34B and 70B Llama 2 models; LLaMA-1 used standard multi-head attention throughout [dubey_2024_llama3::s03::c00].\n- YaRN combines NTK-by-parts interpolation of the rotary frequencies with an attention temperature scaling of sqrt(1/t) = 0.1 ln(s) + 1 [peng_2023_yarn::s02::c00].\n- Llama 3 uses a vocabulary with 128K tokens, and the flagship model has 405B parameters trained on about 15.6T tokens [dubey_2024_llama3::s01::c00].\n- YaRN extends the context window of LLaMA models to 128k tokens [peng_2023_yarn::s02::c00].",
+     "route": "VECTOR_ONLY",
+     "template": null,
+     "fallback_triggered": false,
+     "vector_seeded": false,
+     "context_chunk_ids": [
+      "dubey_2024_llama3::s03::c00",
+      "peng_2023_yarn::s02::c00",
+      "dubey_2024_llama3::s01::c00"
+     ],
+     "cited_ids": [
+      "dubey_2024_llama3::s01::c00",
+      "dubey_2024_llama3::s03::c00",
+      "peng_2023_yarn::s02::c00"
+     ],
+     "latency_ms": 3.031,
+     "projected_cost_usd": 0.0026589
+    },
+    {
+     "qid": "HH2",
+     "system": "S2",
+     "strict": 1.0,
+     "concept_recall": 1.0,
+     "groups_hit": [
+      true,
+      true,
+      true
+     ],
+     "evidence_recall": 1.0,
+     "citation_support_precision": 1.0,
+     "gate_valid": true,
+     "refused_or_abstained": false,
+     "pathway": "VECTOR_RRF_RERANK",
+     "failure": "",
+     "missing_groups": [],
+     "answer": "Based on the retrieved evidence:\n- Distilling DeepSeek-R1 outputs into smaller Qwen and Llama models gives them strong reasoning without running any reinforcement learning on the small models [deepseek_2025_r1::s06::c00].\n- The full training of DeepSeek-V3 takes 2.788M H800 GPU hours, and its pre-training corpus contains 14.8T tokens [deepseek_2024_v3::s06::c00].\n- Both DeepSeek-R1-Zero and DeepSeek-R1 start from the DeepSeek-V3-Base checkpoint [deepseek_2025_r1::s05::c00].\n- Unlike DeepSeek-R1-Zero, DeepSeek-R1 first fine-tunes the base model on thousands of long chain-of-thought cold-start examples before reasoning-oriented reinforcement learning [deepseek_2025_r1::s05::c00].",
+     "route": "VECTOR_ONLY",
+     "template": null,
+     "fallback_triggered": false,
+     "vector_seeded": false,
+     "context_chunk_ids": [
+      "deepseek_2025_r1::s05::c00",
+      "deepseek_2025_r1::s06::c00",
+      "deepseek_2024_v3::s06::c00"
+     ],
+     "cited_ids": [
+      "deepseek_2025_r1::s06::c00",
+      "deepseek_2024_v3::s06::c00",
+      "deepseek_2025_r1::s05::c00"
+     ],
+     "latency_ms": 4.2,
+     "projected_cost_usd": 0.0023551
+    },
+    {
+     "qid": "HH3",
+     "system": "S2",
+     "strict": 1.0,
+     "concept_recall": 1.0,
+     "groups_hit": [
+      true,
+      true,
+      true
+     ],
+     "evidence_recall": 1.0,
+     "citation_support_precision": 1.0,
+     "gate_valid": true,
+     "refused_or_abstained": false,
+     "pathway": "VECTOR_RRF_RERANK",
+     "failure": "",
+     "missing_groups": [],
+     "answer": "Based on the retrieved evidence:\n- vLLM is an LLM serving engine built on top of PagedAttention; because it changes only how the KV cache is stored, model outputs are identical to standard attention [kwon_2023_pagedattention::s04::c00].\n- PagedAttention mitigates the KV cache memory bottleneck so that vLLM achieves near-zero waste and 2-4x higher serving throughput [kwon_2023_pagedattention::s02::c00].\n- PagedAttention is complementary to GQA: grouped-query attention shrinks the KV cache per token, whereas PagedAttention removes fragmentation in how that cache is laid out in memory [kwon_2023_pagedattention::s04::c00].\n- Existing serving systems waste 60% to 80% of KV cache memory because of fragmentation and over-reservation [kwon_2023_pagedattention::s01::c00].\n- PagedAttention partitions the KV cache of each sequence into fixed-size blocks that need not be contiguous in memory, inspired by virtual memory paging in operating systems [kwon_2023_pagedattention::s02::c00].",
+     "route": "VECTOR_ONLY",
+     "template": null,
+     "fallback_triggered": false,
+     "vector_seeded": false,
+     "context_chunk_ids": [
+      "kwon_2023_pagedattention::s04::c00",
+      "kwon_2023_pagedattention::s02::c00",
+      "kwon_2023_pagedattention::s01::c00"
+     ],
+     "cited_ids": [
+      "kwon_2023_pagedattention::s04::c00",
+      "kwon_2023_pagedattention::s02::c00",
+      "kwon_2023_pagedattention::s01::c00"
+     ],
+     "latency_ms": 3.755,
+     "projected_cost_usd": 0.003187
+    },
+    {
+     "qid": "HH4",
+     "system": "S2",
+     "strict": 1.0,
+     "concept_recall": 1.0,
+     "groups_hit": [
+      true,
+      true,
+      true
+     ],
+     "evidence_recall": 0.6666666666666666,
+     "citation_support_precision": 1.0,
+     "gate_valid": true,
+     "refused_or_abstained": false,
+     "pathway": "VECTOR_RRF_RERANK",
+     "failure": "",
+     "missing_groups": [],
+     "answer": "Based on the retrieved evidence:\n- Because rotations preserve vector norms, RoPE can be combined with linear self-attention, unlike relative position biases that require the full attention matrix [su_2021_rope::s03::c00].\n- Unlike additive absolute position embeddings, RoPE multiplies queries and keys by position-dependent rotations, so their inner product depends only on the relative distance m - n [su_2021_rope::s02::c00].\n- Llama 3 uses grouped query attention (GQA) with 8 key-value heads to improve inference speed and reduce the size of key-value caches during decoding [dubey_2024_llama3::s01::c00].\n- Llama 3 uses a vocabulary with 128K tokens, and the flagship model has 405B parameters trained on about 15.6T tokens [dubey_2024_llama3::s01::c00].\n- RoPE is applied only to the query and key vectors; the value vectors are not rotated [su_2021_rope::s02::c00].",
+     "route": "VECTOR_ONLY",
+     "template": null,
+     "fallback_triggered": false,
+     "vector_seeded": false,
+     "context_chunk_ids": [
+      "su_2021_rope::s03::c00",
+      "su_2021_rope::s02::c00",
+      "dubey_2024_llama3::s01::c00"
+     ],
+     "cited_ids": [
+      "su_2021_rope::s03::c00",
+      "su_2021_rope::s02::c00",
+      "dubey_2024_llama3::s01::c00"
+     ],
+     "latency_ms": 7.702,
+     "projected_cost_usd": 0.0028951
+    },
+    {
+     "qid": "HA1",
+     "system": "S2",
+     "strict": 1.0,
+     "concept_recall": 1.0,
+     "groups_hit": [
+      true,
+      true,
+      true,
+      true
+     ],
+     "evidence_recall": 0.6666666666666666,
+     "citation_support_precision": 0.6666666666666666,
+     "gate_valid": true,
+     "refused_or_abstained": false,
+     "pathway": "VECTOR_RRF_RERANK",
+     "failure": "",
+     "missing_groups": [],
+     "answer": "Based on the retrieved evidence:\n- DeepSeek-V3 is a Mixture-of-Experts language model with 671B total parameters, of which 37B are activated for each token [deepseek_2024_v3::s01::c00].\n- DeepSeek-V2 contains 236B total parameters, of which 21B are activated for each token, and supports a context length of 128K tokens [deepseek_2024_v2::s06::c00].\n- Chinchilla uses 70B parameters trained on 1.4 trillion tokens, roughly 20 tokens per parameter, and outperforms Gopher (280B) with the same compute budget [hoffmann_2022_chinchilla::s02::c00].",
+     "route": "VECTOR_ONLY",
+     "template": null,
+     "fallback_triggered": false,
+     "vector_seeded": false,
+     "context_chunk_ids": [
+      "deepseek_2024_v2::s06::c00",
+      "deepseek_2024_v3::s01::c00",
+      "hoffmann_2022_chinchilla::s02::c00"
+     ],
+     "cited_ids": [
+      "deepseek_2024_v3::s01::c00",
+      "deepseek_2024_v2::s06::c00",
+      "hoffmann_2022_chinchilla::s02::c00"
+     ],
+     "latency_ms": 4.717,
+     "projected_cost_usd": 0.0019692
+    },
+    {
+     "qid": "HA2",
+     "system": "S2",
+     "strict": 0.0,
+     "concept_recall": 0.0,
+     "groups_hit": [
+      false,
+      false,
+      false
+     ],
+     "evidence_recall": 0.3333333333333333,
+     "citation_support_precision": 0.0,
+     "gate_valid": true,
+     "refused_or_abstained": false,
+     "pathway": "VECTOR_RRF_RERANK",
+     "failure": "mixed: some evidence not retrieved, some dropped by the generator",
+     "missing_groups": [
+      {
+       "group": [
+        "wmt 2014"
+       ],
+       "diagnosis": "in_context_dropped_by_generator"
+      },
+      {
+       "group": [
+        "mmlu"
+       ],
+       "diagnosis": "not_retrieved"
+      },
+      {
+       "group": [
+        "tl;dr"
+       ],
+       "diagnosis": "not_retrieved"
+      }
+     ],
+     "answer": "Based on the retrieved evidence:\n- The full training of DeepSeek-V3 takes 2.788M H800 GPU hours, and its pre-training corpus contains 14.8T tokens [deepseek_2024_v3::s06::c00].\n- LLaMA-13B outperforms GPT-3 (175B) on most benchmarks despite being more than 10x smaller [touvron_2023_llama1::s02::c00].",
+     "route": "VECTOR_ONLY",
+     "template": null,
+     "fallback_triggered": false,
+     "vector_seeded": false,
+     "context_chunk_ids": [
+      "touvron_2023_llama1::s02::c00",
+      "deepseek_2024_v3::s06::c00",
+      "vaswani_2017_transformer::s06::c00"
+     ],
+     "cited_ids": [
+      "deepseek_2024_v3::s06::c00",
+      "touvron_2023_llama1::s02::c00"
+     ],
+     "latency_ms": 2.784,
+     "projected_cost_usd": 0.0012712
+    },
+    {
+     "qid": "HO1",
+     "system": "S2",
+     "strict": 1.0,
+     "concept_recall": 1.0,
+     "groups_hit": [],
+     "evidence_recall": null,
+     "citation_support_precision": null,
+     "gate_valid": false,
+     "refused_or_abstained": true,
+     "pathway": "VECTOR_RRF_RERANK",
+     "failure": "",
+     "missing_groups": [],
+     "answer": "The indexed corpus does not cover Claude 3, Claude, so I can't answer this without guessing. It covers 2017-2025 LLM architecture papers such as the Transformer, LLaMA, DeepSeek-V2/V3/R1, GQA, RoPE, YaRN, DPO, Chinchilla and PagedAttention.",
+     "route": "VECTOR_ONLY",
+     "template": null,
+     "fallback_triggered": false,
+     "vector_seeded": false,
+     "context_chunk_ids": [],
+     "cited_ids": [],
+     "latency_ms": 3.167,
+     "projected_cost_usd": 1.6e-06
+    },
+    {
+     "qid": "HO2",
+     "system": "S2",
+     "strict": 0.0,
+     "concept_recall": 0.0,
+     "groups_hit": [],
+     "evidence_recall": null,
+     "citation_support_precision": null,
+     "gate_valid": true,
+     "refused_or_abstained": false,
+     "pathway": "VECTOR_RRF_RERANK",
+     "failure": "answered an out-of-scope question instead of abstaining",
+     "missing_groups": [],
+     "answer": "Based on the retrieved evidence:\n- DeepSeek-V3 is a Mixture-of-Experts language model with 671B total parameters, of which 37B are activated for each token [deepseek_2024_v3::s01::c00].\n- LLaMA applies pre-normalization with RMSNorm on the input of each transformer sub-layer [touvron_2023_llama1::s01::c00].\n- DeepSeek-V2 contains 236B total parameters, of which 21B are activated for each token, and supports a context length of 128K tokens [deepseek_2024_v2::s06::c00].\n- LLaMA replaces absolute positional embeddings with rotary positional embeddings (RoPE) at each layer of the network [touvron_2023_llama1::s01::c00].",
+     "route": "VECTOR_ONLY",
+     "template": null,
+     "fallback_triggered": false,
+     "vector_seeded": false,
+     "context_chunk_ids": [
+      "touvron_2023_llama1::s01::c00",
+      "deepseek_2024_v2::s06::c00",
+      "deepseek_2024_v3::s01::c00"
+     ],
+     "cited_ids": [
+      "deepseek_2024_v3::s01::c00",
+      "touvron_2023_llama1::s01::c00",
+      "deepseek_2024_v2::s06::c00"
+     ],
+     "latency_ms": 2.526,
+     "projected_cost_usd": 0.0021976
+    }
+   ]
+  },
+  "S3": {
+   "label": "ArchGraph-RAG (graph_top_k=3, vector_top_k=3, max_passages=6)",
+   "summary": {
+    "strict_by_stratum": {
+     "single_hop": 100.0,
+     "two_hop": 100.0,
+     "three_hop": 75.0,
+     "aggregation": 50.0,
+     "out_of_scope": 50.0
+    },
+    "concept_recall_by_stratum": {
+     "single_hop": 100.0,
+     "two_hop": 100.0,
+     "three_hop": 91.7,
+     "aggregation": 50.0
+    },
+    "strict_by_stress_type": {
+     "direct": 100.0,
+     "paraphrased": 100.0,
+     "implicit_bridge": 33.3,
+     "caveat_trap": 100.0,
+     "cross_pillar": 100.0,
+     "out_of_scope": 50.0
+    },
+    "strict_overall": 81.2,
+    "strict_answerable": 85.7,
+    "strict_multi_hop": 87.5,
+    "concept_recall_answerable": 90.5,
+    "evidence_recall_answerable": 90.5,
+    "citation_support_precision": 44.1,
+    "citation_gate_valid_rate": 100.0,
+    "false_refusal_rate_answerable": 0.0,
+    "latency_ms_p50": 8.39,
+    "latency_ms_p95": 11.93,
+    "projected_cost_per_query_usd": 0.004394,
+    "generator_calls_mean": 0.938,
+    "pathway_distribution": {
+     "VECTOR": {
+      "questions": 4,
+      "passing": 3
+     },
+     "HYBRID(low-conf):T6_FALLBACK": {
+      "questions": 4,
+      "passing": 3
+     },
+     "HYBRID(structural):T6_FALLBACK": {
+      "questions": 3,
+      "passing": 3
+     },
+     "HYBRID(low-conf):T6_FALLBACK_VECTOR_SEEDED": {
+      "questions": 2,
+      "passing": 1
+     },
+     "GRAPH:T6_FALLBACK_VECTOR_SEEDED": {
+      "questions": 1,
+      "passing": 1
+     },
+     "HYBRID:T6_FALLBACK_VECTOR_SEEDED": {
+      "questions": 1,
+      "passing": 1
+     },
+     "SUBJECT_GATE_REFUSAL": {
+      "questions": 1,
+      "passing": 1
+     }
+    },
+    "one_time_cost_usd": 0.023601
+   },
+   "per_question": [
+    {
+     "qid": "HS1",
+     "system": "S3",
+     "strict": 1.0,
+     "concept_recall": 1.0,
+     "groups_hit": [
+      true,
+      true
+     ],
+     "evidence_recall": 1.0,
+     "citation_support_precision": 0.14285714285714285,
+     "gate_valid": true,
+     "refused_or_abstained": false,
+     "pathway": "HYBRID(structural):T6_FALLBACK",
+     "failure": "",
+     "missing_groups": [],
+     "answer": "Based on the retrieved evidence:\n- Grouped-Query Attention extends Multi-Head Attention, as the source states: \"Grouped-query attention extends multi-head attention by sharing each key-value head across a group of query heads\" [ainslie_2023_gqa::s02::c00].\n- GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints introduces Grouped-Query Attention, as the source states: \"We introduce grouped-query attention (GQA), a generalization of multi-query attention\" [ainslie_2023_gqa::s01::c00].\n- Transformer adopts Sinusoidal Positional Encoding, as the source states: \"The Transformer adopts sinusoidal positional encodings because the model contains no recurrence\" [vaswani_2017_transformer::s03::c00].\n- Transformer is evaluated on WMT 2014 English-to-German, as the source states: \"The big Transformer reaches 28.4 BLEU on the WMT 2014 English-to-German translation task\" [vaswani_2017_transformer::s06::c00].\n- Attention Is All You Need introduces Transformer, as the source states: \"We propose the Transformer, a model architecture based solely on attention mechanisms\" [vaswani_2017_transformer::s01::c00].\n- The base model uses h = 8 parallel attention heads with d_k = d_v = d_model / h = 64, so the total cost is similar to single-head attention with full dimensionality [vaswani_2017_transformer::s04::c00].\n- We compute attention as a weighted sum of the values, where each weight is the softmax of a query-key dot product divided by the square root of the key dimension d_k [vaswani_2017_transformer::s04::c00].\n- We increase the RoPE base frequency hyperparameter to 500,000, which enables better support for longer contexts [dubey_2024_llama3::s01::c00].\n- Llama 3 uses grouped query attention (GQA) with 8 key-value heads to improve inference speed and reduce the size of key-value caches during decoding [dubey_2024_llama3::s01::c00].\n- Multi-query attention (MQA) uses only a single key-value head and drastically speeds up decoder inference [ainslie_2023_gqa::s01::c00].",
+     "route": "HYBRID_PARALLEL",
+     "template": "T6_DYNAMIC_SUBGRAPH_FALLBACK",
+     "fallback_triggered": false,
+     "vector_seeded": false,
+     "context_chunk_ids": [
+      "ainslie_2023_gqa::s02::c00",
+      "dubey_2024_llama3::s01::c00",
+      "vaswani_2017_transformer::s04::c00",
+      "ainslie_2023_gqa::s01::c00",
+      "vaswani_2017_transformer::s03::c00",
+      "vaswani_2017_transformer::s06::c00",
+      "vaswani_2017_transformer::s01::c00"
+     ],
+     "cited_ids": [
+      "ainslie_2023_gqa::s02::c00",
+      "ainslie_2023_gqa::s01::c00",
+      "vaswani_2017_transformer::s03::c00",
+      "vaswani_2017_transformer::s06::c00",
+      "vaswani_2017_transformer::s01::c00",
+      "vaswani_2017_transformer::s04::c00",
+      "dubey_2024_llama3::s01::c00"
+     ],
+     "latency_ms": 13.454,
+     "projected_cost_usd": 0.0065124
+    },
+    {
+     "qid": "HS2",
+     "system": "S3",
+     "strict": 1.0,
+     "concept_recall": 1.0,
+     "groups_hit": [
+      true
+     ],
+     "evidence_recall": 1.0,
+     "citation_support_precision": 0.3333333333333333,
+     "gate_valid": true,
+     "refused_or_abstained": false,
+     "pathway": "VECTOR",
+     "failure": "",
+     "missing_groups": [],
+     "answer": "Based on the retrieved evidence:\n- DeepSeek-V3 is a Mixture-of-Experts language model with 671B total parameters, of which 37B are activated for each token [deepseek_2024_v3::s01::c00].\n- Llama 3 uses a vocabulary with 128K tokens, and the flagship model has 405B parameters trained on about 15.6T tokens [dubey_2024_llama3::s01::c00].\n- DeepSeek-V3 pioneers an auxiliary-loss-free load balancing strategy that adds a bias term to each expert's routing score instead of an auxiliary loss [deepseek_2024_v3::s02::c00].\n- DeepSeek-V3 adopts Multi-head Latent Attention (MLA) and the DeepSeekMoE architecture, both validated in DeepSeek-V2 [deepseek_2024_v3::s02::c00].",
+     "route": "VECTOR_ONLY",
+     "template": null,
+     "fallback_triggered": false,
+     "vector_seeded": false,
+     "context_chunk_ids": [
+      "deepseek_2024_v3::s01::c00",
+      "deepseek_2024_v3::s02::c00",
+      "dubey_2024_llama3::s01::c00"
+     ],
+     "cited_ids": [
+      "deepseek_2024_v3::s01::c00",
+      "dubey_2024_llama3::s01::c00",
+      "deepseek_2024_v3::s02::c00"
+     ],
+     "latency_ms": 5.487,
+     "projected_cost_usd": 0.0024217
+    },
+    {
+     "qid": "HS3",
+     "system": "S3",
+     "strict": 1.0,
+     "concept_recall": 1.0,
+     "groups_hit": [
+      true,
+      true
+     ],
+     "evidence_recall": 1.0,
+     "citation_support_precision": 0.14285714285714285,
+     "gate_valid": true,
+     "refused_or_abstained": false,
+     "pathway": "GRAPH:T6_FALLBACK_VECTOR_SEEDED",
+     "failure": "",
+     "missing_groups": [],
+     "answer": "Based on the retrieved evidence:\n- Multi-Head Attention causes the bottleneck Quadratic Self-Attention Complexity, as the source states: \"The complexity of self-attention per layer is $O(n^2 \\cdot d)$ in the sequence length n\" [vaswani_2017_transformer::s05::c00].\n- Attention Is All You Need introduces Multi-Head Attention, as the source states: \"Multi-head attention allows the model to jointly attend to information from different representation subspaces\" [vaswani_2017_transformer::s02::c00].\n- Attention Is All You Need introduces Transformer, as the source states: \"We propose the Transformer, a model architecture based solely on attention mechanisms\" [vaswani_2017_transformer::s01::c00].\n- LLaMA-1 adopts Multi-Head Attention, as the source states: \"LLaMA uses standard multi-head attention in every layer\" [touvron_2023_llama1::s04::c00].\n- LLaMA-1 adopts RMSNorm, as the source states: \"LLaMA applies pre-normalization with RMSNorm on the input of each transformer sub-layer\" [touvron_2023_llama1::s01::c00].\n- Multi-head Latent Attention extends Grouped-Query Attention, as the source states: \"Multi-head Latent Attention (MLA) extends the KV-sharing idea of Grouped-Query Attention (GQA)\" [deepseek_2024_v2::s02::c00].\n- A self-attention layer connects all positions with a constant number of sequential operations, whereas a recurrent layer requires O(n) sequential operations [vaswani_2017_transformer::s05::c00].\n- The complexity of self-attention per layer is $O(n^2 \\cdot d)$ in the sequence length n, which becomes the dominant cost for very long sequences [vaswani_2017_transformer::s05::c00].\n- GQA is applied to decoder self-attention and cross-attention only; the encoder is left unchanged because encoder representations are computed in parallel and are not limited by memory bandwidth [ainslie_2023_gqa::s04::c00].\n- Multi-head attention allows the model to jointly attend to information from different representation subspaces at different positions [vaswani_2017_transformer::s02::c00].",
+     "route": "GRAPH_ONLY",
+     "template": "T6_DYNAMIC_SUBGRAPH_FALLBACK",
+     "fallback_triggered": false,
+     "vector_seeded": true,
+     "context_chunk_ids": [
+      "vaswani_2017_transformer::s05::c00",
+      "vaswani_2017_transformer::s02::c00",
+      "vaswani_2017_transformer::s01::c00",
+      "ainslie_2023_gqa::s04::c00",
+      "touvron_2023_llama1::s04::c00",
+      "touvron_2023_llama1::s01::c00",
+      "deepseek_2024_v2::s02::c00"
+     ],
+     "cited_ids": [
+      "vaswani_2017_transformer::s05::c00",
+      "vaswani_2017_transformer::s02::c00",
+      "vaswani_2017_transformer::s01::c00",
+      "touvron_2023_llama1::s04::c00",
+      "touvron_2023_llama1::s01::c00",
+      "deepseek_2024_v2::s02::c00",
+      "ainslie_2023_gqa::s04::c00"
+     ],
+     "latency_ms": 9.874,
+     "projected_cost_usd": 0.0062788
+    },
+    {
+     "qid": "HS4",
+     "system": "S3",
+     "strict": 1.0,
+     "concept_recall": 1.0,
+     "groups_hit": [
+      true
+     ],
+     "evidence_recall": 1.0,
+     "citation_support_precision": 0.125,
+     "gate_valid": true,
+     "refused_or_abstained": false,
+     "pathway": "HYBRID(low-conf):T6_FALLBACK_VECTOR_SEEDED",
+     "failure": "",
+     "missing_groups": [],
+     "answer": "Based on the retrieved evidence:\n- GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints introduces Grouped-Query Attention, as the source states: \"We introduce grouped-query attention (GQA), a generalization of multi-query attention\" [ainslie_2023_gqa::s01::c00].\n- DeepSeek-V3 adopts FP8 Mixed Precision Training, as the source states: \"We validate FP8 mixed precision training on an extremely large-scale model for the first time\" [deepseek_2024_v3::s03::c00].\n- LLaMA-2 adopts Grouped-Query Attention, as the source states: \"Grouped-query attention entered the Llama family with the 34B and 70B Llama 2 models\" [dubey_2024_llama3::s03::c00].\n- DeepSeek-V3 adopts Multi-Token Prediction, as the source states: \"DeepSeek-V3 adds a multi-token prediction (MTP) training objective\" [deepseek_2024_v3::s04::c00].\n- DeepSeek-V3 is inspired by DeepSeek-R1, as the source states: \"reasoning capability is distilled from the DeepSeek-R1 series of models into DeepSeek-V3\" [deepseek_2024_v3::s07::c00].\n- An attention mask prevents self-attention across different documents packed into the same training sequence [dubey_2024_llama3::s04::c00].\n- DeepSeek-V3 adds a multi-token prediction (MTP) training objective that predicts several future tokens at each position, densifying the training signal [deepseek_2024_v3::s04::c00].\n- Under Chinchilla-style compute-optimal scaling, an 8B model would need only about 200B training tokens, yet Llama 3 8B is trained on roughly 15T tokens because over-training a small model keeps improving quality and makes inference cheaper [dubey_2024_llama3::s02::c00].\n- Llama 3 extends its context window from 8K to 128K tokens through continued pre-training on long documents in six gradual stages [dubey_2024_llama3::s04::c00].\n- Grouped-query attention extends multi-head attention by sharing each key-value head across a group of query heads [ainslie_2023_gqa::s02::c00].",
+     "route": "HYBRID_PARALLEL",
+     "template": "T6_DYNAMIC_SUBGRAPH_FALLBACK",
+     "fallback_triggered": true,
+     "vector_seeded": true,
+     "context_chunk_ids": [
+      "deepseek_2024_v3::s03::c00",
+      "dubey_2024_llama3::s04::c00",
+      "ainslie_2023_gqa::s02::c00",
+      "deepseek_2024_v3::s04::c00",
+      "dubey_2024_llama3::s02::c00",
+      "ainslie_2023_gqa::s01::c00",
+      "dubey_2024_llama3::s03::c00",
+      "deepseek_2024_v3::s07::c00"
+     ],
+     "cited_ids": [
+      "ainslie_2023_gqa::s01::c00",
+      "deepseek_2024_v3::s03::c00",
+      "dubey_2024_llama3::s03::c00",
+      "deepseek_2024_v3::s04::c00",
+      "deepseek_2024_v3::s07::c00",
+      "dubey_2024_llama3::s04::c00",
+      "dubey_2024_llama3::s02::c00",
+      "ainslie_2023_gqa::s02::c00"
+     ],
+     "latency_ms": 11.42,
+     "projected_cost_usd": 0.0063653
+    },
+    {
+     "qid": "HT1",
+     "system": "S3",
+     "strict": 1.0,
+     "concept_recall": 1.0,
+     "groups_hit": [
+      true,
+      true
+     ],
+     "evidence_recall": 1.0,
+     "citation_support_precision": 0.6666666666666666,
+     "gate_valid": true,
+     "refused_or_abstained": false,
+     "pathway": "VECTOR",
+     "failure": "",
+     "missing_groups": [],
+     "answer": "Based on the retrieved evidence:\n- DeepSeek-V3 pioneers an auxiliary-loss-free load balancing strategy that adds a bias term to each expert's routing score instead of an auxiliary loss [deepseek_2024_v3::s02::c00].\n- The routing bias is only used to select experts; the gating value that multiplies each expert output is still computed from the original affinity score [deepseek_2024_v3::s05::c00].\n- DeepSeek-V3 adds a multi-token prediction (MTP) training objective that predicts several future tokens at each position, densifying the training signal [deepseek_2024_v3::s04::c00].\n- DeepSeek-V3 adopts Multi-head Latent Attention (MLA) and the DeepSeekMoE architecture, both validated in DeepSeek-V2 [deepseek_2024_v3::s02::c00].",
+     "route": "VECTOR_ONLY",
+     "template": null,
+     "fallback_triggered": false,
+     "vector_seeded": false,
+     "context_chunk_ids": [
+      "deepseek_2024_v3::s02::c00",
+      "deepseek_2024_v3::s05::c00",
+      "deepseek_2024_v3::s04::c00"
+     ],
+     "cited_ids": [
+      "deepseek_2024_v3::s02::c00",
+      "deepseek_2024_v3::s05::c00",
+      "deepseek_2024_v3::s04::c00"
+     ],
+     "latency_ms": 5.255,
+     "projected_cost_usd": 0.00261
+    },
+    {
+     "qid": "HT2",
+     "system": "S3",
+     "strict": 1.0,
+     "concept_recall": 1.0,
+     "groups_hit": [
+      true,
+      true
+     ],
+     "evidence_recall": 1.0,
+     "citation_support_precision": 0.3333333333333333,
+     "gate_valid": true,
+     "refused_or_abstained": false,
+     "pathway": "HYBRID(low-conf):T6_FALLBACK",
+     "failure": "",
+     "missing_groups": [],
+     "answer": "Based on the retrieved evidence:\n- Multi-head Latent Attention mitigates KV Cache Memory Bandwidth Bottleneck, as the source states: \"Compared with GQA, MLA reduces the KV cache by 93.3% while achieving stronger performance than MHA\" [deepseek_2024_v2::s02::c00].\n- Grouped-Query Attention mitigates KV Cache Memory Bandwidth Bottleneck, as the source states: \"GQA reduces the KV cache memory bandwidth bottleneck during autoregressive decoding\" [ainslie_2023_gqa::s02::c00].\n- PagedAttention mitigates KV Cache Memory Bandwidth Bottleneck, as the source states: \"PagedAttention mitigates the KV cache memory bottleneck so that vLLM achieves near-zero waste\" [kwon_2023_pagedattention::s02::c00].\n- DeepSeek-V3 adopts Multi-head Latent Attention, as the source states: \"DeepSeek-V3 adopts Multi-head Latent Attention (MLA) and the DeepSeekMoE architecture\" [deepseek_2024_v3::s02::c00].\n- Multi-head Latent Attention (MLA) extends the KV-sharing idea of Grouped-Query Attention (GQA) by jointly compressing keys and values into a low-rank latent vector [deepseek_2024_v2::s02::c00].\n- MLA also compresses the queries into a low-rank latent to reduce activation memory during training, but query compression does not shrink the KV cache [deepseek_2024_v2::s05::c00].\n- Decoupled RoPE extends Rotary Position Embedding (RoPE) so that positional information survives low-rank key-value compression [deepseek_2024_v2::s03::c00].\n- Standard RoPE is position-sensitive for both keys and queries, so the key up-projection matrix W^{UK} could no longer be absorbed into the query projection during inference; MLA therefore carries positional information in an additional shared key k_t^R [deepseek_2024_v2::s05::c00].\n- PagedAttention partitions the KV cache of each sequence into fixed-size blocks that need not be contiguous in memory, inspired by virtual memory paging in operating systems [kwon_2023_pagedattention::s02::c00].\n- c_t^{KV} = W^{DKV} h_t [deepseek_2024_v2::s02::c00].",
+     "route": "HYBRID_PARALLEL",
+     "template": "T6_DYNAMIC_SUBGRAPH_FALLBACK",
+     "fallback_triggered": true,
+     "vector_seeded": false,
+     "context_chunk_ids": [
+      "deepseek_2024_v2::s02::c00",
+      "deepseek_2024_v2::s05::c00",
+      "deepseek_2024_v2::s03::c00",
+      "kwon_2023_pagedattention::s02::c00",
+      "ainslie_2023_gqa::s02::c00",
+      "deepseek_2024_v3::s02::c00",
+      "deepseek_2024_v3::s02::c00"
+     ],
+     "cited_ids": [
+      "deepseek_2024_v2::s02::c00",
+      "ainslie_2023_gqa::s02::c00",
+      "kwon_2023_pagedattention::s02::c00",
+      "deepseek_2024_v3::s02::c00",
+      "deepseek_2024_v2::s05::c00",
+      "deepseek_2024_v2::s03::c00"
+     ],
+     "latency_ms": 9.819,
+     "projected_cost_usd": 0.0065138
+    },
+    {
+     "qid": "HT3",
+     "system": "S3",
+     "strict": 1.0,
+     "concept_recall": 1.0,
+     "groups_hit": [
+      true,
+      true
+     ],
+     "evidence_recall": 1.0,
+     "citation_support_precision": 0.5,
+     "gate_valid": true,
+     "refused_or_abstained": false,
+     "pathway": "HYBRID(low-conf):T6_FALLBACK",
+     "failure": "",
+     "missing_groups": [],
+     "answer": "Based on the retrieved evidence:\n- DeepSeek-R1-Zero requires DeepSeek-V3, as the source states: \"Both DeepSeek-R1-Zero and DeepSeek-R1 start from the DeepSeek-V3-Base checkpoint\" [deepseek_2025_r1::s05::c00].\n- DeepSeek-R1-Zero adopts Group Relative Policy Optimization, as the source states: \"DeepSeek-R1-Zero is optimized with GRPO using rule-based accuracy and format rewards\" [deepseek_2025_r1::s03::c00].\n- DeepSeek-V2 adopts Group Relative Policy Optimization, as the source states: \"DeepSeek-V2 Chat is aligned with supervised fine-tuning followed by reinforcement learning with GRPO\" [deepseek_2024_v2::s07::c00].\n- DeepSeek-V2 adopts Supervised Fine-Tuning, as the source states: \"DeepSeek-V2 Chat is aligned with supervised fine-tuning followed by reinforcement learning with GRPO\" [deepseek_2024_v2::s07::c00].\n- DeepSeek-V3 extends DeepSeek-V2, as the source states: \"DeepSeek-V3 adopts Multi-head Latent Attention (MLA) and the DeepSeekMoE architecture, both validated in DeepSeek-V2\" [deepseek_2024_v3::s02::c00].\n- DeepSeek-R1-Zero is optimized with GRPO using rule-based accuracy and format rewards rather than a neural reward model, because neural reward models are prone to reward hacking at scale [deepseek_2025_r1::s03::c00].\n- Unlike DeepSeek-R1-Zero, DeepSeek-R1 first fine-tunes the base model on thousands of long chain-of-thought cold-start examples before reasoning-oriented reinforcement learning [deepseek_2025_r1::s05::c00].\n- DeepSeek-V3 pioneers an auxiliary-loss-free load balancing strategy that adds a bias term to each expert's routing score instead of an auxiliary loss [deepseek_2024_v3::s02::c00].",
+     "route": "HYBRID_PARALLEL",
+     "template": "T6_DYNAMIC_SUBGRAPH_FALLBACK",
+     "fallback_triggered": true,
+     "vector_seeded": false,
+     "context_chunk_ids": [
+      "deepseek_2024_v2::s07::c00",
+      "deepseek_2025_r1::s05::c00",
+      "deepseek_2025_r1::s03::c00",
+      "deepseek_2024_v3::s02::c00"
+     ],
+     "cited_ids": [
+      "deepseek_2025_r1::s05::c00",
+      "deepseek_2025_r1::s03::c00",
+      "deepseek_2024_v2::s07::c00",
+      "deepseek_2024_v3::s02::c00"
+     ],
+     "latency_ms": 8.076,
+     "projected_cost_usd": 0.0053759
+    },
+    {
+     "qid": "HT4",
+     "system": "S3",
+     "strict": 1.0,
+     "concept_recall": 1.0,
+     "groups_hit": [
+      true
+     ],
+     "evidence_recall": 1.0,
+     "citation_support_precision": 0.6666666666666666,
+     "gate_valid": true,
+     "refused_or_abstained": false,
+     "pathway": "VECTOR",
+     "failure": "",
+     "missing_groups": [],
+     "answer": "Based on the retrieved evidence:\n- We find that for compute-optimal training, model size and the number of training tokens should be scaled equally: for every doubling of model size the number of training tokens should also be doubled [hoffmann_2022_chinchilla::s01::c00].\n- Chinchilla uses 70B parameters trained on 1.4 trillion tokens, roughly 20 tokens per parameter, and outperforms Gopher (280B) with the same compute budget [hoffmann_2022_chinchilla::s02::c00].\n- LLaMA is trained only on publicly available data, and the 65B model is trained on 1.4 trillion tokens [touvron_2023_llama1::s03::c00].",
+     "route": "VECTOR_ONLY",
+     "template": null,
+     "fallback_triggered": false,
+     "vector_seeded": false,
+     "context_chunk_ids": [
+      "hoffmann_2022_chinchilla::s02::c00",
+      "hoffmann_2022_chinchilla::s01::c00",
+      "touvron_2023_llama1::s03::c00"
+     ],
+     "cited_ids": [
+      "hoffmann_2022_chinchilla::s01::c00",
+      "hoffmann_2022_chinchilla::s02::c00",
+      "touvron_2023_llama1::s03::c00"
+     ],
+     "latency_ms": 3.857,
+     "projected_cost_usd": 0.0022195
+    },
+    {
+     "qid": "HH1",
+     "system": "S3",
+     "strict": 0.0,
+     "concept_recall": 0.6666666666666666,
+     "groups_hit": [
+      true,
+      true,
+      false
+     ],
+     "evidence_recall": 0.3333333333333333,
+     "citation_support_precision": 0.5,
+     "gate_valid": true,
+     "refused_or_abstained": false,
+     "pathway": "HYBRID(low-conf):T6_FALLBACK",
+     "failure": "retrieval miss: required evidence never reached the context",
+     "missing_groups": [
+      {
+       "group": [
+        "quality degradation",
+        "training instability"
+       ],
+       "diagnosis": "not_retrieved"
+      }
+     ],
+     "answer": "Based on the retrieved evidence:\n- Multi-head Latent Attention extends Grouped-Query Attention, as the source states: \"Multi-head Latent Attention (MLA) extends the KV-sharing idea of Grouped-Query Attention (GQA)\" [deepseek_2024_v2::s02::c00].\n- Llama-3 adopts Grouped-Query Attention, as the source states: \"Llama 3 uses grouped query attention (GQA) with 8 key-value heads\" [dubey_2024_llama3::s01::c00].\n- Grouped-Query Attention mitigates KV Cache Memory Bandwidth Bottleneck, as the source states: \"GQA reduces the KV cache memory bandwidth bottleneck during autoregressive decoding\" [ainslie_2023_gqa::s02::c00].\n- Grouped-Query Attention extends Multi-Head Attention, as the source states: \"Grouped-query attention extends multi-head attention by sharing each key-value head across a group of query heads\" [ainslie_2023_gqa::s02::c00].\n- Llama 3 uses grouped query attention (GQA) with 8 key-value heads to improve inference speed and reduce the size of key-value caches during decoding [dubey_2024_llama3::s01::c00].\n- Multi-head Latent Attention (MLA) extends the KV-sharing idea of Grouped-Query Attention (GQA) by jointly compressing keys and values into a low-rank latent vector [deepseek_2024_v2::s02::c00].\n- Grouped-query attention entered the Llama family with the 34B and 70B Llama 2 models; LLaMA-1 used standard multi-head attention throughout [dubey_2024_llama3::s03::c00].\n- YaRN combines NTK-by-parts interpolation of the rotary frequencies with an attention temperature scaling of sqrt(1/t) = 0.1 ln(s) + 1 [peng_2023_yarn::s02::c00].\n- LLaMA uses standard multi-head attention in every layer; it does not use grouped-query or multi-query attention [touvron_2023_llama1::s04::c00].\n- Llama 3 uses a vocabulary with 128K tokens, and the flagship model has 405B parameters trained on about 15.6T tokens [dubey_2024_llama3::s01::c00].",
+     "route": "HYBRID_PARALLEL",
+     "template": "T6_DYNAMIC_SUBGRAPH_FALLBACK",
+     "fallback_triggered": true,
+     "vector_seeded": false,
+     "context_chunk_ids": [
+      "dubey_2024_llama3::s01::c00",
+      "dubey_2024_llama3::s03::c00",
+      "touvron_2023_llama1::s04::c00",
+      "peng_2023_yarn::s02::c00",
+      "deepseek_2024_v2::s02::c00",
+      "ainslie_2023_gqa::s02::c00",
+      "ainslie_2023_gqa::s02::c00"
+     ],
+     "cited_ids": [
+      "deepseek_2024_v2::s02::c00",
+      "dubey_2024_llama3::s01::c00",
+      "ainslie_2023_gqa::s02::c00",
+      "dubey_2024_llama3::s03::c00",
+      "peng_2023_yarn::s02::c00",
+      "touvron_2023_llama1::s04::c00"
+     ],
+     "latency_ms": 8.711,
+     "projected_cost_usd": 0.0060703
+    },
+    {
+     "qid": "HH2",
+     "system": "S3",
+     "strict": 1.0,
+     "concept_recall": 1.0,
+     "groups_hit": [
+      true,
+      true,
+      true
+     ],
+     "evidence_recall": 1.0,
+     "citation_support_precision": 0.6666666666666666,
+     "gate_valid": true,
+     "refused_or_abstained": false,
+     "pathway": "HYBRID(structural):T6_FALLBACK",
+     "failure": "",
+     "missing_groups": [],
+     "answer": "Based on the retrieved evidence:\n- DeepSeek-R1 requires DeepSeek-V3, as the source states: \"Both DeepSeek-R1-Zero and DeepSeek-R1 start from the DeepSeek-V3-Base checkpoint\" [deepseek_2025_r1::s05::c00].\n- DeepSeek-R1-Zero requires DeepSeek-V3, as the source states: \"Both DeepSeek-R1-Zero and DeepSeek-R1 start from the DeepSeek-V3-Base checkpoint\" [deepseek_2025_r1::s05::c00].\n- DeepSeek-R1 adopts Cold-Start Supervised Fine-Tuning, as the source states: \"DeepSeek-R1 first fine-tunes the base model on thousands of long chain-of-thought cold-start examples\" [deepseek_2025_r1::s05::c00].\n- DeepSeek-V3 adopts FP8 Mixed Precision Training, as the source states: \"We validate FP8 mixed precision training on an extremely large-scale model for the first time\" [deepseek_2024_v3::s03::c00].\n- Distilling DeepSeek-R1 outputs into smaller Qwen and Llama models gives them strong reasoning without running any reinforcement learning on the small models [deepseek_2025_r1::s06::c00].\n- The full training of DeepSeek-V3 takes 2.788M H800 GPU hours, and its pre-training corpus contains 14.8T tokens [deepseek_2024_v3::s06::c00].\n- During post-training, reasoning capability is distilled from the DeepSeek-R1 series of models into DeepSeek-V3 [deepseek_2024_v3::s07::c00].\n- LLaMA uses standard multi-head attention in every layer; it does not use grouped-query or multi-query attention [touvron_2023_llama1::s04::c00].\n- LLaMA supports a context length of 2,048 tokens [touvron_2023_llama1::s04::c00].",
+     "route": "HYBRID_PARALLEL",
+     "template": "T6_DYNAMIC_SUBGRAPH_FALLBACK",
+     "fallback_triggered": false,
+     "vector_seeded": false,
+     "context_chunk_ids": [
+      "deepseek_2025_r1::s05::c00",
+      "deepseek_2025_r1::s06::c00",
+      "deepseek_2024_v3::s06::c00",
+      "touvron_2023_llama1::s04::c00",
+      "deepseek_2024_v3::s07::c00",
+      "deepseek_2024_v3::s03::c00",
+      "deepseek_2024_v3::s04::c00"
+     ],
+     "cited_ids": [
+      "deepseek_2025_r1::s05::c00",
+      "deepseek_2024_v3::s03::c00",
+      "deepseek_2025_r1::s06::c00",
+      "deepseek_2024_v3::s06::c00",
+      "deepseek_2024_v3::s07::c00",
+      "touvron_2023_llama1::s04::c00"
+     ],
+     "latency_ms": 8.924,
+     "projected_cost_usd": 0.0050475
+    },
+    {
+     "qid": "HH3",
+     "system": "S3",
+     "strict": 1.0,
+     "concept_recall": 1.0,
+     "groups_hit": [
+      true,
+      true,
+      true
+     ],
+     "evidence_recall": 1.0,
+     "citation_support_precision": 0.6,
+     "gate_valid": true,
+     "refused_or_abstained": false,
+     "pathway": "HYBRID(structural):T6_FALLBACK",
+     "failure": "",
+     "missing_groups": [],
+     "answer": "Based on the retrieved evidence:\n- vLLM requires PagedAttention, as the source states: \"vLLM is an LLM serving engine built on top of PagedAttention\" [kwon_2023_pagedattention::s04::c00].\n- PagedAttention mitigates KV Cache Memory Bandwidth Bottleneck, as the source states: \"PagedAttention mitigates the KV cache memory bottleneck so that vLLM achieves near-zero waste\" [kwon_2023_pagedattention::s02::c00].\n- Grouped-Query Attention mitigates KV Cache Memory Bandwidth Bottleneck, as the source states: \"GQA reduces the KV cache memory bandwidth bottleneck during autoregressive decoding\" [ainslie_2023_gqa::s02::c00].\n- Multi-head Latent Attention mitigates KV Cache Memory Bandwidth Bottleneck, as the source states: \"Compared with GQA, MLA reduces the KV cache by 93.3% while achieving stronger performance than MHA\" [deepseek_2024_v2::s02::c00].\n- vLLM is an LLM serving engine built on top of PagedAttention; because it changes only how the KV cache is stored, model outputs are identical to standard attention [kwon_2023_pagedattention::s04::c00].\n- PagedAttention mitigates the KV cache memory bottleneck so that vLLM achieves near-zero waste and 2-4x higher serving throughput [kwon_2023_pagedattention::s02::c00].\n- PagedAttention is complementary to GQA: grouped-query attention shrinks the KV cache per token, whereas PagedAttention removes fragmentation in how that cache is laid out in memory [kwon_2023_pagedattention::s04::c00].\n- Existing serving systems waste 60% to 80% of KV cache memory because of fragmentation and over-reservation [kwon_2023_pagedattention::s01::c00].\n- PagedAttention partitions the KV cache of each sequence into fixed-size blocks that need not be contiguous in memory, inspired by virtual memory paging in operating systems [kwon_2023_pagedattention::s02::c00].",
+     "route": "HYBRID_PARALLEL",
+     "template": "T6_DYNAMIC_SUBGRAPH_FALLBACK",
+     "fallback_triggered": false,
+     "vector_seeded": false,
+     "context_chunk_ids": [
+      "kwon_2023_pagedattention::s04::c00",
+      "kwon_2023_pagedattention::s02::c00",
+      "kwon_2023_pagedattention::s01::c00",
+      "ainslie_2023_gqa::s02::c00",
+      "deepseek_2024_v2::s02::c00"
+     ],
+     "cited_ids": [
+      "kwon_2023_pagedattention::s04::c00",
+      "kwon_2023_pagedattention::s02::c00",
+      "ainslie_2023_gqa::s02::c00",
+      "deepseek_2024_v2::s02::c00",
+      "kwon_2023_pagedattention::s01::c00"
+     ],
+     "latency_ms": 6.999,
+     "projected_cost_usd": 0.0057637
+    },
+    {
+     "qid": "HH4",
+     "system": "S3",
+     "strict": 1.0,
+     "concept_recall": 1.0,
+     "groups_hit": [
+      true,
+      true,
+      true
+     ],
+     "evidence_recall": 1.0,
+     "citation_support_precision": 0.6666666666666666,
+     "gate_valid": true,
+     "refused_or_abstained": false,
+     "pathway": "HYBRID(low-conf):T6_FALLBACK",
+     "failure": "",
+     "missing_groups": [],
+     "answer": "Based on the retrieved evidence:\n- Llama-3 adopts Grouped-Query Attention, as the source states: \"Llama 3 uses grouped query attention (GQA) with 8 key-value heads\" [dubey_2024_llama3::s01::c00].\n- Llama-3 modifies the hyperparameter RoPE Base Frequency, as the source states: \"We increase the RoPE base frequency hyperparameter to 500,000\" [dubey_2024_llama3::s01::c00].\n- LLaMA-1 adopts Rotary Position Embedding, as the source states: \"LLaMA replaces absolute positional embeddings with rotary positional embeddings (RoPE)\" [touvron_2023_llama1::s01::c00].\n- Grouped-Query Attention requires Uptraining, as the source states: \"The converted checkpoint is then uptrained with only 5% of the original pre-training compute\" [ainslie_2023_gqa::s03::c00].\n- Because rotations preserve vector norms, RoPE can be combined with linear self-attention, unlike relative position biases that require the full attention matrix [su_2021_rope::s03::c00].\n- Unlike additive absolute position embeddings, RoPE multiplies queries and keys by position-dependent rotations, so their inner product depends only on the relative distance m - n [su_2021_rope::s02::c00].\n- Llama 3 uses grouped query attention (GQA) with 8 key-value heads to improve inference speed and reduce the size of key-value caches during decoding [dubey_2024_llama3::s01::c00].\n- Llama 3 uses a vocabulary with 128K tokens, and the flagship model has 405B parameters trained on about 15.6T tokens [dubey_2024_llama3::s01::c00].\n- Grouped-query attention entered the Llama family with the 34B and 70B Llama 2 models; LLaMA-1 used standard multi-head attention throughout [dubey_2024_llama3::s03::c00].\n- RoPE is applied only to the query and key vectors; the value vectors are not rotated [su_2021_rope::s02::c00].",
+     "route": "HYBRID_PARALLEL",
+     "template": "T6_DYNAMIC_SUBGRAPH_FALLBACK",
+     "fallback_triggered": true,
+     "vector_seeded": false,
+     "context_chunk_ids": [
+      "dubey_2024_llama3::s01::c00",
+      "su_2021_rope::s02::c00",
+      "su_2021_rope::s03::c00",
+      "dubey_2024_llama3::s03::c00",
+      "touvron_2023_llama1::s01::c00",
+      "touvron_2023_llama1::s01::c00",
+      "ainslie_2023_gqa::s03::c00"
+     ],
+     "cited_ids": [
+      "dubey_2024_llama3::s01::c00",
+      "touvron_2023_llama1::s01::c00",
+      "ainslie_2023_gqa::s03::c00",
+      "su_2021_rope::s03::c00",
+      "su_2021_rope::s02::c00",
+      "dubey_2024_llama3::s03::c00"
+     ],
+     "latency_ms": 7.123,
+     "projected_cost_usd": 0.0056675
+    },
+    {
+     "qid": "HA1",
+     "system": "S3",
+     "strict": 1.0,
+     "concept_recall": 1.0,
+     "groups_hit": [
+      true,
+      true,
+      true,
+      true
+     ],
+     "evidence_recall": 1.0,
+     "citation_support_precision": 0.8333333333333334,
+     "gate_valid": true,
+     "refused_or_abstained": false,
+     "pathway": "HYBRID:T6_FALLBACK_VECTOR_SEEDED",
+     "failure": "",
+     "missing_groups": [],
+     "answer": "Based on the retrieved evidence:\n- DeepSeek-V2: A Strong, Economical, and Efficient Mixture-of-Experts Language Model (MLA) introduces DeepSeek-V2, as the source states: \"We present DeepSeek-V2, a strong Mixture-of-Experts language model\" [deepseek_2024_v2::s01::c00].\n- DeepSeek-V3 is inspired by DeepSeek-R1, as the source states: \"reasoning capability is distilled from the DeepSeek-R1 series of models into DeepSeek-V3\" [deepseek_2024_v3::s07::c00].\n- DeepSeek-V3 is a Mixture-of-Experts language model with 671B total parameters, of which 37B are activated for each token [deepseek_2024_v3::s01::c00].\n- DeepSeek-V2 contains 236B total parameters, of which 21B are activated for each token, and supports a context length of 128K tokens [deepseek_2024_v2::s06::c00].\n- We present DeepSeek-V2, a strong Mixture-of-Experts language model characterized by economical training and efficient inference [deepseek_2024_v2::s01::c00].\n- Chinchilla uses 70B parameters trained on 1.4 trillion tokens, roughly 20 tokens per parameter, and outperforms Gopher (280B) with the same compute budget [hoffmann_2022_chinchilla::s02::c00].\n- DeepSeek-V3 pioneers an auxiliary-loss-free load balancing strategy that adds a bias term to each expert's routing score instead of an auxiliary loss [deepseek_2024_v3::s02::c00].\n- During post-training, reasoning capability is distilled from the DeepSeek-R1 series of models into DeepSeek-V3 [deepseek_2024_v3::s07::c00].",
+     "route": "HYBRID_PARALLEL",
+     "template": "T6_DYNAMIC_SUBGRAPH_FALLBACK",
+     "fallback_triggered": false,
+     "vector_seeded": true,
+     "context_chunk_ids": [
+      "deepseek_2024_v2::s01::c00",
+      "deepseek_2024_v2::s06::c00",
+      "deepseek_2024_v3::s01::c00",
+      "hoffmann_2022_chinchilla::s02::c00",
+      "deepseek_2024_v3::s02::c00",
+      "deepseek_2024_v3::s07::c00",
+      "deepseek_2024_v2::s04::c00",
+      "deepseek_2024_v2::s04::c00"
+     ],
+     "cited_ids": [
+      "deepseek_2024_v2::s01::c00",
+      "deepseek_2024_v3::s07::c00",
+      "deepseek_2024_v3::s01::c00",
+      "deepseek_2024_v2::s06::c00",
+      "hoffmann_2022_chinchilla::s02::c00",
+      "deepseek_2024_v3::s02::c00"
+     ],
+     "latency_ms": 10.941,
+     "projected_cost_usd": 0.0049769
+    },
+    {
+     "qid": "HA2",
+     "system": "S3",
+     "strict": 0.0,
+     "concept_recall": 0.0,
+     "groups_hit": [
+      false,
+      false,
+      false
+     ],
+     "evidence_recall": 0.3333333333333333,
+     "citation_support_precision": 0.0,
+     "gate_valid": true,
+     "refused_or_abstained": false,
+     "pathway": "HYBRID(low-conf):T6_FALLBACK_VECTOR_SEEDED",
+     "failure": "mixed: some evidence not retrieved, some dropped by the generator",
+     "missing_groups": [
+      {
+       "group": [
+        "wmt 2014"
+       ],
+       "diagnosis": "in_context_dropped_by_generator"
+      },
+      {
+       "group": [
+        "mmlu"
+       ],
+       "diagnosis": "not_retrieved"
+      },
+      {
+       "group": [
+        "tl;dr"
+       ],
+       "diagnosis": "not_retrieved"
+      }
+     ],
+     "answer": "Based on the retrieved evidence:\n- The full training of DeepSeek-V3 takes 2.788M H800 GPU hours, and its pre-training corpus contains 14.8T tokens [deepseek_2024_v3::s06::c00].\n- LLaMA-13B outperforms GPT-3 (175B) on most benchmarks despite being more than 10x smaller [touvron_2023_llama1::s02::c00].",
+     "route": "HYBRID_PARALLEL",
+     "template": "T6_DYNAMIC_SUBGRAPH_FALLBACK",
+     "fallback_triggered": true,
+     "vector_seeded": true,
+     "context_chunk_ids": [
+      "deepseek_2024_v3::s02::c00",
+      "touvron_2023_llama1::s02::c00",
+      "deepseek_2024_v3::s06::c00",
+      "vaswani_2017_transformer::s06::c00",
+      "deepseek_2024_v2::s04::c00",
+      "touvron_2023_llama1::s04::c00"
+     ],
+     "cited_ids": [
+      "deepseek_2024_v3::s06::c00",
+      "touvron_2023_llama1::s02::c00"
+     ],
+     "latency_ms": 10.572,
+     "projected_cost_usd": 0.0020671
+    },
+    {
+     "qid": "HO1",
+     "system": "S3",
+     "strict": 1.0,
+     "concept_recall": 1.0,
+     "groups_hit": [],
+     "evidence_recall": null,
+     "citation_support_precision": null,
+     "gate_valid": false,
+     "refused_or_abstained": true,
+     "pathway": "SUBJECT_GATE_REFUSAL",
+     "failure": "",
+     "missing_groups": [],
+     "answer": "The indexed corpus does not cover Claude 3, Claude, so I can't answer this without guessing. It covers 2017-2025 LLM architecture papers such as the Transformer, LLaMA, DeepSeek-V2/V3/R1, GQA, RoPE, YaRN, DPO, Chinchilla and PagedAttention.",
+     "route": "OUT_OF_SCOPE",
+     "template": null,
+     "fallback_triggered": false,
+     "vector_seeded": false,
+     "context_chunk_ids": [],
+     "cited_ids": [],
+     "latency_ms": 2.177,
+     "projected_cost_usd": 0.0001102
+    },
+    {
+     "qid": "HO2",
+     "system": "S3",
+     "strict": 0.0,
+     "concept_recall": 0.0,
+     "groups_hit": [],
+     "evidence_recall": null,
+     "citation_support_precision": null,
+     "gate_valid": true,
+     "refused_or_abstained": false,
+     "pathway": "VECTOR",
+     "failure": "answered an out-of-scope question instead of abstaining",
+     "missing_groups": [],
+     "answer": "Based on the retrieved evidence:\n- DeepSeek-V3 is a Mixture-of-Experts language model with 671B total parameters, of which 37B are activated for each token [deepseek_2024_v3::s01::c00].\n- LLaMA applies pre-normalization with RMSNorm on the input of each transformer sub-layer [touvron_2023_llama1::s01::c00].\n- DeepSeek-V2 contains 236B total parameters, of which 21B are activated for each token, and supports a context length of 128K tokens [deepseek_2024_v2::s06::c00].\n- LLaMA replaces absolute positional embeddings with rotary positional embeddings (RoPE) at each layer of the network [touvron_2023_llama1::s01::c00].",
+     "route": "VECTOR_ONLY",
+     "template": null,
+     "fallback_triggered": false,
+     "vector_seeded": false,
+     "context_chunk_ids": [
+      "touvron_2023_llama1::s01::c00",
+      "deepseek_2024_v2::s06::c00",
+      "deepseek_2024_v3::s01::c00"
+     ],
+     "cited_ids": [
+      "deepseek_2024_v3::s01::c00",
+      "touvron_2023_llama1::s01::c00",
+      "deepseek_2024_v2::s06::c00"
+     ],
+     "latency_ms": 7.42,
+     "projected_cost_usd": 0.0023087
+    }
+   ]
+  },
+  "S2@k6": {
+   "label": "Tuned Hybrid Vector RAG (RRF + Reranker) (top_k=6)",
+   "summary": {
+    "strict_by_stratum": {
+     "single_hop": 100.0,
+     "two_hop": 100.0,
+     "three_hop": 75.0,
+     "aggregation": 50.0,
+     "out_of_scope": 50.0
+    },
+    "concept_recall_by_stratum": {
+     "single_hop": 100.0,
+     "two_hop": 100.0,
+     "three_hop": 83.3,
+     "aggregation": 50.0
+    },
+    "strict_by_stress_type": {
+     "direct": 100.0,
+     "paraphrased": 100.0,
+     "implicit_bridge": 33.3,
+     "caveat_trap": 100.0,
+     "cross_pillar": 100.0,
+     "out_of_scope": 50.0
+    },
+    "strict_overall": 81.2,
+    "strict_answerable": 85.7,
+    "strict_multi_hop": 87.5,
+    "concept_recall_answerable": 88.1,
+    "evidence_recall_answerable": 88.1,
+    "citation_support_precision": 36.2,
+    "citation_gate_valid_rate": 100.0,
+    "false_refusal_rate_answerable": 0.0,
+    "latency_ms_p50": 4.37,
+    "latency_ms_p95": 7.87,
+    "projected_cost_per_query_usd": 0.004098,
+    "generator_calls_mean": 0.938,
+    "pathway_distribution": {
+     "VECTOR_RRF_RERANK": {
+      "questions": 16,
+      "passing": 13
+     }
+    },
+    "one_time_cost_usd": 0.001038
+   },
+   "per_question": [
+    {
+     "qid": "HS1",
+     "system": "S2@k6",
+     "strict": 1.0,
+     "concept_recall": 1.0,
+     "groups_hit": [
+      true,
+      true
+     ],
+     "evidence_recall": 1.0,
+     "citation_support_precision": 0.16666666666666666,
+     "gate_valid": true,
+     "refused_or_abstained": false,
+     "pathway": "VECTOR_RRF_RERANK",
+     "failure": "",
+     "missing_groups": [],
+     "answer": "Based on the retrieved evidence:\n- The base model uses h = 8 parallel attention heads with d_k = d_v = d_model / h = 64, so the total cost is similar to single-head attention with full dimensionality [vaswani_2017_transformer::s04::c00].\n- We compute attention as a weighted sum of the values, where each weight is the softmax of a query-key dot product divided by the square root of the key dimension d_k [vaswani_2017_transformer::s04::c00].\n- Grouped-query attention extends multi-head attention by sharing each key-value head across a group of query heads [ainslie_2023_gqa::s02::c00].\n- Llama 3 uses grouped query attention (GQA) with 8 key-value heads to improve inference speed and reduce the size of key-value caches during decoding [dubey_2024_llama3::s01::c00].\n- Existing multi-head checkpoints are converted into multi-query or grouped-query checkpoints by mean-pooling the key and value projection heads within each group [ainslie_2023_gqa::s03::c00].\n- We increase the RoPE base frequency hyperparameter to 500,000, which enables better support for longer contexts [dubey_2024_llama3::s01::c00].\n- GQA is applied to decoder self-attention and cross-attention only; the encoder is left unchanged because encoder representations are computed in parallel and are not limited by memory bandwidth [ainslie_2023_gqa::s04::c00].\n- Multi-query attention (MQA) uses only a single key-value head and drastically speeds up decoder inference [ainslie_2023_gqa::s01::c00].\n- We introduce grouped-query attention (GQA), a generalization of multi-query attention which uses an intermediate number of key-value heads [ainslie_2023_gqa::s01::c00].",
+     "route": "VECTOR_ONLY",
+     "template": null,
+     "fallback_triggered": false,
+     "vector_seeded": false,
+     "context_chunk_ids": [
+      "vaswani_2017_transformer::s04::c00",
+      "dubey_2024_llama3::s01::c00",
+      "ainslie_2023_gqa::s02::c00",
+      "ainslie_2023_gqa::s01::c00",
+      "ainslie_2023_gqa::s04::c00",
+      "ainslie_2023_gqa::s03::c00"
+     ],
+     "cited_ids": [
+      "vaswani_2017_transformer::s04::c00",
+      "ainslie_2023_gqa::s02::c00",
+      "dubey_2024_llama3::s01::c00",
+      "ainslie_2023_gqa::s03::c00",
+      "ainslie_2023_gqa::s04::c00",
+      "ainslie_2023_gqa::s01::c00"
+     ],
+     "latency_ms": 6.631,
+     "projected_cost_usd": 0.005375
+    },
+    {
+     "qid": "HS2",
+     "system": "S2@k6",
+     "strict": 1.0,
+     "concept_recall": 1.0,
+     "groups_hit": [
+      true
+     ],
+     "evidence_recall": 1.0,
+     "citation_support_precision": 0.16666666666666666,
+     "gate_valid": true,
+     "refused_or_abstained": false,
+     "pathway": "VECTOR_RRF_RERANK",
+     "failure": "",
+     "missing_groups": [],
+     "answer": "Based on the retrieved evidence:\n- DeepSeek-V3 is a Mixture-of-Experts language model with 671B total parameters, of which 37B are activated for each token [deepseek_2024_v3::s01::c00].\n- Llama 3 uses a vocabulary with 128K tokens, and the flagship model has 405B parameters trained on about 15.6T tokens [dubey_2024_llama3::s01::c00].\n- DeepSeek-V3 pioneers an auxiliary-loss-free load balancing strategy that adds a bias term to each expert's routing score instead of an auxiliary loss [deepseek_2024_v3::s02::c00].\n- DeepSeek-V3 adds a multi-token prediction (MTP) training objective that predicts several future tokens at each position, densifying the training signal [deepseek_2024_v3::s04::c00].\n- DeepSeek-V2 contains 236B total parameters, of which 21B are activated for each token, and supports a context length of 128K tokens [deepseek_2024_v2::s06::c00].\n- Compared with DeepSeek 67B, DeepSeek-V2 saves 42.5% of training costs and boosts the maximum generation throughput to 5.76 times [deepseek_2024_v2::s06::c00].\n- DeepSeek-V3 adopts Multi-head Latent Attention (MLA) and the DeepSeekMoE architecture, both validated in DeepSeek-V2 [deepseek_2024_v3::s02::c00].\n- During post-training, reasoning capability is distilled from the DeepSeek-R1 series of models into DeepSeek-V3 [deepseek_2024_v3::s07::c00].",
+     "route": "VECTOR_ONLY",
+     "template": null,
+     "fallback_triggered": false,
+     "vector_seeded": false,
+     "context_chunk_ids": [
+      "deepseek_2024_v3::s01::c00",
+      "deepseek_2024_v3::s02::c00",
+      "dubey_2024_llama3::s01::c00",
+      "deepseek_2024_v3::s04::c00",
+      "deepseek_2024_v2::s06::c00",
+      "deepseek_2024_v3::s07::c00"
+     ],
+     "cited_ids": [
+      "deepseek_2024_v3::s01::c00",
+      "dubey_2024_llama3::s01::c00",
+      "deepseek_2024_v3::s02::c00",
+      "deepseek_2024_v3::s04::c00",
+      "deepseek_2024_v2::s06::c00",
+      "deepseek_2024_v3::s07::c00"
+     ],
+     "latency_ms": 4.312,
+     "projected_cost_usd": 0.0042809
+    },
+    {
+     "qid": "HS3",
+     "system": "S2@k6",
+     "strict": 1.0,
+     "concept_recall": 1.0,
+     "groups_hit": [
+      true,
+      true
+     ],
+     "evidence_recall": 1.0,
+     "citation_support_precision": 0.16666666666666666,
+     "gate_valid": true,
+     "refused_or_abstained": false,
+     "pathway": "VECTOR_RRF_RERANK",
+     "failure": "",
+     "missing_groups": [],
+     "answer": "Based on the retrieved evidence:\n- A self-attention layer connects all positions with a constant number of sequential operations, whereas a recurrent layer requires O(n) sequential operations [vaswani_2017_transformer::s05::c00].\n- The complexity of self-attention per layer is $O(n^2 \\cdot d)$ in the sequence length n, which becomes the dominant cost for very long sequences [vaswani_2017_transformer::s05::c00].\n- GQA is applied to decoder self-attention and cross-attention only; the encoder is left unchanged because encoder representations are computed in parallel and are not limited by memory bandwidth [ainslie_2023_gqa::s04::c00].\n- DeepSeek-V2 adopts Multi-head Latent Attention in every attention layer and the DeepSeekMoE architecture in its feed-forward networks [deepseek_2024_v2::s04::c00].\n- Multi-head attention allows the model to jointly attend to information from different representation subspaces at different positions [vaswani_2017_transformer::s02::c00].\n- The base model uses h = 8 parallel attention heads with d_k = d_v = d_model / h = 64, so the total cost is similar to single-head attention with full dimensionality [vaswani_2017_transformer::s04::c00].\n- We compute attention as a weighted sum of the values, where each weight is the softmax of a query-key dot product divided by the square root of the key dimension d_k [vaswani_2017_transformer::s04::c00].\n- We propose the Transformer, a model architecture based solely on attention mechanisms, dispensing with recurrence and convolutions entirely [vaswani_2017_transformer::s01::c00].\n- \\mathrm{Attention}(Q, K, V) = \\mathrm{softmax}(Q K^T / \\sqrt{d_k}) V [vaswani_2017_transformer::s04::c00].",
+     "route": "VECTOR_ONLY",
+     "template": null,
+     "fallback_triggered": false,
+     "vector_seeded": false,
+     "context_chunk_ids": [
+      "vaswani_2017_transformer::s05::c00",
+      "vaswani_2017_transformer::s02::c00",
+      "ainslie_2023_gqa::s04::c00",
+      "deepseek_2024_v2::s04::c00",
+      "vaswani_2017_transformer::s04::c00",
+      "vaswani_2017_transformer::s01::c00"
+     ],
+     "cited_ids": [
+      "vaswani_2017_transformer::s05::c00",
+      "ainslie_2023_gqa::s04::c00",
+      "deepseek_2024_v2::s04::c00",
+      "vaswani_2017_transformer::s02::c00",
+      "vaswani_2017_transformer::s04::c00",
+      "vaswani_2017_transformer::s01::c00"
+     ],
+     "latency_ms": 8.071,
+     "projected_cost_usd": 0.0052946
+    },
+    {
+     "qid": "HS4",
+     "system": "S2@k6",
+     "strict": 1.0,
+     "concept_recall": 1.0,
+     "groups_hit": [
+      true
+     ],
+     "evidence_recall": 1.0,
+     "citation_support_precision": 0.2,
+     "gate_valid": true,
+     "refused_or_abstained": false,
+     "pathway": "VECTOR_RRF_RERANK",
+     "failure": "",
+     "missing_groups": [],
+     "answer": "Based on the retrieved evidence:\n- An attention mask prevents self-attention across different documents packed into the same training sequence [dubey_2024_llama3::s04::c00].\n- Under Chinchilla-style compute-optimal scaling, an 8B model would need only about 200B training tokens, yet Llama 3 8B is trained on roughly 15T tokens because over-training a small model keeps improving quality and makes inference cheaper [dubey_2024_llama3::s02::c00].\n- DeepSeek-V3 adds a multi-token prediction (MTP) training objective that predicts several future tokens at each position, densifying the training signal [deepseek_2024_v3::s04::c00].\n- Llama 3 uses a vocabulary with 128K tokens, and the flagship model has 405B parameters trained on about 15.6T tokens [dubey_2024_llama3::s01::c00].\n- Llama 3 extends its context window from 8K to 128K tokens through continued pre-training on long documents in six gradual stages [dubey_2024_llama3::s04::c00].\n- The full training of DeepSeek-V3 takes 2.788M H800 GPU hours, and its pre-training corpus contains 14.8T tokens [deepseek_2024_v3::s06::c00].",
+     "route": "VECTOR_ONLY",
+     "template": null,
+     "fallback_triggered": false,
+     "vector_seeded": false,
+     "context_chunk_ids": [
+      "dubey_2024_llama3::s04::c00",
+      "deepseek_2024_v3::s04::c00",
+      "dubey_2024_llama3::s02::c00",
+      "dubey_2024_llama3::s01::c00",
+      "dubey_2024_llama3::s00::c00",
+      "deepseek_2024_v3::s06::c00"
+     ],
+     "cited_ids": [
+      "dubey_2024_llama3::s04::c00",
+      "dubey_2024_llama3::s02::c00",
+      "deepseek_2024_v3::s04::c00",
+      "dubey_2024_llama3::s01::c00",
+      "deepseek_2024_v3::s06::c00"
+     ],
+     "latency_ms": 4.045,
+     "projected_cost_usd": 0.0036843
+    },
+    {
+     "qid": "HT1",
+     "system": "S2@k6",
+     "strict": 1.0,
+     "concept_recall": 1.0,
+     "groups_hit": [
+      true,
+      true
+     ],
+     "evidence_recall": 1.0,
+     "citation_support_precision": 0.3333333333333333,
+     "gate_valid": true,
+     "refused_or_abstained": false,
+     "pathway": "VECTOR_RRF_RERANK",
+     "failure": "",
+     "missing_groups": [],
+     "answer": "Based on the retrieved evidence:\n- DeepSeek-V3 pioneers an auxiliary-loss-free load balancing strategy that adds a bias term to each expert's routing score instead of an auxiliary loss [deepseek_2024_v3::s02::c00].\n- The routing bias is only used to select experts; the gating value that multiplies each expert output is still computed from the original affinity score [deepseek_2024_v3::s05::c00].\n- DeepSeek-V3 adds a multi-token prediction (MTP) training objective that predicts several future tokens at each position, densifying the training signal [deepseek_2024_v3::s04::c00].\n- DeepSeek-V3 is a Mixture-of-Experts language model with 671B total parameters, of which 37B are activated for each token [deepseek_2024_v3::s01::c00].\n- DeepSeek-V3 adopts Multi-head Latent Attention (MLA) and the DeepSeekMoE architecture, both validated in DeepSeek-V2 [deepseek_2024_v3::s02::c00].\n- During post-training, reasoning capability is distilled from the DeepSeek-R1 series of models into DeepSeek-V3 [deepseek_2024_v3::s07::c00].\n- The full training of DeepSeek-V3 takes 2.788M H800 GPU hours, and its pre-training corpus contains 14.8T tokens [deepseek_2024_v3::s06::c00].",
+     "route": "VECTOR_ONLY",
+     "template": null,
+     "fallback_triggered": false,
+     "vector_seeded": false,
+     "context_chunk_ids": [
+      "deepseek_2024_v3::s02::c00",
+      "deepseek_2024_v3::s05::c00",
+      "deepseek_2024_v3::s04::c00",
+      "deepseek_2024_v3::s01::c00",
+      "deepseek_2024_v3::s07::c00",
+      "deepseek_2024_v3::s06::c00"
+     ],
+     "cited_ids": [
+      "deepseek_2024_v3::s02::c00",
+      "deepseek_2024_v3::s05::c00",
+      "deepseek_2024_v3::s04::c00",
+      "deepseek_2024_v3::s01::c00",
+      "deepseek_2024_v3::s07::c00",
+      "deepseek_2024_v3::s06::c00"
+     ],
+     "latency_ms": 3.936,
+     "projected_cost_usd": 0.0038226
+    },
+    {
+     "qid": "HT2",
+     "system": "S2@k6",
+     "strict": 1.0,
+     "concept_recall": 1.0,
+     "groups_hit": [
+      true,
+      true
+     ],
+     "evidence_recall": 1.0,
+     "citation_support_precision": 0.3333333333333333,
+     "gate_valid": true,
+     "refused_or_abstained": false,
+     "pathway": "VECTOR_RRF_RERANK",
+     "failure": "",
+     "missing_groups": [],
+     "answer": "Based on the retrieved evidence:\n- Multi-head Latent Attention (MLA) extends the KV-sharing idea of Grouped-Query Attention (GQA) by jointly compressing keys and values into a low-rank latent vector [deepseek_2024_v2::s02::c00].\n- MLA also compresses the queries into a low-rank latent to reduce activation memory during training, but query compression does not shrink the KV cache [deepseek_2024_v2::s05::c00].\n- Decoupled RoPE extends Rotary Position Embedding (RoPE) so that positional information survives low-rank key-value compression [deepseek_2024_v2::s03::c00].\n- Compared with GQA, MLA reduces the KV cache by 93.3% while achieving stronger performance than MHA [deepseek_2024_v2::s02::c00].\n- Standard RoPE is position-sensitive for both keys and queries, so the key up-projection matrix W^{UK} could no longer be absorbed into the query projection during inference; MLA therefore carries positional information in an additional shared key k_t^R [deepseek_2024_v2::s05::c00].\n- PagedAttention is complementary to GQA: grouped-query attention shrinks the KV cache per token, whereas PagedAttention removes fragmentation in how that cache is laid out in memory [kwon_2023_pagedattention::s04::c00].\n- vLLM is an LLM serving engine built on top of PagedAttention; because it changes only how the KV cache is stored, model outputs are identical to standard attention [kwon_2023_pagedattention::s04::c00].\n- PagedAttention partitions the KV cache of each sequence into fixed-size blocks that need not be contiguous in memory, inspired by virtual memory paging in operating systems [kwon_2023_pagedattention::s02::c00].\n- PagedAttention mitigates the KV cache memory bottleneck so that vLLM achieves near-zero waste and 2-4x higher serving throughput [kwon_2023_pagedattention::s02::c00].\n- GQA reduces the KV cache memory bandwidth bottleneck during autoregressive decoding [ainslie_2023_gqa::s02::c00].",
+     "route": "VECTOR_ONLY",
+     "template": null,
+     "fallback_triggered": false,
+     "vector_seeded": false,
+     "context_chunk_ids": [
+      "deepseek_2024_v2::s02::c00",
+      "deepseek_2024_v2::s05::c00",
+      "deepseek_2024_v2::s03::c00",
+      "kwon_2023_pagedattention::s04::c00",
+      "kwon_2023_pagedattention::s02::c00",
+      "ainslie_2023_gqa::s02::c00"
+     ],
+     "cited_ids": [
+      "deepseek_2024_v2::s02::c00",
+      "deepseek_2024_v2::s05::c00",
+      "deepseek_2024_v2::s03::c00",
+      "kwon_2023_pagedattention::s04::c00",
+      "kwon_2023_pagedattention::s02::c00",
+      "ainslie_2023_gqa::s02::c00"
+     ],
+     "latency_ms": 4.986,
+     "projected_cost_usd": 0.0060264
+    },
+    {
+     "qid": "HT3",
+     "system": "S2@k6",
+     "strict": 1.0,
+     "concept_recall": 1.0,
+     "groups_hit": [
+      true,
+      true
+     ],
+     "evidence_recall": 1.0,
+     "citation_support_precision": 0.3333333333333333,
+     "gate_valid": true,
+     "refused_or_abstained": false,
+     "pathway": "VECTOR_RRF_RERANK",
+     "failure": "",
+     "missing_groups": [],
+     "answer": "Based on the retrieved evidence:\n- DeepSeek-R1-Zero is optimized with GRPO using rule-based accuracy and format rewards rather than a neural reward model, because neural reward models are prone to reward hacking at scale [deepseek_2025_r1::s03::c00].\n- Both DeepSeek-R1-Zero and DeepSeek-R1 start from the DeepSeek-V3-Base checkpoint [deepseek_2025_r1::s05::c00].\n- DeepSeek-V2 Chat is aligned with supervised fine-tuning followed by reinforcement learning with GRPO [deepseek_2024_v2::s07::c00].\n- Unlike DeepSeek-R1-Zero, DeepSeek-R1 first fine-tunes the base model on thousands of long chain-of-thought cold-start examples before reasoning-oriented reinforcement learning [deepseek_2025_r1::s05::c00].\n- Compared with DeepSeek 67B, DeepSeek-V2 saves 42.5% of training costs and boosts the maximum generation throughput to 5.76 times [deepseek_2024_v2::s06::c00].\n- DeepSeek-V3 adopts Multi-head Latent Attention (MLA) and the DeepSeekMoE architecture, both validated in DeepSeek-V2 [deepseek_2024_v3::s02::c00].\n- We present DeepSeek-V2, a strong Mixture-of-Experts language model characterized by economical training and efficient inference [deepseek_2024_v2::s01::c00].\n- DeepSeek-V3 pioneers an auxiliary-loss-free load balancing strategy that adds a bias term to each expert's routing score instead of an auxiliary loss [deepseek_2024_v3::s02::c00].\n- DeepSeek-V2 contains 236B total parameters, of which 21B are activated for each token, and supports a context length of 128K tokens [deepseek_2024_v2::s06::c00].",
+     "route": "VECTOR_ONLY",
+     "template": null,
+     "fallback_triggered": false,
+     "vector_seeded": false,
+     "context_chunk_ids": [
+      "deepseek_2024_v2::s07::c00",
+      "deepseek_2025_r1::s05::c00",
+      "deepseek_2024_v3::s02::c00",
+      "deepseek_2024_v2::s06::c00",
+      "deepseek_2025_r1::s03::c00",
+      "deepseek_2024_v2::s01::c00"
+     ],
+     "cited_ids": [
+      "deepseek_2025_r1::s03::c00",
+      "deepseek_2025_r1::s05::c00",
+      "deepseek_2024_v2::s07::c00",
+      "deepseek_2024_v2::s06::c00",
+      "deepseek_2024_v3::s02::c00",
+      "deepseek_2024_v2::s01::c00"
+     ],
+     "latency_ms": 3.774,
+     "projected_cost_usd": 0.0048543
+    },
+    {
+     "qid": "HT4",
+     "system": "S2@k6",
+     "strict": 1.0,
+     "concept_recall": 1.0,
+     "groups_hit": [
+      true
+     ],
+     "evidence_recall": 1.0,
+     "citation_support_precision": 0.5,
+     "gate_valid": true,
+     "refused_or_abstained": false,
+     "pathway": "VECTOR_RRF_RERANK",
+     "failure": "",
+     "missing_groups": [],
+     "answer": "Based on the retrieved evidence:\n- We find that for compute-optimal training, model size and the number of training tokens should be scaled equally: for every doubling of model size the number of training tokens should also be doubled [hoffmann_2022_chinchilla::s01::c00].\n- Chinchilla uses 70B parameters trained on 1.4 trillion tokens, roughly 20 tokens per parameter, and outperforms Gopher (280B) with the same compute budget [hoffmann_2022_chinchilla::s02::c00].\n- Gopher, GPT-3 and other large models of the time were substantially undertrained: their parameter counts were increased much faster than their training data [hoffmann_2022_chinchilla::s03::c00].\n- LLaMA is trained only on publicly available data, and the 65B model is trained on 1.4 trillion tokens [touvron_2023_llama1::s03::c00].\n- Because Chinchilla is 4x smaller than Gopher, it also uses substantially less compute for fine-tuning and inference [hoffmann_2022_chinchilla::s03::c00].",
+     "route": "VECTOR_ONLY",
+     "template": null,
+     "fallback_triggered": false,
+     "vector_seeded": false,
+     "context_chunk_ids": [
+      "hoffmann_2022_chinchilla::s02::c00",
+      "hoffmann_2022_chinchilla::s01::c00",
+      "touvron_2023_llama1::s03::c00",
+      "hoffmann_2022_chinchilla::s03::c00",
+      "touvron_2023_llama1::s00::c00",
+      "touvron_2023_llama1::s02::c00"
+     ],
+     "cited_ids": [
+      "hoffmann_2022_chinchilla::s01::c00",
+      "hoffmann_2022_chinchilla::s02::c00",
+      "hoffmann_2022_chinchilla::s03::c00",
+      "touvron_2023_llama1::s03::c00"
+     ],
+     "latency_ms": 3.065,
+     "projected_cost_usd": 0.0033123
+    },
+    {
+     "qid": "HH1",
+     "system": "S2@k6",
+     "strict": 0.0,
+     "concept_recall": 0.3333333333333333,
+     "groups_hit": [
+      true,
+      false,
+      false
+     ],
+     "evidence_recall": 0.3333333333333333,
+     "citation_support_precision": 0.3333333333333333,
+     "gate_valid": true,
+     "refused_or_abstained": false,
+     "pathway": "VECTOR_RRF_RERANK",
+     "failure": "mixed: some evidence not retrieved, some dropped by the generator",
+     "missing_groups": [
+      {
+       "group": [
+        "multi-query attention",
+        "mqa"
+       ],
+       "diagnosis": "in_context_dropped_by_generator"
+      },
+      {
+       "group": [
+        "quality degradation",
+        "training instability"
+       ],
+       "diagnosis": "not_retrieved"
+      }
+     ],
+     "answer": "Based on the retrieved evidence:\n- Llama 3 uses grouped query attention (GQA) with 8 key-value heads to improve inference speed and reduce the size of key-value caches during decoding [dubey_2024_llama3::s01::c00].\n- Grouped-query attention entered the Llama family with the 34B and 70B Llama 2 models; LLaMA-1 used standard multi-head attention throughout [dubey_2024_llama3::s03::c00].\n- Multi-head Latent Attention (MLA) extends the KV-sharing idea of Grouped-Query Attention (GQA) by jointly compressing keys and values into a low-rank latent vector [deepseek_2024_v2::s02::c00].\n- Grouped-query attention extends multi-head attention by sharing each key-value head across a group of query heads [ainslie_2023_gqa::s02::c00].\n- YaRN combines NTK-by-parts interpolation of the rotary frequencies with an attention temperature scaling of sqrt(1/t) = 0.1 ln(s) + 1 [peng_2023_yarn::s02::c00].\n- Llama 3 extends its context window from 8K to 128K tokens through continued pre-training on long documents in six gradual stages [dubey_2024_llama3::s04::c00].\n- Llama 3 uses a vocabulary with 128K tokens, and the flagship model has 405B parameters trained on about 15.6T tokens [dubey_2024_llama3::s01::c00].\n- c_t^{KV} = W^{DKV} h_t [deepseek_2024_v2::s02::c00].\n- Compared with GQA, MLA reduces the KV cache by 93.3% while achieving stronger performance than MHA [deepseek_2024_v2::s02::c00].\n- An attention mask prevents self-attention across different documents packed into the same training sequence [dubey_2024_llama3::s04::c00].",
+     "route": "VECTOR_ONLY",
+     "template": null,
+     "fallback_triggered": false,
+     "vector_seeded": false,
+     "context_chunk_ids": [
+      "dubey_2024_llama3::s03::c00",
+      "peng_2023_yarn::s02::c00",
+      "dubey_2024_llama3::s01::c00",
+      "dubey_2024_llama3::s04::c00",
+      "deepseek_2024_v2::s02::c00",
+      "ainslie_2023_gqa::s02::c00"
+     ],
+     "cited_ids": [
+      "dubey_2024_llama3::s01::c00",
+      "dubey_2024_llama3::s03::c00",
+      "deepseek_2024_v2::s02::c00",
+      "ainslie_2023_gqa::s02::c00",
+      "peng_2023_yarn::s02::c00",
+      "dubey_2024_llama3::s04::c00"
+     ],
+     "latency_ms": 6.003,
+     "projected_cost_usd": 0.0049477
+    },
+    {
+     "qid": "HH2",
+     "system": "S2@k6",
+     "strict": 1.0,
+     "concept_recall": 1.0,
+     "groups_hit": [
+      true,
+      true,
+      true
+     ],
+     "evidence_recall": 1.0,
+     "citation_support_precision": 0.6666666666666666,
+     "gate_valid": true,
+     "refused_or_abstained": false,
+     "pathway": "VECTOR_RRF_RERANK",
+     "failure": "",
+     "missing_groups": [],
+     "answer": "Based on the retrieved evidence:\n- Distilling DeepSeek-R1 outputs into smaller Qwen and Llama models gives them strong reasoning without running any reinforcement learning on the small models [deepseek_2025_r1::s06::c00].\n- The full training of DeepSeek-V3 takes 2.788M H800 GPU hours, and its pre-training corpus contains 14.8T tokens [deepseek_2024_v3::s06::c00].\n- Both DeepSeek-R1-Zero and DeepSeek-R1 start from the DeepSeek-V3-Base checkpoint [deepseek_2025_r1::s05::c00].\n- Unlike DeepSeek-R1-Zero, DeepSeek-R1 first fine-tunes the base model on thousands of long chain-of-thought cold-start examples before reasoning-oriented reinforcement learning [deepseek_2025_r1::s05::c00].\n- During post-training, reasoning capability is distilled from the DeepSeek-R1 series of models into DeepSeek-V3 [deepseek_2024_v3::s07::c00].\n- LLaMA-13B outperforms GPT-3 (175B) on most benchmarks despite being more than 10x smaller [touvron_2023_llama1::s02::c00].\n- DeepSeek-R1-Zero is optimized with GRPO using rule-based accuracy and format rewards rather than a neural reward model, because neural reward models are prone to reward hacking at scale [deepseek_2025_r1::s03::c00].\n- PPO, by contrast, requires a separate value model (the critic) of similar size to the policy, which adds substantial memory and compute burden [deepseek_2025_r1::s03::c00].",
+     "route": "VECTOR_ONLY",
+     "template": null,
+     "fallback_triggered": false,
+     "vector_seeded": false,
+     "context_chunk_ids": [
+      "deepseek_2025_r1::s05::c00",
+      "deepseek_2025_r1::s06::c00",
+      "deepseek_2024_v3::s06::c00",
+      "deepseek_2025_r1::s03::c00",
+      "deepseek_2024_v3::s07::c00",
+      "touvron_2023_llama1::s02::c00"
+     ],
+     "cited_ids": [
+      "deepseek_2025_r1::s06::c00",
+      "deepseek_2024_v3::s06::c00",
+      "deepseek_2025_r1::s05::c00",
+      "deepseek_2024_v3::s07::c00",
+      "touvron_2023_llama1::s02::c00",
+      "deepseek_2025_r1::s03::c00"
+     ],
+     "latency_ms": 4.728,
+     "projected_cost_usd": 0.0043188
+    },
+    {
+     "qid": "HH3",
+     "system": "S2@k6",
+     "strict": 1.0,
+     "concept_recall": 1.0,
+     "groups_hit": [
+      true,
+      true,
+      true
+     ],
+     "evidence_recall": 1.0,
+     "citation_support_precision": 0.6,
+     "gate_valid": true,
+     "refused_or_abstained": false,
+     "pathway": "VECTOR_RRF_RERANK",
+     "failure": "",
+     "missing_groups": [],
+     "answer": "Based on the retrieved evidence:\n- vLLM is an LLM serving engine built on top of PagedAttention; because it changes only how the KV cache is stored, model outputs are identical to standard attention [kwon_2023_pagedattention::s04::c00].\n- PagedAttention mitigates the KV cache memory bottleneck so that vLLM achieves near-zero waste and 2-4x higher serving throughput [kwon_2023_pagedattention::s02::c00].\n- YaRN changes only the RoPE frequencies and the attention temperature, so it requires no change to the model architecture and adds no inference overhead [peng_2023_yarn::s04::c00].\n- PagedAttention is complementary to GQA: grouped-query attention shrinks the KV cache per token, whereas PagedAttention removes fragmentation in how that cache is laid out in memory [kwon_2023_pagedattention::s04::c00].\n- Existing serving systems waste 60% to 80% of KV cache memory because of fragmentation and over-reservation [kwon_2023_pagedattention::s01::c00].\n- PagedAttention partitions the KV cache of each sequence into fixed-size blocks that need not be contiguous in memory, inspired by virtual memory paging in operating systems [kwon_2023_pagedattention::s02::c00].\n- PagedAttention lets parallel sampling and beam search candidates share KV blocks with copy-on-write, cutting their memory usage by up to 55% [kwon_2023_pagedattention::s03::c00].",
+     "route": "VECTOR_ONLY",
+     "template": null,
+     "fallback_triggered": false,
+     "vector_seeded": false,
+     "context_chunk_ids": [
+      "kwon_2023_pagedattention::s04::c00",
+      "kwon_2023_pagedattention::s02::c00",
+      "kwon_2023_pagedattention::s01::c00",
+      "kwon_2023_pagedattention::s03::c00",
+      "kwon_2023_pagedattention::s00::c00",
+      "peng_2023_yarn::s04::c00"
+     ],
+     "cited_ids": [
+      "kwon_2023_pagedattention::s04::c00",
+      "kwon_2023_pagedattention::s02::c00",
+      "peng_2023_yarn::s04::c00",
+      "kwon_2023_pagedattention::s01::c00",
+      "kwon_2023_pagedattention::s03::c00"
+     ],
+     "latency_ms": 4.089,
+     "projected_cost_usd": 0.004442
+    },
+    {
+     "qid": "HH4",
+     "system": "S2@k6",
+     "strict": 1.0,
+     "concept_recall": 1.0,
+     "groups_hit": [
+      true,
+      true,
+      true
+     ],
+     "evidence_recall": 0.6666666666666666,
+     "citation_support_precision": 0.6666666666666666,
+     "gate_valid": true,
+     "refused_or_abstained": false,
+     "pathway": "VECTOR_RRF_RERANK",
+     "failure": "",
+     "missing_groups": [],
+     "answer": "Based on the retrieved evidence:\n- Because rotations preserve vector norms, RoPE can be combined with linear self-attention, unlike relative position biases that require the full attention matrix [su_2021_rope::s03::c00].\n- Unlike additive absolute position embeddings, RoPE multiplies queries and keys by position-dependent rotations, so their inner product depends only on the relative distance m - n [su_2021_rope::s02::c00].\n- Llama 3 uses grouped query attention (GQA) with 8 key-value heads to improve inference speed and reduce the size of key-value caches during decoding [dubey_2024_llama3::s01::c00].\n- RoPE has long-term decay: the inner product between tokens decays as the relative distance increases [su_2021_rope::s01::c00].\n- Llama 3 extends its context window from 8K to 128K tokens through continued pre-training on long documents in six gradual stages [dubey_2024_llama3::s04::c00].\n- Llama 3 uses a vocabulary with 128K tokens, and the flagship model has 405B parameters trained on about 15.6T tokens [dubey_2024_llama3::s01::c00].\n- Grouped-query attention entered the Llama family with the 34B and 70B Llama 2 models; LLaMA-1 used standard multi-head attention throughout [dubey_2024_llama3::s03::c00].\n- Rotary Position Embedding (RoPE) encodes the absolute position with a rotation matrix and incorporates explicit relative position dependency in the self-attention formulation [su_2021_rope::s01::c00].\n- RoPE is applied only to the query and key vectors; the value vectors are not rotated [su_2021_rope::s02::c00].\n- An attention mask prevents self-attention across different documents packed into the same training sequence [dubey_2024_llama3::s04::c00].",
+     "route": "VECTOR_ONLY",
+     "template": null,
+     "fallback_triggered": false,
+     "vector_seeded": false,
+     "context_chunk_ids": [
+      "su_2021_rope::s03::c00",
+      "su_2021_rope::s02::c00",
+      "dubey_2024_llama3::s01::c00",
+      "dubey_2024_llama3::s04::c00",
+      "su_2021_rope::s01::c00",
+      "dubey_2024_llama3::s03::c00"
+     ],
+     "cited_ids": [
+      "su_2021_rope::s03::c00",
+      "su_2021_rope::s02::c00",
+      "dubey_2024_llama3::s01::c00",
+      "su_2021_rope::s01::c00",
+      "dubey_2024_llama3::s04::c00",
+      "dubey_2024_llama3::s03::c00"
+     ],
+     "latency_ms": 7.804,
+     "projected_cost_usd": 0.0052901
+    },
+    {
+     "qid": "HA1",
+     "system": "S2@k6",
+     "strict": 1.0,
+     "concept_recall": 1.0,
+     "groups_hit": [
+      true,
+      true,
+      true,
+      true
+     ],
+     "evidence_recall": 1.0,
+     "citation_support_precision": 0.6,
+     "gate_valid": true,
+     "refused_or_abstained": false,
+     "pathway": "VECTOR_RRF_RERANK",
+     "failure": "",
+     "missing_groups": [],
+     "answer": "Based on the retrieved evidence:\n- DeepSeek-V3 is a Mixture-of-Experts language model with 671B total parameters, of which 37B are activated for each token [deepseek_2024_v3::s01::c00].\n- We present DeepSeek-V2, a strong Mixture-of-Experts language model characterized by economical training and efficient inference [deepseek_2024_v2::s01::c00].\n- DeepSeek-V2 contains 236B total parameters, of which 21B are activated for each token, and supports a context length of 128K tokens [deepseek_2024_v2::s06::c00].\n- Chinchilla uses 70B parameters trained on 1.4 trillion tokens, roughly 20 tokens per parameter, and outperforms Gopher (280B) with the same compute budget [hoffmann_2022_chinchilla::s02::c00].\n- LLaMA applies pre-normalization with RMSNorm on the input of each transformer sub-layer [touvron_2023_llama1::s01::c00].\n- LLaMA replaces absolute positional embeddings with rotary positional embeddings (RoPE) at each layer of the network [touvron_2023_llama1::s01::c00].",
+     "route": "VECTOR_ONLY",
+     "template": null,
+     "fallback_triggered": false,
+     "vector_seeded": false,
+     "context_chunk_ids": [
+      "deepseek_2024_v2::s06::c00",
+      "deepseek_2024_v3::s01::c00",
+      "hoffmann_2022_chinchilla::s02::c00",
+      "deepseek_2024_v2::s01::c00",
+      "touvron_2023_llama1::s01::c00",
+      "deepseek_2024_v2::s00::c00"
+     ],
+     "cited_ids": [
+      "deepseek_2024_v3::s01::c00",
+      "deepseek_2024_v2::s01::c00",
+      "deepseek_2024_v2::s06::c00",
+      "hoffmann_2022_chinchilla::s02::c00",
+      "touvron_2023_llama1::s01::c00"
+     ],
+     "latency_ms": 4.437,
+     "projected_cost_usd": 0.0033879
+    },
+    {
+     "qid": "HA2",
+     "system": "S2@k6",
+     "strict": 0.0,
+     "concept_recall": 0.0,
+     "groups_hit": [
+      false,
+      false,
+      false
+     ],
+     "evidence_recall": 0.3333333333333333,
+     "citation_support_precision": 0.0,
+     "gate_valid": true,
+     "refused_or_abstained": false,
+     "pathway": "VECTOR_RRF_RERANK",
+     "failure": "mixed: some evidence not retrieved, some dropped by the generator",
+     "missing_groups": [
+      {
+       "group": [
+        "wmt 2014"
+       ],
+       "diagnosis": "in_context_dropped_by_generator"
+      },
+      {
+       "group": [
+        "mmlu"
+       ],
+       "diagnosis": "not_retrieved"
+      },
+      {
+       "group": [
+        "tl;dr"
+       ],
+       "diagnosis": "not_retrieved"
+      }
+     ],
+     "answer": "Based on the retrieved evidence:\n- The full training of DeepSeek-V3 takes 2.788M H800 GPU hours, and its pre-training corpus contains 14.8T tokens [deepseek_2024_v3::s06::c00].\n- LLaMA-13B outperforms GPT-3 (175B) on most benchmarks despite being more than 10x smaller [touvron_2023_llama1::s02::c00].\n- With dynamic scaling, YaRN can extend the context at inference time without any fine-tuning, although fine-tuning on a small amount of long data still gives better results [peng_2023_yarn::s04::c00].",
+     "route": "VECTOR_ONLY",
+     "template": null,
+     "fallback_triggered": false,
+     "vector_seeded": false,
+     "context_chunk_ids": [
+      "touvron_2023_llama1::s02::c00",
+      "deepseek_2024_v3::s06::c00",
+      "ainslie_2023_gqa::s05::c00",
+      "peng_2023_yarn::s04::c00",
+      "vaswani_2017_transformer::s06::c00",
+      "deepseek_2024_v3::s00::c00"
+     ],
+     "cited_ids": [
+      "deepseek_2024_v3::s06::c00",
+      "touvron_2023_llama1::s02::c00",
+      "peng_2023_yarn::s04::c00"
+     ],
+     "latency_ms": 3.812,
+     "projected_cost_usd": 0.0021212
+    },
+    {
+     "qid": "HO1",
+     "system": "S2@k6",
+     "strict": 1.0,
+     "concept_recall": 1.0,
+     "groups_hit": [],
+     "evidence_recall": null,
+     "citation_support_precision": null,
+     "gate_valid": false,
+     "refused_or_abstained": true,
+     "pathway": "VECTOR_RRF_RERANK",
+     "failure": "",
+     "missing_groups": [],
+     "answer": "The indexed corpus does not cover Claude 3, Claude, so I can't answer this without guessing. It covers 2017-2025 LLM architecture papers such as the Transformer, LLaMA, DeepSeek-V2/V3/R1, GQA, RoPE, YaRN, DPO, Chinchilla and PagedAttention.",
+     "route": "VECTOR_ONLY",
+     "template": null,
+     "fallback_triggered": false,
+     "vector_seeded": false,
+     "context_chunk_ids": [],
+     "cited_ids": [],
+     "latency_ms": 3.277,
+     "projected_cost_usd": 1.6e-06
+    },
+    {
+     "qid": "HO2",
+     "system": "S2@k6",
+     "strict": 0.0,
+     "concept_recall": 0.0,
+     "groups_hit": [],
+     "evidence_recall": null,
+     "citation_support_precision": null,
+     "gate_valid": true,
+     "refused_or_abstained": false,
+     "pathway": "VECTOR_RRF_RERANK",
+     "failure": "answered an out-of-scope question instead of abstaining",
+     "missing_groups": [],
+     "answer": "Based on the retrieved evidence:\n- DeepSeek-V3 is a Mixture-of-Experts language model with 671B total parameters, of which 37B are activated for each token [deepseek_2024_v3::s01::c00].\n- LLaMA applies pre-normalization with RMSNorm on the input of each transformer sub-layer [touvron_2023_llama1::s01::c00].\n- DeepSeek-V2 contains 236B total parameters, of which 21B are activated for each token, and supports a context length of 128K tokens [deepseek_2024_v2::s06::c00].\n- DeepSeek-V3 adds a multi-token prediction (MTP) training objective that predicts several future tokens at each position, densifying the training signal [deepseek_2024_v3::s04::c00].\n- LLaMA replaces absolute positional embeddings with rotary positional embeddings (RoPE) at each layer of the network [touvron_2023_llama1::s01::c00].\n- A self-attention layer connects all positions with a constant number of sequential operations, whereas a recurrent layer requires O(n) sequential operations [vaswani_2017_transformer::s05::c00].\n- DeepSeek-V2 adopts Multi-head Latent Attention in every attention layer and the DeepSeekMoE architecture in its feed-forward networks [deepseek_2024_v2::s04::c00].\n- The complexity of self-attention per layer is $O(n^2 \\cdot d)$ in the sequence length n, which becomes the dominant cost for very long sequences [vaswani_2017_transformer::s05::c00].",
+     "route": "VECTOR_ONLY",
+     "template": null,
+     "fallback_triggered": false,
+     "vector_seeded": false,
+     "context_chunk_ids": [
+      "touvron_2023_llama1::s01::c00",
+      "deepseek_2024_v2::s06::c00",
+      "deepseek_2024_v3::s01::c00",
+      "deepseek_2024_v3::s04::c00",
+      "vaswani_2017_transformer::s05::c00",
+      "deepseek_2024_v2::s04::c00"
+     ],
+     "cited_ids": [
+      "deepseek_2024_v3::s01::c00",
+      "touvron_2023_llama1::s01::c00",
+      "deepseek_2024_v2::s06::c00",
+      "deepseek_2024_v3::s04::c00",
+      "vaswani_2017_transformer::s05::c00",
+      "deepseek_2024_v2::s04::c00"
+     ],
+     "latency_ms": 7.793,
+     "projected_cost_usd": 0.0044013
+    }
+   ]
+  },
+  "S3@3p": {
+   "label": "ArchGraph-RAG (graph_top_k=3, vector_top_k=3, max_passages=3)",
+   "summary": {
+    "strict_by_stratum": {
+     "single_hop": 100.0,
+     "two_hop": 100.0,
+     "three_hop": 75.0,
+     "aggregation": 50.0,
+     "out_of_scope": 50.0
+    },
+    "concept_recall_by_stratum": {
+     "single_hop": 100.0,
+     "two_hop": 100.0,
+     "three_hop": 91.7,
+     "aggregation": 50.0
+    },
+    "strict_by_stress_type": {
+     "direct": 100.0,
+     "paraphrased": 100.0,
+     "implicit_bridge": 33.3,
+     "caveat_trap": 100.0,
+     "cross_pillar": 100.0,
+     "out_of_scope": 50.0
+    },
+    "strict_overall": 81.2,
+    "strict_answerable": 85.7,
+    "strict_multi_hop": 87.5,
+    "concept_recall_answerable": 90.5,
+    "evidence_recall_answerable": 88.1,
+    "citation_support_precision": 48.5,
+    "citation_gate_valid_rate": 100.0,
+    "false_refusal_rate_answerable": 0.0,
+    "latency_ms_p50": 7.46,
+    "latency_ms_p95": 12.4,
+    "projected_cost_per_query_usd": 0.004079,
+    "generator_calls_mean": 0.938,
+    "pathway_distribution": {
+     "VECTOR": {
+      "questions": 4,
+      "passing": 3
+     },
+     "HYBRID(low-conf):T6_FALLBACK": {
+      "questions": 4,
+      "passing": 3
+     },
+     "HYBRID(structural):T6_FALLBACK": {
+      "questions": 3,
+      "passing": 3
+     },
+     "HYBRID(low-conf):T6_FALLBACK_VECTOR_SEEDED": {
+      "questions": 2,
+      "passing": 1
+     },
+     "GRAPH:T6_FALLBACK_VECTOR_SEEDED": {
+      "questions": 1,
+      "passing": 1
+     },
+     "HYBRID:T6_FALLBACK_VECTOR_SEEDED": {
+      "questions": 1,
+      "passing": 1
+     },
+     "SUBJECT_GATE_REFUSAL": {
+      "questions": 1,
+      "passing": 1
+     }
+    },
+    "one_time_cost_usd": 0.023601
+   },
+   "per_question": [
+    {
+     "qid": "HS1",
+     "system": "S3@3p",
+     "strict": 1.0,
+     "concept_recall": 1.0,
+     "groups_hit": [
+      true,
+      true
+     ],
+     "evidence_recall": 1.0,
+     "citation_support_precision": 0.14285714285714285,
+     "gate_valid": true,
+     "refused_or_abstained": false,
+     "pathway": "HYBRID(structural):T6_FALLBACK",
+     "failure": "",
+     "missing_groups": [],
+     "answer": "Based on the retrieved evidence:\n- Grouped-Query Attention extends Multi-Head Attention, as the source states: \"Grouped-query attention extends multi-head attention by sharing each key-value head across a group of query heads\" [ainslie_2023_gqa::s02::c00].\n- Llama-3 adopts Grouped-Query Attention, as the source states: \"Llama 3 uses grouped query attention (GQA) with 8 key-value heads\" [dubey_2024_llama3::s01::c00].\n- GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints introduces Grouped-Query Attention, as the source states: \"We introduce grouped-query attention (GQA), a generalization of multi-query attention\" [ainslie_2023_gqa::s01::c00].\n- Transformer adopts Sinusoidal Positional Encoding, as the source states: \"The Transformer adopts sinusoidal positional encodings because the model contains no recurrence\" [vaswani_2017_transformer::s03::c00].\n- Transformer is evaluated on WMT 2014 English-to-German, as the source states: \"The big Transformer reaches 28.4 BLEU on the WMT 2014 English-to-German translation task\" [vaswani_2017_transformer::s06::c00].\n- Attention Is All You Need introduces Transformer, as the source states: \"We propose the Transformer, a model architecture based solely on attention mechanisms\" [vaswani_2017_transformer::s01::c00].\n- The base model uses h = 8 parallel attention heads with d_k = d_v = d_model / h = 64, so the total cost is similar to single-head attention with full dimensionality [vaswani_2017_transformer::s04::c00].\n- We compute attention as a weighted sum of the values, where each weight is the softmax of a query-key dot product divided by the square root of the key dimension d_k [vaswani_2017_transformer::s04::c00].\n- Llama 3 uses grouped query attention (GQA) with 8 key-value heads to improve inference speed and reduce the size of key-value caches during decoding [dubey_2024_llama3::s01::c00].\n- We increase the RoPE base frequency hyperparameter to 500,000, which enables better support for longer contexts [dubey_2024_llama3::s01::c00].",
+     "route": "HYBRID_PARALLEL",
+     "template": "T6_DYNAMIC_SUBGRAPH_FALLBACK",
+     "fallback_triggered": false,
+     "vector_seeded": false,
+     "context_chunk_ids": [
+      "ainslie_2023_gqa::s02::c00",
+      "dubey_2024_llama3::s01::c00",
+      "vaswani_2017_transformer::s04::c00",
+      "ainslie_2023_gqa::s01::c00",
+      "vaswani_2017_transformer::s03::c00",
+      "vaswani_2017_transformer::s06::c00",
+      "vaswani_2017_transformer::s01::c00"
+     ],
+     "cited_ids": [
+      "ainslie_2023_gqa::s02::c00",
+      "dubey_2024_llama3::s01::c00",
+      "ainslie_2023_gqa::s01::c00",
+      "vaswani_2017_transformer::s03::c00",
+      "vaswani_2017_transformer::s06::c00",
+      "vaswani_2017_transformer::s01::c00",
+      "vaswani_2017_transformer::s04::c00"
+     ],
+     "latency_ms": 9.943,
+     "projected_cost_usd": 0.0064399
+    },
+    {
+     "qid": "HS2",
+     "system": "S3@3p",
+     "strict": 1.0,
+     "concept_recall": 1.0,
+     "groups_hit": [
+      true
+     ],
+     "evidence_recall": 1.0,
+     "citation_support_precision": 0.3333333333333333,
+     "gate_valid": true,
+     "refused_or_abstained": false,
+     "pathway": "VECTOR",
+     "failure": "",
+     "missing_groups": [],
+     "answer": "Based on the retrieved evidence:\n- DeepSeek-V3 is a Mixture-of-Experts language model with 671B total parameters, of which 37B are activated for each token [deepseek_2024_v3::s01::c00].\n- Llama 3 uses a vocabulary with 128K tokens, and the flagship model has 405B parameters trained on about 15.6T tokens [dubey_2024_llama3::s01::c00].\n- DeepSeek-V3 pioneers an auxiliary-loss-free load balancing strategy that adds a bias term to each expert's routing score instead of an auxiliary loss [deepseek_2024_v3::s02::c00].\n- DeepSeek-V3 adopts Multi-head Latent Attention (MLA) and the DeepSeekMoE architecture, both validated in DeepSeek-V2 [deepseek_2024_v3::s02::c00].",
+     "route": "VECTOR_ONLY",
+     "template": null,
+     "fallback_triggered": false,
+     "vector_seeded": false,
+     "context_chunk_ids": [
+      "deepseek_2024_v3::s01::c00",
+      "deepseek_2024_v3::s02::c00",
+      "dubey_2024_llama3::s01::c00"
+     ],
+     "cited_ids": [
+      "deepseek_2024_v3::s01::c00",
+      "dubey_2024_llama3::s01::c00",
+      "deepseek_2024_v3::s02::c00"
+     ],
+     "latency_ms": 3.661,
+     "projected_cost_usd": 0.0024217
+    },
+    {
+     "qid": "HS3",
+     "system": "S3@3p",
+     "strict": 1.0,
+     "concept_recall": 1.0,
+     "groups_hit": [
+      true,
+      true
+     ],
+     "evidence_recall": 1.0,
+     "citation_support_precision": 0.16666666666666666,
+     "gate_valid": true,
+     "refused_or_abstained": false,
+     "pathway": "GRAPH:T6_FALLBACK_VECTOR_SEEDED",
+     "failure": "",
+     "missing_groups": [],
+     "answer": "Based on the retrieved evidence:\n- Multi-Head Attention causes the bottleneck Quadratic Self-Attention Complexity, as the source states: \"The complexity of self-attention per layer is $O(n^2 \\cdot d)$ in the sequence length n\" [vaswani_2017_transformer::s05::c00].\n- Attention Is All You Need introduces Multi-Head Attention, as the source states: \"Multi-head attention allows the model to jointly attend to information from different representation subspaces\" [vaswani_2017_transformer::s02::c00].\n- Attention Is All You Need introduces Transformer, as the source states: \"We propose the Transformer, a model architecture based solely on attention mechanisms\" [vaswani_2017_transformer::s01::c00].\n- LLaMA-1 adopts Multi-Head Attention, as the source states: \"LLaMA uses standard multi-head attention in every layer\" [touvron_2023_llama1::s04::c00].\n- LLaMA-1 adopts RMSNorm, as the source states: \"LLaMA applies pre-normalization with RMSNorm on the input of each transformer sub-layer\" [touvron_2023_llama1::s01::c00].\n- Multi-head Latent Attention extends Grouped-Query Attention, as the source states: \"Multi-head Latent Attention (MLA) extends the KV-sharing idea of Grouped-Query Attention (GQA)\" [deepseek_2024_v2::s02::c00].\n- A self-attention layer connects all positions with a constant number of sequential operations, whereas a recurrent layer requires O(n) sequential operations [vaswani_2017_transformer::s05::c00].\n- The complexity of self-attention per layer is $O(n^2 \\cdot d)$ in the sequence length n, which becomes the dominant cost for very long sequences [vaswani_2017_transformer::s05::c00].\n- Multi-head attention allows the model to jointly attend to information from different representation subspaces at different positions [vaswani_2017_transformer::s02::c00].\n- We propose the Transformer, a model architecture based solely on attention mechanisms, dispensing with recurrence and convolutions entirely [vaswani_2017_transformer::s01::c00].",
+     "route": "GRAPH_ONLY",
+     "template": "T6_DYNAMIC_SUBGRAPH_FALLBACK",
+     "fallback_triggered": false,
+     "vector_seeded": true,
+     "context_chunk_ids": [
+      "vaswani_2017_transformer::s05::c00",
+      "vaswani_2017_transformer::s02::c00",
+      "vaswani_2017_transformer::s01::c00",
+      "touvron_2023_llama1::s04::c00",
+      "touvron_2023_llama1::s01::c00",
+      "deepseek_2024_v2::s02::c00"
+     ],
+     "cited_ids": [
+      "vaswani_2017_transformer::s05::c00",
+      "vaswani_2017_transformer::s02::c00",
+      "vaswani_2017_transformer::s01::c00",
+      "touvron_2023_llama1::s04::c00",
+      "touvron_2023_llama1::s01::c00",
+      "deepseek_2024_v2::s02::c00"
+     ],
+     "latency_ms": 12.025,
+     "projected_cost_usd": 0.0060476
+    },
+    {
+     "qid": "HS4",
+     "system": "S3@3p",
+     "strict": 1.0,
+     "concept_recall": 1.0,
+     "groups_hit": [
+      true
+     ],
+     "evidence_recall": 1.0,
+     "citation_support_precision": 0.14285714285714285,
+     "gate_valid": true,
+     "refused_or_abstained": false,
+     "pathway": "HYBRID(low-conf):T6_FALLBACK_VECTOR_SEEDED",
+     "failure": "",
+     "missing_groups": [],
+     "answer": "Based on the retrieved evidence:\n- GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints introduces Grouped-Query Attention, as the source states: \"We introduce grouped-query attention (GQA), a generalization of multi-query attention\" [ainslie_2023_gqa::s01::c00].\n- Grouped-Query Attention extends Multi-Head Attention, as the source states: \"Grouped-query attention extends multi-head attention by sharing each key-value head across a group of query heads\" [ainslie_2023_gqa::s02::c00].\n- DeepSeek-V3 adopts FP8 Mixed Precision Training, as the source states: \"We validate FP8 mixed precision training on an extremely large-scale model for the first time\" [deepseek_2024_v3::s03::c00].\n- LLaMA-2 adopts Grouped-Query Attention, as the source states: \"Grouped-query attention entered the Llama family with the 34B and 70B Llama 2 models\" [dubey_2024_llama3::s03::c00].\n- DeepSeek-V3 adopts Multi-Token Prediction, as the source states: \"DeepSeek-V3 adds a multi-token prediction (MTP) training objective\" [deepseek_2024_v3::s04::c00].\n- DeepSeek-V3 is inspired by DeepSeek-R1, as the source states: \"reasoning capability is distilled from the DeepSeek-R1 series of models into DeepSeek-V3\" [deepseek_2024_v3::s07::c00].\n- An attention mask prevents self-attention across different documents packed into the same training sequence [dubey_2024_llama3::s04::c00].\n- Llama 3 extends its context window from 8K to 128K tokens through continued pre-training on long documents in six gradual stages [dubey_2024_llama3::s04::c00].",
+     "route": "HYBRID_PARALLEL",
+     "template": "T6_DYNAMIC_SUBGRAPH_FALLBACK",
+     "fallback_triggered": true,
+     "vector_seeded": true,
+     "context_chunk_ids": [
+      "deepseek_2024_v3::s03::c00",
+      "dubey_2024_llama3::s04::c00",
+      "ainslie_2023_gqa::s02::c00",
+      "ainslie_2023_gqa::s01::c00",
+      "dubey_2024_llama3::s03::c00",
+      "deepseek_2024_v3::s04::c00",
+      "deepseek_2024_v3::s07::c00"
+     ],
+     "cited_ids": [
+      "ainslie_2023_gqa::s01::c00",
+      "ainslie_2023_gqa::s02::c00",
+      "deepseek_2024_v3::s03::c00",
+      "dubey_2024_llama3::s03::c00",
+      "deepseek_2024_v3::s04::c00",
+      "deepseek_2024_v3::s07::c00",
+      "dubey_2024_llama3::s04::c00"
+     ],
+     "latency_ms": 13.533,
+     "projected_cost_usd": 0.005034
+    },
+    {
+     "qid": "HT1",
+     "system": "S3@3p",
+     "strict": 1.0,
+     "concept_recall": 1.0,
+     "groups_hit": [
+      true,
+      true
+     ],
+     "evidence_recall": 1.0,
+     "citation_support_precision": 0.6666666666666666,
+     "gate_valid": true,
+     "refused_or_abstained": false,
+     "pathway": "VECTOR",
+     "failure": "",
+     "missing_groups": [],
+     "answer": "Based on the retrieved evidence:\n- DeepSeek-V3 pioneers an auxiliary-loss-free load balancing strategy that adds a bias term to each expert's routing score instead of an auxiliary loss [deepseek_2024_v3::s02::c00].\n- The routing bias is only used to select experts; the gating value that multiplies each expert output is still computed from the original affinity score [deepseek_2024_v3::s05::c00].\n- DeepSeek-V3 adds a multi-token prediction (MTP) training objective that predicts several future tokens at each position, densifying the training signal [deepseek_2024_v3::s04::c00].\n- DeepSeek-V3 adopts Multi-head Latent Attention (MLA) and the DeepSeekMoE architecture, both validated in DeepSeek-V2 [deepseek_2024_v3::s02::c00].",
+     "route": "VECTOR_ONLY",
+     "template": null,
+     "fallback_triggered": false,
+     "vector_seeded": false,
+     "context_chunk_ids": [
+      "deepseek_2024_v3::s02::c00",
+      "deepseek_2024_v3::s05::c00",
+      "deepseek_2024_v3::s04::c00"
+     ],
+     "cited_ids": [
+      "deepseek_2024_v3::s02::c00",
+      "deepseek_2024_v3::s05::c00",
+      "deepseek_2024_v3::s04::c00"
+     ],
+     "latency_ms": 4.278,
+     "projected_cost_usd": 0.00261
+    },
+    {
+     "qid": "HT2",
+     "system": "S3@3p",
+     "strict": 1.0,
+     "concept_recall": 1.0,
+     "groups_hit": [
+      true,
+      true
+     ],
+     "evidence_recall": 1.0,
+     "citation_support_precision": 0.3333333333333333,
+     "gate_valid": true,
+     "refused_or_abstained": false,
+     "pathway": "HYBRID(low-conf):T6_FALLBACK",
+     "failure": "",
+     "missing_groups": [],
+     "answer": "Based on the retrieved evidence:\n- Multi-head Latent Attention mitigates KV Cache Memory Bandwidth Bottleneck, as the source states: \"Compared with GQA, MLA reduces the KV cache by 93.3% while achieving stronger performance than MHA\" [deepseek_2024_v2::s02::c00].\n- Grouped-Query Attention mitigates KV Cache Memory Bandwidth Bottleneck, as the source states: \"GQA reduces the KV cache memory bandwidth bottleneck during autoregressive decoding\" [ainslie_2023_gqa::s02::c00].\n- PagedAttention mitigates KV Cache Memory Bandwidth Bottleneck, as the source states: \"PagedAttention mitigates the KV cache memory bottleneck so that vLLM achieves near-zero waste\" [kwon_2023_pagedattention::s02::c00].\n- DeepSeek-V3 adopts Multi-head Latent Attention, as the source states: \"DeepSeek-V3 adopts Multi-head Latent Attention (MLA) and the DeepSeekMoE architecture\" [deepseek_2024_v3::s02::c00].\n- Multi-head Latent Attention (MLA) extends the KV-sharing idea of Grouped-Query Attention (GQA) by jointly compressing keys and values into a low-rank latent vector [deepseek_2024_v2::s02::c00].\n- MLA also compresses the queries into a low-rank latent to reduce activation memory during training, but query compression does not shrink the KV cache [deepseek_2024_v2::s05::c00].\n- Decoupled RoPE extends Rotary Position Embedding (RoPE) so that positional information survives low-rank key-value compression [deepseek_2024_v2::s03::c00].\n- Standard RoPE is position-sensitive for both keys and queries, so the key up-projection matrix W^{UK} could no longer be absorbed into the query projection during inference; MLA therefore carries positional information in an additional shared key k_t^R [deepseek_2024_v2::s05::c00].\n- c_t^{KV} = W^{DKV} h_t [deepseek_2024_v2::s02::c00].",
+     "route": "HYBRID_PARALLEL",
+     "template": "T6_DYNAMIC_SUBGRAPH_FALLBACK",
+     "fallback_triggered": true,
+     "vector_seeded": false,
+     "context_chunk_ids": [
+      "deepseek_2024_v2::s02::c00",
+      "deepseek_2024_v2::s05::c00",
+      "deepseek_2024_v2::s03::c00",
+      "ainslie_2023_gqa::s02::c00",
+      "kwon_2023_pagedattention::s02::c00",
+      "deepseek_2024_v3::s02::c00",
+      "deepseek_2024_v3::s02::c00"
+     ],
+     "cited_ids": [
+      "deepseek_2024_v2::s02::c00",
+      "ainslie_2023_gqa::s02::c00",
+      "kwon_2023_pagedattention::s02::c00",
+      "deepseek_2024_v3::s02::c00",
+      "deepseek_2024_v2::s05::c00",
+      "deepseek_2024_v2::s03::c00"
+     ],
+     "latency_ms": 9.215,
+     "projected_cost_usd": 0.0056501
+    },
+    {
+     "qid": "HT3",
+     "system": "S3@3p",
+     "strict": 1.0,
+     "concept_recall": 1.0,
+     "groups_hit": [
+      true,
+      true
+     ],
+     "evidence_recall": 1.0,
+     "citation_support_precision": 0.5,
+     "gate_valid": true,
+     "refused_or_abstained": false,
+     "pathway": "HYBRID(low-conf):T6_FALLBACK",
+     "failure": "",
+     "missing_groups": [],
+     "answer": "Based on the retrieved evidence:\n- DeepSeek-R1-Zero requires DeepSeek-V3, as the source states: \"Both DeepSeek-R1-Zero and DeepSeek-R1 start from the DeepSeek-V3-Base checkpoint\" [deepseek_2025_r1::s05::c00].\n- DeepSeek-R1-Zero adopts Group Relative Policy Optimization, as the source states: \"DeepSeek-R1-Zero is optimized with GRPO using rule-based accuracy and format rewards\" [deepseek_2025_r1::s03::c00].\n- DeepSeek-R1 requires DeepSeek-V3, as the source states: \"Both DeepSeek-R1-Zero and DeepSeek-R1 start from the DeepSeek-V3-Base checkpoint\" [deepseek_2025_r1::s05::c00].\n- DeepSeek-V2 adopts Group Relative Policy Optimization, as the source states: \"DeepSeek-V2 Chat is aligned with supervised fine-tuning followed by reinforcement learning with GRPO\" [deepseek_2024_v2::s07::c00].\n- DeepSeek-V2 adopts Supervised Fine-Tuning, as the source states: \"DeepSeek-V2 Chat is aligned with supervised fine-tuning followed by reinforcement learning with GRPO\" [deepseek_2024_v2::s07::c00].\n- DeepSeek-V3 extends DeepSeek-V2, as the source states: \"DeepSeek-V3 adopts Multi-head Latent Attention (MLA) and the DeepSeekMoE architecture, both validated in DeepSeek-V2\" [deepseek_2024_v3::s02::c00].\n- DeepSeek-R1-Zero is optimized with GRPO using rule-based accuracy and format rewards rather than a neural reward model, because neural reward models are prone to reward hacking at scale [deepseek_2025_r1::s03::c00].\n- Unlike DeepSeek-R1-Zero, DeepSeek-R1 first fine-tunes the base model on thousands of long chain-of-thought cold-start examples before reasoning-oriented reinforcement learning [deepseek_2025_r1::s05::c00].",
+     "route": "HYBRID_PARALLEL",
+     "template": "T6_DYNAMIC_SUBGRAPH_FALLBACK",
+     "fallback_triggered": true,
+     "vector_seeded": false,
+     "context_chunk_ids": [
+      "deepseek_2024_v2::s07::c00",
+      "deepseek_2025_r1::s05::c00",
+      "deepseek_2025_r1::s03::c00",
+      "deepseek_2024_v3::s02::c00"
+     ],
+     "cited_ids": [
+      "deepseek_2025_r1::s05::c00",
+      "deepseek_2025_r1::s03::c00",
+      "deepseek_2024_v2::s07::c00",
+      "deepseek_2024_v3::s02::c00"
+     ],
+     "latency_ms": 7.996,
+     "projected_cost_usd": 0.0052222
+    },
+    {
+     "qid": "HT4",
+     "system": "S3@3p",
+     "strict": 1.0,
+     "concept_recall": 1.0,
+     "groups_hit": [
+      true
+     ],
+     "evidence_recall": 1.0,
+     "citation_support_precision": 0.6666666666666666,
+     "gate_valid": true,
+     "refused_or_abstained": false,
+     "pathway": "VECTOR",
+     "failure": "",
+     "missing_groups": [],
+     "answer": "Based on the retrieved evidence:\n- We find that for compute-optimal training, model size and the number of training tokens should be scaled equally: for every doubling of model size the number of training tokens should also be doubled [hoffmann_2022_chinchilla::s01::c00].\n- Chinchilla uses 70B parameters trained on 1.4 trillion tokens, roughly 20 tokens per parameter, and outperforms Gopher (280B) with the same compute budget [hoffmann_2022_chinchilla::s02::c00].\n- LLaMA is trained only on publicly available data, and the 65B model is trained on 1.4 trillion tokens [touvron_2023_llama1::s03::c00].",
+     "route": "VECTOR_ONLY",
+     "template": null,
+     "fallback_triggered": false,
+     "vector_seeded": false,
+     "context_chunk_ids": [
+      "hoffmann_2022_chinchilla::s02::c00",
+      "hoffmann_2022_chinchilla::s01::c00",
+      "touvron_2023_llama1::s03::c00"
+     ],
+     "cited_ids": [
+      "hoffmann_2022_chinchilla::s01::c00",
+      "hoffmann_2022_chinchilla::s02::c00",
+      "touvron_2023_llama1::s03::c00"
+     ],
+     "latency_ms": 4.676,
+     "projected_cost_usd": 0.0022195
+    },
+    {
+     "qid": "HH1",
+     "system": "S3@3p",
+     "strict": 0.0,
+     "concept_recall": 0.6666666666666666,
+     "groups_hit": [
+      true,
+      true,
+      false
+     ],
+     "evidence_recall": 0.3333333333333333,
+     "citation_support_precision": 0.6,
+     "gate_valid": true,
+     "refused_or_abstained": false,
+     "pathway": "HYBRID(low-conf):T6_FALLBACK",
+     "failure": "retrieval miss: required evidence never reached the context",
+     "missing_groups": [
+      {
+       "group": [
+        "quality degradation",
+        "training instability"
+       ],
+       "diagnosis": "not_retrieved"
+      }
+     ],
+     "answer": "Based on the retrieved evidence:\n- Multi-head Latent Attention extends Grouped-Query Attention, as the source states: \"Multi-head Latent Attention (MLA) extends the KV-sharing idea of Grouped-Query Attention (GQA)\" [deepseek_2024_v2::s02::c00].\n- Llama-3 adopts Grouped-Query Attention, as the source states: \"Llama 3 uses grouped query attention (GQA) with 8 key-value heads\" [dubey_2024_llama3::s01::c00].\n- LLaMA-1 adopts Multi-Head Attention, as the source states: \"LLaMA uses standard multi-head attention in every layer\" [touvron_2023_llama1::s04::c00].\n- Grouped-Query Attention mitigates KV Cache Memory Bandwidth Bottleneck, as the source states: \"GQA reduces the KV cache memory bandwidth bottleneck during autoregressive decoding\" [ainslie_2023_gqa::s02::c00].\n- Grouped-Query Attention extends Multi-Head Attention, as the source states: \"Grouped-query attention extends multi-head attention by sharing each key-value head across a group of query heads\" [ainslie_2023_gqa::s02::c00].\n- Llama-3 adopts Rotary Position Embedding, as the source states: \"We increase the RoPE base frequency hyperparameter to 500,000\" [dubey_2024_llama3::s01::c00].\n- Llama 3 uses grouped query attention (GQA) with 8 key-value heads to improve inference speed and reduce the size of key-value caches during decoding [dubey_2024_llama3::s01::c00].\n- Grouped-query attention entered the Llama family with the 34B and 70B Llama 2 models; LLaMA-1 used standard multi-head attention throughout [dubey_2024_llama3::s03::c00].\n- LLaMA uses standard multi-head attention in every layer; it does not use grouped-query or multi-query attention [touvron_2023_llama1::s04::c00].\n- Llama 3 uses a vocabulary with 128K tokens, and the flagship model has 405B parameters trained on about 15.6T tokens [dubey_2024_llama3::s01::c00].",
+     "route": "HYBRID_PARALLEL",
+     "template": "T6_DYNAMIC_SUBGRAPH_FALLBACK",
+     "fallback_triggered": true,
+     "vector_seeded": false,
+     "context_chunk_ids": [
+      "dubey_2024_llama3::s01::c00",
+      "dubey_2024_llama3::s03::c00",
+      "touvron_2023_llama1::s04::c00",
+      "deepseek_2024_v2::s02::c00",
+      "ainslie_2023_gqa::s02::c00",
+      "ainslie_2023_gqa::s02::c00"
+     ],
+     "cited_ids": [
+      "deepseek_2024_v2::s02::c00",
+      "dubey_2024_llama3::s01::c00",
+      "touvron_2023_llama1::s04::c00",
+      "ainslie_2023_gqa::s02::c00",
+      "dubey_2024_llama3::s03::c00"
+     ],
+     "latency_ms": 7.866,
+     "projected_cost_usd": 0.005679
+    },
+    {
+     "qid": "HH2",
+     "system": "S3@3p",
+     "strict": 1.0,
+     "concept_recall": 1.0,
+     "groups_hit": [
+      true,
+      true,
+      true
+     ],
+     "evidence_recall": 1.0,
+     "citation_support_precision": 0.8333333333333334,
+     "gate_valid": true,
+     "refused_or_abstained": false,
+     "pathway": "HYBRID(structural):T6_FALLBACK",
+     "failure": "",
+     "missing_groups": [],
+     "answer": "Based on the retrieved evidence:\n- DeepSeek-R1 requires DeepSeek-V3, as the source states: \"Both DeepSeek-R1-Zero and DeepSeek-R1 start from the DeepSeek-V3-Base checkpoint\" [deepseek_2025_r1::s05::c00].\n- DeepSeek-R1-Zero requires DeepSeek-V3, as the source states: \"Both DeepSeek-R1-Zero and DeepSeek-R1 start from the DeepSeek-V3-Base checkpoint\" [deepseek_2025_r1::s05::c00].\n- DeepSeek-R1 adopts Cold-Start Supervised Fine-Tuning, as the source states: \"DeepSeek-R1 first fine-tunes the base model on thousands of long chain-of-thought cold-start examples\" [deepseek_2025_r1::s05::c00].\n- DeepSeek-V3 is inspired by DeepSeek-R1, as the source states: \"reasoning capability is distilled from the DeepSeek-R1 series of models into DeepSeek-V3\" [deepseek_2024_v3::s07::c00].\n- DeepSeek-V3 adopts FP8 Mixed Precision Training, as the source states: \"We validate FP8 mixed precision training on an extremely large-scale model for the first time\" [deepseek_2024_v3::s03::c00].\n- DeepSeek-V3 adopts Multi-Token Prediction, as the source states: \"DeepSeek-V3 adds a multi-token prediction (MTP) training objective\" [deepseek_2024_v3::s04::c00].\n- Distilling DeepSeek-R1 outputs into smaller Qwen and Llama models gives them strong reasoning without running any reinforcement learning on the small models [deepseek_2025_r1::s06::c00].\n- The full training of DeepSeek-V3 takes 2.788M H800 GPU hours, and its pre-training corpus contains 14.8T tokens [deepseek_2024_v3::s06::c00].\n- Unlike DeepSeek-R1-Zero, DeepSeek-R1 first fine-tunes the base model on thousands of long chain-of-thought cold-start examples before reasoning-oriented reinforcement learning [deepseek_2025_r1::s05::c00].",
+     "route": "HYBRID_PARALLEL",
+     "template": "T6_DYNAMIC_SUBGRAPH_FALLBACK",
+     "fallback_triggered": false,
+     "vector_seeded": false,
+     "context_chunk_ids": [
+      "deepseek_2025_r1::s05::c00",
+      "deepseek_2025_r1::s06::c00",
+      "deepseek_2024_v3::s06::c00",
+      "deepseek_2024_v3::s07::c00",
+      "deepseek_2024_v3::s03::c00",
+      "deepseek_2024_v3::s04::c00"
+     ],
+     "cited_ids": [
+      "deepseek_2025_r1::s05::c00",
+      "deepseek_2024_v3::s07::c00",
+      "deepseek_2024_v3::s03::c00",
+      "deepseek_2024_v3::s04::c00",
+      "deepseek_2025_r1::s06::c00",
+      "deepseek_2024_v3::s06::c00"
+     ],
+     "latency_ms": 9.786,
+     "projected_cost_usd": 0.0052949
+    },
+    {
+     "qid": "HH3",
+     "system": "S3@3p",
+     "strict": 1.0,
+     "concept_recall": 1.0,
+     "groups_hit": [
+      true,
+      true,
+      true
+     ],
+     "evidence_recall": 1.0,
+     "citation_support_precision": 0.6,
+     "gate_valid": true,
+     "refused_or_abstained": false,
+     "pathway": "HYBRID(structural):T6_FALLBACK",
+     "failure": "",
+     "missing_groups": [],
+     "answer": "Based on the retrieved evidence:\n- vLLM requires PagedAttention, as the source states: \"vLLM is an LLM serving engine built on top of PagedAttention\" [kwon_2023_pagedattention::s04::c00].\n- PagedAttention mitigates KV Cache Memory Bandwidth Bottleneck, as the source states: \"PagedAttention mitigates the KV cache memory bottleneck so that vLLM achieves near-zero waste\" [kwon_2023_pagedattention::s02::c00].\n- Grouped-Query Attention mitigates KV Cache Memory Bandwidth Bottleneck, as the source states: \"GQA reduces the KV cache memory bandwidth bottleneck during autoregressive decoding\" [ainslie_2023_gqa::s02::c00].\n- Multi-head Latent Attention mitigates KV Cache Memory Bandwidth Bottleneck, as the source states: \"Compared with GQA, MLA reduces the KV cache by 93.3% while achieving stronger performance than MHA\" [deepseek_2024_v2::s02::c00].\n- vLLM is an LLM serving engine built on top of PagedAttention; because it changes only how the KV cache is stored, model outputs are identical to standard attention [kwon_2023_pagedattention::s04::c00].\n- PagedAttention mitigates the KV cache memory bottleneck so that vLLM achieves near-zero waste and 2-4x higher serving throughput [kwon_2023_pagedattention::s02::c00].\n- PagedAttention is complementary to GQA: grouped-query attention shrinks the KV cache per token, whereas PagedAttention removes fragmentation in how that cache is laid out in memory [kwon_2023_pagedattention::s04::c00].\n- Existing serving systems waste 60% to 80% of KV cache memory because of fragmentation and over-reservation [kwon_2023_pagedattention::s01::c00].\n- PagedAttention partitions the KV cache of each sequence into fixed-size blocks that need not be contiguous in memory, inspired by virtual memory paging in operating systems [kwon_2023_pagedattention::s02::c00].",
+     "route": "HYBRID_PARALLEL",
+     "template": "T6_DYNAMIC_SUBGRAPH_FALLBACK",
+     "fallback_triggered": false,
+     "vector_seeded": false,
+     "context_chunk_ids": [
+      "kwon_2023_pagedattention::s04::c00",
+      "kwon_2023_pagedattention::s02::c00",
+      "kwon_2023_pagedattention::s01::c00",
+      "ainslie_2023_gqa::s02::c00",
+      "deepseek_2024_v2::s02::c00"
+     ],
+     "cited_ids": [
+      "kwon_2023_pagedattention::s04::c00",
+      "kwon_2023_pagedattention::s02::c00",
+      "ainslie_2023_gqa::s02::c00",
+      "deepseek_2024_v2::s02::c00",
+      "kwon_2023_pagedattention::s01::c00"
+     ],
+     "latency_ms": 5.961,
+     "projected_cost_usd": 0.0055937
+    },
+    {
+     "qid": "HH4",
+     "system": "S3@3p",
+     "strict": 1.0,
+     "concept_recall": 1.0,
+     "groups_hit": [
+      true,
+      true,
+      true
+     ],
+     "evidence_recall": 1.0,
+     "citation_support_precision": 0.8,
+     "gate_valid": true,
+     "refused_or_abstained": false,
+     "pathway": "HYBRID(low-conf):T6_FALLBACK",
+     "failure": "",
+     "missing_groups": [],
+     "answer": "Based on the retrieved evidence:\n- Llama-3 adopts Grouped-Query Attention, as the source states: \"Llama 3 uses grouped query attention (GQA) with 8 key-value heads\" [dubey_2024_llama3::s01::c00].\n- Llama-3 adopts Rotary Position Embedding, as the source states: \"We increase the RoPE base frequency hyperparameter to 500,000\" [dubey_2024_llama3::s01::c00].\n- Llama-3 modifies the hyperparameter RoPE Base Frequency, as the source states: \"We increase the RoPE base frequency hyperparameter to 500,000\" [dubey_2024_llama3::s01::c00].\n- LLaMA-1 adopts Rotary Position Embedding, as the source states: \"LLaMA replaces absolute positional embeddings with rotary positional embeddings (RoPE)\" [touvron_2023_llama1::s01::c00].\n- Grouped-Query Attention requires Uptraining, as the source states: \"The converted checkpoint is then uptrained with only 5% of the original pre-training compute\" [ainslie_2023_gqa::s03::c00].\n- Because rotations preserve vector norms, RoPE can be combined with linear self-attention, unlike relative position biases that require the full attention matrix [su_2021_rope::s03::c00].\n- Unlike additive absolute position embeddings, RoPE multiplies queries and keys by position-dependent rotations, so their inner product depends only on the relative distance m - n [su_2021_rope::s02::c00].\n- Llama 3 uses grouped query attention (GQA) with 8 key-value heads to improve inference speed and reduce the size of key-value caches during decoding [dubey_2024_llama3::s01::c00].\n- Llama 3 uses a vocabulary with 128K tokens, and the flagship model has 405B parameters trained on about 15.6T tokens [dubey_2024_llama3::s01::c00].\n- RoPE is applied only to the query and key vectors; the value vectors are not rotated [su_2021_rope::s02::c00].",
+     "route": "HYBRID_PARALLEL",
+     "template": "T6_DYNAMIC_SUBGRAPH_FALLBACK",
+     "fallback_triggered": true,
+     "vector_seeded": false,
+     "context_chunk_ids": [
+      "dubey_2024_llama3::s01::c00",
+      "su_2021_rope::s02::c00",
+      "su_2021_rope::s03::c00",
+      "touvron_2023_llama1::s01::c00",
+      "touvron_2023_llama1::s01::c00",
+      "ainslie_2023_gqa::s03::c00"
+     ],
+     "cited_ids": [
+      "dubey_2024_llama3::s01::c00",
+      "touvron_2023_llama1::s01::c00",
+      "ainslie_2023_gqa::s03::c00",
+      "su_2021_rope::s03::c00",
+      "su_2021_rope::s02::c00"
+     ],
+     "latency_ms": 8.448,
+     "projected_cost_usd": 0.0055462
+    },
+    {
+     "qid": "HA1",
+     "system": "S3@3p",
+     "strict": 1.0,
+     "concept_recall": 1.0,
+     "groups_hit": [
+      true,
+      true,
+      true,
+      true
+     ],
+     "evidence_recall": 1.0,
+     "citation_support_precision": 1.0,
+     "gate_valid": true,
+     "refused_or_abstained": false,
+     "pathway": "HYBRID:T6_FALLBACK_VECTOR_SEEDED",
+     "failure": "",
+     "missing_groups": [],
+     "answer": "Based on the retrieved evidence:\n- DeepSeek-V2: A Strong, Economical, and Efficient Mixture-of-Experts Language Model (MLA) introduces DeepSeek-V2, as the source states: \"We present DeepSeek-V2, a strong Mixture-of-Experts language model\" [deepseek_2024_v2::s01::c00].\n- DeepSeek-V3 is inspired by DeepSeek-R1, as the source states: \"reasoning capability is distilled from the DeepSeek-R1 series of models into DeepSeek-V3\" [deepseek_2024_v3::s07::c00].\n- DeepSeek-V3 is a Mixture-of-Experts language model with 671B total parameters, of which 37B are activated for each token [deepseek_2024_v3::s01::c00].\n- DeepSeek-V2 contains 236B total parameters, of which 21B are activated for each token, and supports a context length of 128K tokens [deepseek_2024_v2::s06::c00].\n- We present DeepSeek-V2, a strong Mixture-of-Experts language model characterized by economical training and efficient inference [deepseek_2024_v2::s01::c00].",
+     "route": "HYBRID_PARALLEL",
+     "template": "T6_DYNAMIC_SUBGRAPH_FALLBACK",
+     "fallback_triggered": false,
+     "vector_seeded": true,
+     "context_chunk_ids": [
+      "deepseek_2024_v2::s01::c00",
+      "deepseek_2024_v2::s06::c00",
+      "deepseek_2024_v3::s01::c00",
+      "deepseek_2024_v3::s07::c00",
+      "deepseek_2024_v3::s02::c00",
+      "deepseek_2024_v2::s04::c00",
+      "deepseek_2024_v3::s02::c00",
+      "deepseek_2024_v2::s04::c00"
+     ],
+     "cited_ids": [
+      "deepseek_2024_v2::s01::c00",
+      "deepseek_2024_v3::s07::c00",
+      "deepseek_2024_v3::s01::c00",
+      "deepseek_2024_v2::s06::c00"
+     ],
+     "latency_ms": 6.452,
+     "projected_cost_usd": 0.0033669
+    },
+    {
+     "qid": "HA2",
+     "system": "S3@3p",
+     "strict": 0.0,
+     "concept_recall": 0.0,
+     "groups_hit": [
+      false,
+      false,
+      false
+     ],
+     "evidence_recall": 0.0,
+     "citation_support_precision": 0.0,
+     "gate_valid": true,
+     "refused_or_abstained": false,
+     "pathway": "HYBRID(low-conf):T6_FALLBACK_VECTOR_SEEDED",
+     "failure": "retrieval miss: required evidence never reached the context",
+     "missing_groups": [
+      {
+       "group": [
+        "wmt 2014"
+       ],
+       "diagnosis": "not_retrieved"
+      },
+      {
+       "group": [
+        "mmlu"
+       ],
+       "diagnosis": "not_retrieved"
+      },
+      {
+       "group": [
+        "tl;dr"
+       ],
+       "diagnosis": "not_retrieved"
+      }
+     ],
+     "answer": "Based on the retrieved evidence:\n- The full training of DeepSeek-V3 takes 2.788M H800 GPU hours, and its pre-training corpus contains 14.8T tokens [deepseek_2024_v3::s06::c00].\n- LLaMA-13B outperforms GPT-3 (175B) on most benchmarks despite being more than 10x smaller [touvron_2023_llama1::s02::c00].",
+     "route": "HYBRID_PARALLEL",
+     "template": "T6_DYNAMIC_SUBGRAPH_FALLBACK",
+     "fallback_triggered": true,
+     "vector_seeded": true,
+     "context_chunk_ids": [
+      "deepseek_2024_v3::s02::c00",
+      "touvron_2023_llama1::s02::c00",
+      "deepseek_2024_v3::s06::c00",
+      "deepseek_2024_v2::s04::c00",
+      "touvron_2023_llama1::s04::c00",
+      "deepseek_2024_v2::s04::c00"
+     ],
+     "cited_ids": [
+      "deepseek_2024_v3::s06::c00",
+      "touvron_2023_llama1::s02::c00"
+     ],
+     "latency_ms": 7.058,
+     "projected_cost_usd": 0.001722
+    },
+    {
+     "qid": "HO1",
+     "system": "S3@3p",
+     "strict": 1.0,
+     "concept_recall": 1.0,
+     "groups_hit": [],
+     "evidence_recall": null,
+     "citation_support_precision": null,
+     "gate_valid": false,
+     "refused_or_abstained": true,
+     "pathway": "SUBJECT_GATE_REFUSAL",
+     "failure": "",
+     "missing_groups": [],
+     "answer": "The indexed corpus does not cover Claude 3, Claude, so I can't answer this without guessing. It covers 2017-2025 LLM architecture papers such as the Transformer, LLaMA, DeepSeek-V2/V3/R1, GQA, RoPE, YaRN, DPO, Chinchilla and PagedAttention.",
+     "route": "OUT_OF_SCOPE",
+     "template": null,
+     "fallback_triggered": false,
+     "vector_seeded": false,
+     "context_chunk_ids": [],
+     "cited_ids": [],
+     "latency_ms": 3.093,
+     "projected_cost_usd": 0.0001102
+    },
+    {
+     "qid": "HO2",
+     "system": "S3@3p",
+     "strict": 0.0,
+     "concept_recall": 0.0,
+     "groups_hit": [],
+     "evidence_recall": null,
+     "citation_support_precision": null,
+     "gate_valid": true,
+     "refused_or_abstained": false,
+     "pathway": "VECTOR",
+     "failure": "answered an out-of-scope question instead of abstaining",
+     "missing_groups": [],
+     "answer": "Based on the retrieved evidence:\n- DeepSeek-V3 is a Mixture-of-Experts language model with 671B total parameters, of which 37B are activated for each token [deepseek_2024_v3::s01::c00].\n- LLaMA applies pre-normalization with RMSNorm on the input of each transformer sub-layer [touvron_2023_llama1::s01::c00].\n- DeepSeek-V2 contains 236B total parameters, of which 21B are activated for each token, and supports a context length of 128K tokens [deepseek_2024_v2::s06::c00].\n- LLaMA replaces absolute positional embeddings with rotary positional embeddings (RoPE) at each layer of the network [touvron_2023_llama1::s01::c00].",
+     "route": "VECTOR_ONLY",
+     "template": null,
+     "fallback_triggered": false,
+     "vector_seeded": false,
+     "context_chunk_ids": [
+      "touvron_2023_llama1::s01::c00",
+      "deepseek_2024_v2::s06::c00",
+      "deepseek_2024_v3::s01::c00"
+     ],
+     "cited_ids": [
+      "deepseek_2024_v3::s01::c00",
+      "touvron_2023_llama1::s01::c00",
+      "deepseek_2024_v2::s06::c00"
+     ],
+     "latency_ms": 7.009,
+     "projected_cost_usd": 0.0023087
+    }
+   ]
+  }
+ },
+ "questions": [
+  {
+   "id": "HS1",
+   "stratum": "single_hop",
+   "hop_count": 1,
+   "stress_type": "direct",
+   "question": "What is the per-head key dimension in the base Transformer, and how many parallel heads does it run?",
+   "concept_groups": [
+    [
+     "64"
+    ],
+    [
+     "8 parallel attention heads",
+     "h = 8"
+    ]
+   ],
+   "required_chunk_ids": [
+    "vaswani_2017_transformer::s04::c00"
+   ]
+  },
+  {
+   "id": "HS2",
+   "stratum": "single_hop",
+   "hop_count": 1,
+   "stress_type": "paraphrased",
+   "question": "Of the 671B weights in DeepSeek's 2024 flagship, how many actually fire for any given token?",
+   "concept_groups": [
+    [
+     "37b"
+    ]
+   ],
+   "required_chunk_ids": [
+    "deepseek_2024_v3::s01::c00"
+   ]
+  },
+  {
+   "id": "HS3",
+   "stratum": "single_hop",
+   "hop_count": 1,
+   "stress_type": "direct",
+   "question": "How many sequential operations does a self-attention layer need to connect all positions, compared with a recurrent layer?",
+   "concept_groups": [
+    [
+     "constant number"
+    ],
+    [
+     "o(n)"
+    ]
+   ],
+   "required_chunk_ids": [
+    "vaswani_2017_transformer::s05::c00"
+   ]
+  },
+  {
+   "id": "HS4",
+   "stratum": "single_hop",
+   "hop_count": 1,
+   "stress_type": "paraphrased",
+   "question": "When several documents are packed into one training sequence for Meta's 2024 models, what stops tokens from attending across document boundaries?",
+   "concept_groups": [
+    [
+     "attention mask"
+    ]
+   ],
+   "required_chunk_ids": [
+    "dubey_2024_llama3::s04::c00"
+   ]
+  },
+  {
+   "id": "HT1",
+   "stratum": "two_hop",
+   "hop_count": 2,
+   "stress_type": "caveat_trap",
+   "question": "DeepSeek-V3 adds a bias to each expert's routing score. Does that bias also change the gating value that weights the expert's output?",
+   "concept_groups": [
+    [
+     "only used to select experts",
+     "routing bias is only used"
+    ],
+    [
+     "original affinity score",
+     "affinity score"
+    ]
+   ],
+   "required_chunk_ids": [
+    "deepseek_2024_v3::s02::c00",
+    "deepseek_2024_v3::s05::c00"
+   ]
+  },
+  {
+   "id": "HT2",
+   "stratum": "two_hop",
+   "hop_count": 2,
+   "stress_type": "caveat_trap",
+   "question": "Besides keys and values, what else does MLA compress into a low-rank latent, and does that extra compression make the KV cache smaller?",
+   "concept_groups": [
+    [
+     "queries",
+     "query compression"
+    ],
+    [
+     "does not shrink the kv cache"
+    ]
+   ],
+   "required_chunk_ids": [
+    "deepseek_2024_v2::s05::c00",
+    "deepseek_2024_v2::s02::c00"
+   ]
+  },
+  {
+   "id": "HT3",
+   "stratum": "two_hop",
+   "hop_count": 2,
+   "stress_type": "cross_pillar",
+   "question": "Which RL algorithm appears both in DeepSeek-V2 Chat's alignment and in DeepSeek-R1-Zero's training, and what kind of rewards drive it for R1-Zero?",
+   "concept_groups": [
+    [
+     "grpo"
+    ],
+    [
+     "rule-based",
+     "accuracy and format rewards"
+    ]
+   ],
+   "required_chunk_ids": [
+    "deepseek_2024_v2::s07::c00",
+    "deepseek_2025_r1::s03::c00"
+   ]
+  },
+  {
+   "id": "HT4",
+   "stratum": "two_hop",
+   "hop_count": 2,
+   "stress_type": "implicit_bridge",
+   "question": "The compute-optimal 70B model and Meta's largest 2023 open model were trained on the same number of tokens. What is that number?",
+   "concept_groups": [
+    [
+     "1.4 trillion"
+    ]
+   ],
+   "required_chunk_ids": [
+    "hoffmann_2022_chinchilla::s02::c00",
+    "touvron_2023_llama1::s03::c00"
+   ]
+  },
+  {
+   "id": "HH1",
+   "stratum": "three_hop",
+   "hop_count": 3,
+   "stress_type": "implicit_bridge",
+   "question": "In which Llama generation did Llama 3's attention variant first appear, what single-KV-head design does it generalize, and what problems of that design motivated grouping?",
+   "concept_groups": [
+    [
+     "llama 2"
+    ],
+    [
+     "multi-query attention",
+     "mqa"
+    ],
+    [
+     "quality degradation",
+     "training instability"
+    ]
+   ],
+   "required_chunk_ids": [
+    "dubey_2024_llama3::s03::c00",
+    "ainslie_2023_gqa::s01::c00",
+    "ainslie_2023_gqa::s05::c00"
+   ]
+  },
+  {
+   "id": "HH2",
+   "stratum": "three_hop",
+   "hop_count": 3,
+   "stress_type": "cross_pillar",
+   "question": "What do DeepSeek-R1's outputs give smaller Qwen and Llama models, which checkpoint did R1 start from, and how many GPU hours did that checkpoint's full training take?",
+   "concept_groups": [
+    [
+     "strong reasoning"
+    ],
+    [
+     "deepseek-v3-base",
+     "deepseek-v3"
+    ],
+    [
+     "2.788m"
+    ]
+   ],
+   "required_chunk_ids": [
+    "deepseek_2025_r1::s06::c00",
+    "deepseek_2025_r1::s05::c00",
+    "deepseek_2024_v3::s06::c00"
+   ]
+  },
+  {
+   "id": "HH3",
+   "stratum": "three_hop",
+   "hop_count": 3,
+   "stress_type": "caveat_trap",
+   "question": "Does the serving engine built on PagedAttention change model outputs, what memory problem does it remove, and how much higher throughput does it report?",
+   "concept_groups": [
+    [
+     "identical to standard attention",
+     "outputs are identical"
+    ],
+    [
+     "fragmentation"
+    ],
+    [
+     "2-4x"
+    ]
+   ],
+   "required_chunk_ids": [
+    "kwon_2023_pagedattention::s04::c00",
+    "kwon_2023_pagedattention::s02::c00"
+   ]
+  },
+  {
+   "id": "HH4",
+   "stratum": "three_hop",
+   "hop_count": 3,
+   "stress_type": "cross_pillar",
+   "question": "Which positional scheme do both LLaMA and Llama 3 use, why does its attention score depend only on relative distance, and why can it be combined with linear attention?",
+   "concept_groups": [
+    [
+     "rope",
+     "rotary"
+    ],
+    [
+     "relative distance"
+    ],
+    [
+     "preserve vector norms"
+    ]
+   ],
+   "required_chunk_ids": [
+    "touvron_2023_llama1::s01::c00",
+    "su_2021_rope::s02::c00",
+    "su_2021_rope::s03::c00"
+   ]
+  },
+  {
+   "id": "HA1",
+   "stratum": "aggregation",
+   "hop_count": 4,
+   "stress_type": "cross_pillar",
+   "question": "Which models in the corpus are Mixture-of-Experts models, and how many parameters does each activate per token?",
+   "concept_groups": [
+    [
+     "deepseek-v2"
+    ],
+    [
+     "deepseek-v3"
+    ],
+    [
+     "21b"
+    ],
+    [
+     "37b"
+    ]
+   ],
+   "required_chunk_ids": [
+    "deepseek_2024_v2::s01::c00",
+    "deepseek_2024_v2::s06::c00",
+    "deepseek_2024_v3::s01::c00"
+   ]
+  },
+  {
+   "id": "HA2",
+   "stratum": "aggregation",
+   "hop_count": 3,
+   "stress_type": "implicit_bridge",
+   "question": "Which benchmarks or datasets does the corpus report results on?",
+   "concept_groups": [
+    [
+     "wmt 2014"
+    ],
+    [
+     "mmlu"
+    ],
+    [
+     "tl;dr"
+    ]
+   ],
+   "required_chunk_ids": [
+    "vaswani_2017_transformer::s06::c00",
+    "hoffmann_2022_chinchilla::s03::c00",
+    "rafailov_2023_dpo::s05::c00"
+   ]
+  },
+  {
+   "id": "HO1",
+   "stratum": "out_of_scope",
+   "hop_count": 0,
+   "stress_type": "out_of_scope",
+   "question": "What is the context window of Claude 3 Opus?",
+   "concept_groups": [],
+   "required_chunk_ids": []
+  },
+  {
+   "id": "HO2",
+   "stratum": "out_of_scope",
+   "hop_count": 0,
+   "stress_type": "out_of_scope",
+   "question": "How many experts does a Switch Transformer layer send each token to?",
+   "concept_groups": [],
+   "required_chunk_ids": []
+  }
+ ],
+ "oracle": {
+  "answerable": 14,
+  "oracle_satisfiable": 14,
+  "failures": []
+ },
+ "one_time_costs": {
+  "embedding_usd": 0.001038,
+  "graph_extraction_usd": 0.022563
+ },
+ "corpus": {
+  "papers": 12,
+  "chunks": 70,
+  "graph_entities": 55,
+  "graph_relationships": 248
+ },
+ "statistics": {
+  "wilson_95": {
+   "S1": [
+    18.5,
+    61.4
+   ],
+   "S2": [
+    50.5,
+    89.8
+   ],
+   "S3": [
+    57.0,
+    93.4
+   ],
+   "S2@k6": [
+    57.0,
+    93.4
+   ],
+   "S3@3p": [
+    57.0,
+    93.4
+   ]
+  },
+  "paired_sign_test": {
+   "ArchGraph-RAG vs Tuned Hybrid": {
+    "a_only": 1,
+    "b_only": 0,
+    "p": 1.0
+   },
+   "ArchGraph-RAG vs Plain Dense": {
+    "a_only": 7,
+    "b_only": 0,
+    "p": 0.0156
+   },
+   "Tuned Hybrid vs Plain Dense": {
+    "a_only": 7,
+    "b_only": 1,
+    "p": 0.0703
+   },
+   "Hybrid top_k=6 vs ArchGraph-RAG": {
+    "a_only": 0,
+    "b_only": 0,
+    "p": 1.0
+   }
+  }
+ }
+}

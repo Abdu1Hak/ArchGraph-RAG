@@ -1,0 +1,24 @@
+paper_id: chen_2023_pi
+markdown: |
+  # Extending Context Window of Large Language Models via Positional Interpolation
+
+  {BANNER}
+
+  ## Abstract
+
+  Position Interpolation (PI) extends the context window of RoPE-based pretrained LLMs such as LLaMA to up to 32768 tokens with minimal fine-tuning (within 1000 steps).
+
+  ## 2 Method
+
+  Instead of extrapolating beyond the trained context length, Position Interpolation linearly down-scales the input position indices to match the original context window size.
+
+  The upper bound of interpolated attention scores is about 600x smaller than that of extrapolated ones, so the attention stays stable.
+
+  ## 3 Why Extrapolation Fails
+
+  Direct extrapolation of RoPE to unseen positions leads to catastrophically high attention scores that ruin the self-attention mechanism.
+relationships:
+  - [chen_2023_pi, Paper, INTRODUCES, Position Interpolation (PI), TrainingMethod, "Position Interpolation (PI) extends the context window of RoPE-based pretrained LLMs"]
+  - [Position Interpolation, TrainingMethod, EXTENDS, Rotary Position Embedding, ArchComponent, "extends the context window of RoPE-based pretrained LLMs such as LLaMA to up to 32768 tokens"]
+  - [Position Interpolation, TrainingMethod, MITIGATES, Length Extrapolation Failure, Bottleneck, "Instead of extrapolating beyond the trained context length, Position Interpolation linearly down-scales the input position indices"]
+  - [Rotary Position Embedding, ArchComponent, CAUSES_BOTTLENECK, Length Extrapolation Failure, Bottleneck, "Direct extrapolation of RoPE to unseen positions leads to catastrophically high attention scores"]

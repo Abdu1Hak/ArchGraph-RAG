@@ -15,6 +15,7 @@ refusal behavior for out-of-scope questions. See `grade()` for exact rules.
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
+import inspect
 import json
 import math
 import re
@@ -27,6 +28,7 @@ from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 from pydantic import BaseModel, Field, field_validator
 
 from src.config import settings
+from src.evaluation.faithfulness import evaluate_faithfulness
 from src.generation.citation_validator import CITATION_RE
 from src.generation.synthesizer import (
     GENERATION_SYSTEM_PROMPT,
@@ -262,13 +264,19 @@ class PlainDenseRAG(RagSystem):
 class TunedHybridRAG(RagSystem):
     key, label = "S2", "Tuned Hybrid Vector RAG (RRF + Reranker)"
 
-    def __init__(self, vectors: Any, generator: Any, top_k: int = 3, candidate_k: int = 15) -> None:
+    def __init__(self, vectors: Any, generator: Any, top_k: int = 3, candidate_k: int = 15,
+                 reranker: Optional[Any] = None) -> None:
         super().__init__(vectors, generator)
         self.top_k, self.candidate_k = top_k, candidate_k
+        self.reranker = reranker
         self.label = f"{self.label} (top_k={top_k})"
 
     def retrieve(self, question: str) -> Tuple[RetrievalResult, str]:
-        hits = self.vectors.search_hybrid_reranked(question, top_k=self.top_k, candidate_k=max(self.candidate_k, self.top_k))
+        reranker = self.reranker or getattr(self.vectors, "reranker", None)
+        kwargs = {"reranker": reranker} if reranker is not None else {}
+        hits = self.vectors.search_hybrid_reranked(
+            question, top_k=self.top_k, candidate_k=max(self.candidate_k, self.top_k), **kwargs
+        )
         return RetrievalResult(decision=_vector_decision(question), vector_chunks=hits), "VECTOR_RRF_RERANK"
 
 
@@ -277,11 +285,17 @@ class ArchGraphRAG(RagSystem):
     uses_router = True
 
     def __init__(self, corpus: Any, generator: Any, graph_top_k: int = 3, vector_top_k: int = 3,
-                 max_passages: int = 6, telemetry_path: Optional[Path] = None) -> None:
+                 max_passages: int = 6, telemetry_path: Optional[Path] = None,
+                 reranker: Optional[Any] = None, engine_kwargs: Optional[Dict[str, Any]] = None) -> None:
         super().__init__(corpus.vectors, generator, max_passages=max_passages)
         router = QueryRouter(corpus.resolver, corpus.graph, corpus.vectors,
                              telemetry_path=telemetry_path or Path(tempfile.mkdtemp()) / "routing.jsonl")
-        self.engine = GraphVectorEngine(router)
+        candidate_kwargs: Dict[str, Any] = dict(engine_kwargs or {})
+        if reranker is not None:
+            candidate_kwargs.setdefault("reranker", reranker)
+        sig = inspect.signature(GraphVectorEngine.__init__)
+        filtered_kwargs = {k: v for k, v in candidate_kwargs.items() if k in sig.parameters}
+        self.engine = GraphVectorEngine(router, **filtered_kwargs)
         self.graph_top_k, self.vector_top_k = graph_top_k, vector_top_k
         self.label = f"{self.label} (graph_top_k={graph_top_k}, vector_top_k={vector_top_k}, max_passages={max_passages})"
 
@@ -289,13 +303,17 @@ class ArchGraphRAG(RagSystem):
         r = self.engine.retrieve(question, graph_top_k=self.graph_top_k, vector_top_k=self.vector_top_k)
         d = r.decision
         if d.route == RouteType.OUT_OF_SCOPE:
-            return r, "OUT_OF_SCOPE_REFUSAL"
+            return r, "SUBJECT_GATE_REFUSAL" if d.unverified_subjects else "OUT_OF_SCOPE_REFUSAL"
         t = d.cypher_template_id.value.split("_")[0] if d.cypher_template_id else None
         if t == "T6":
             t = "T6_FALLBACK" + ("_VECTOR_SEEDED" if d.vector_seeded else "")
         base = {"VECTOR_ONLY": "VECTOR", "GRAPH_ONLY": "GRAPH", "HYBRID_PARALLEL": "HYBRID"}[d.route.value]
         if d.fallback_triggered:
             base += "(low-conf)"
+        elif d.structural_upgrade:
+            base += "(structural)"
+        if d.cascade_template_ids:
+            t = (t or "") + "+T6_CASCADE"
         return r, base + (f":{t}" if t else "")
 
 
@@ -318,15 +336,39 @@ class QuestionGrade:
     pathway: str
     failure: str = ""
     missing_groups: List[Dict[str, Any]] = field(default_factory=list)
+    faithfulness_score: Optional[float] = None
 
 
-def grade(q: EvalQuestion, out: SystemOutput, chunk_text: Callable[[str], str], system: str) -> QuestionGrade:
+def grade(
+    q: EvalQuestion,
+    out: SystemOutput,
+    chunk_text: Callable[[str], str],
+    system: str,
+    chunk_lookup: Optional[Callable[[str], Any]] = None,
+) -> QuestionGrade:
     declined = out.refused or out.abstained
     answer_text = strip_citations(out.answer)
+    cited_and_ctx = list(dict.fromkeys(list(out.cited_ids) + list(out.context_chunk_ids) + CITATION_RE.findall(out.answer)))
+    chunks_by_id: Dict[str, Any] = {}
+    for cid in cited_and_ctx:
+        obj = chunk_lookup(cid) if chunk_lookup is not None else None
+        if obj is not None:
+            chunks_by_id[cid] = obj
+        else:
+            txt = chunk_text(cid)
+            if txt:
+                chunks_by_id[cid] = txt
+    faithfulness = evaluate_faithfulness(
+        out.answer,
+        chunks_by_id,
+        refused=out.refused,
+        abstained=out.abstained,
+    ).faithfulness_score
     if not q.answerable:
         ok = declined
         return QuestionGrade(q.id, system, float(ok), float(ok), [], None, None, out.gate_valid, declined, out.pathway,
-                             "" if ok else "answered an out-of-scope question instead of abstaining")
+                             "" if ok else "answered an out-of-scope question instead of abstaining",
+                             faithfulness_score=faithfulness)
 
     hits = [False] * len(q.concept_groups) if declined else groups_satisfied(answer_text, q.concept_groups)
     recall = sum(hits) / len(hits)
@@ -354,7 +396,8 @@ def grade(q: EvalQuestion, out: SystemOutput, chunk_text: Callable[[str], str], 
             failure = "generation miss: evidence was in context but not in the answer"
         else:
             failure = "mixed: some evidence not retrieved, some dropped by the generator"
-    return QuestionGrade(q.id, system, strict, recall, hits, ev, support, out.gate_valid, declined, out.pathway, failure, missing)
+    return QuestionGrade(q.id, system, strict, recall, hits, ev, support, out.gate_valid, declined, out.pathway, failure, missing,
+                         faithfulness_score=faithfulness)
 
 
 def oracle_check(questions: Sequence[EvalQuestion], chunk_text: Callable[[str], str]) -> Dict[str, Any]:
@@ -418,6 +461,7 @@ def summarize(questions: Sequence[EvalQuestion], grades: Sequence[QuestionGrade]
         "evidence_recall_answerable": _pct([g.evidence_recall for g in answerable if g.evidence_recall is not None]),
         "citation_support_precision": _pct([g.citation_support_precision for g in answerable if g.citation_support_precision is not None]),
         "citation_gate_valid_rate": _pct([float(g.gate_valid) for g in answerable if not g.refused_or_abstained]),
+        "faithfulness_answerable": _pct([g.faithfulness_score for g in answerable if g.faithfulness_score is not None]),
         "false_refusal_rate_answerable": _pct([float(g.refused_or_abstained) for g in answerable]),
         "latency_ms_p50": round(_percentile([o.latency_ms for o in outputs], 0.5), 2),
         "latency_ms_p95": round(_percentile([o.latency_ms for o in outputs], 0.95), 2),
@@ -434,18 +478,18 @@ def summarize(questions: Sequence[EvalQuestion], grades: Sequence[QuestionGrade]
 
 
 def build_systems(corpus: Any, generator_factory: Callable[[], Any] = OfflineGroundedGeneratorLLM,
-                  include_sensitivity: bool = True) -> List[RagSystem]:
+                  include_sensitivity: bool = True, reranker: Optional[Any] = None) -> List[RagSystem]:
     if not isinstance(corpus.vectors.embedder, CountingEmbedder):
         corpus.vectors.embedder = CountingEmbedder(corpus.vectors.embedder)
     systems: List[RagSystem] = [
         PlainDenseRAG(corpus.vectors, generator_factory(), top_k=3),
-        TunedHybridRAG(corpus.vectors, generator_factory(), top_k=3),
-        ArchGraphRAG(corpus, generator_factory(), graph_top_k=3, vector_top_k=3),
+        TunedHybridRAG(corpus.vectors, generator_factory(), top_k=3, reranker=reranker),
+        ArchGraphRAG(corpus, generator_factory(), graph_top_k=3, vector_top_k=3, reranker=reranker),
     ]
     if include_sensitivity:
-        s2k6 = TunedHybridRAG(corpus.vectors, generator_factory(), top_k=6)
+        s2k6 = TunedHybridRAG(corpus.vectors, generator_factory(), top_k=6, reranker=reranker)
         s2k6.key = "S2@k6"
-        s3b = ArchGraphRAG(corpus, generator_factory(), graph_top_k=3, vector_top_k=3, max_passages=3)
+        s3b = ArchGraphRAG(corpus, generator_factory(), graph_top_k=3, vector_top_k=3, max_passages=3, reranker=reranker)
         s3b.key = "S3@3p"
         systems += [s2k6, s3b]
     return systems
@@ -453,13 +497,17 @@ def build_systems(corpus: Any, generator_factory: Callable[[], Any] = OfflineGro
 
 def run_benchmark(corpus: Any, questions: Sequence[EvalQuestion], systems: Optional[List[RagSystem]] = None) -> Dict[str, Any]:
     systems = systems or build_systems(corpus)
-    texts: Dict[str, str] = {}
+    chunk_objs: Dict[str, Any] = {}
+
+    def chunk_lookup(cid: str) -> Any:
+        if cid not in chunk_objs:
+            rows = corpus.vectors.fetch_chunks_by_ids([cid])
+            chunk_objs[cid] = rows[0] if rows else None
+        return chunk_objs[cid]
 
     def chunk_text(cid: str) -> str:
-        if cid not in texts:
-            rows = corpus.vectors.fetch_chunks_by_ids([cid])
-            texts[cid] = rows[0].raw_text if rows else ""
-        return texts[cid]
+        ch = chunk_lookup(cid)
+        return ch.raw_text if ch is not None else ""
 
     one_time = one_time_costs(corpus.report.chunks)
     results: Dict[str, Any] = {"systems": {}, "questions": [q.model_dump() for q in questions],
@@ -472,7 +520,7 @@ def run_benchmark(corpus: Any, questions: Sequence[EvalQuestion], systems: Optio
         for q in questions:
             o = s.run(q.question)
             outs.append(o)
-            grades.append(grade(q, o, chunk_text, s.key))
+            grades.append(grade(q, o, chunk_text, s.key, chunk_lookup=chunk_lookup))
         summ = summarize(questions, grades, outs)
         summ["one_time_cost_usd"] = round(one_time["embedding_usd"] + (one_time["graph_extraction_usd"] if isinstance(s, ArchGraphRAG) else 0.0), 6)
         results["systems"][s.key] = {

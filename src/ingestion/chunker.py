@@ -24,7 +24,7 @@ Design Decisions:
 from dataclasses import dataclass, field
 import hashlib
 import re
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 from src.schema.ontology import EXTRACTION_PROMPT_VERSION, EXTRACTION_SCHEMA_VERSION
 
@@ -85,6 +85,156 @@ def contains_equation(text: str) -> bool:
         if _MATH_SIGNAL_RE.search(body) or _SHORT_VARIABLE_RE.fullmatch(body):
             return True
     return False
+
+
+_BIB_TITLE = r"(?:\d+(?:\.\d+)*\.?\s*)?(?:references|bibliography|works\s+cited|literature\s+cited|reference\s+list)"
+_BIB_HEADING_RE = re.compile(
+    rf"^\s*(?:#{{1,6}}\s*)?(?:\*\*|__)?\s*{_BIB_TITLE}\s*(?:\*\*|__)?\s*:?\s*$", re.IGNORECASE)
+_ANY_HEADING_RE = re.compile(r"^\s*(?:#{1,6}\s+.+|(?:\*\*|__)[^*_]{2,80}(?:\*\*|__)\s*)$")
+_BACK_MATTER_RE = re.compile(
+    r"^\s*(?:#{1,6}\s*)?(?:\*\*|__)?\s*(?:appendix|appendices|supplementary|supplemental|"
+    r"[A-H](?:\.\d+)*\.?\s+[A-Z][a-z])", re.IGNORECASE)
+
+_ATX_HEADING_RE = re.compile(r"^\s*(#{1,6})\s+(.+?)\s*#*\s*$")
+_BOLD_HEADING_RE = re.compile(r"^\s*(\*\*|__)(.+?)\1\s*:?\s*$")
+_CORE_SECTION_RE = re.compile(
+    r"\b(?:"
+    r"abstract|introduction|background|"
+    r"methods?|methodology|architectures?|"
+    r"experiments?|experimental\s+(?:setup|results?|evaluation|details)|results?|"
+    r"ablations?|ablation\s+stud(?:y|ies)|"
+    r"conclusions?"
+    r")\b",
+    re.IGNORECASE,
+)
+_APPENDIX_OR_SUPP_RE = re.compile(
+    r"^(?:appendix|appendices|supplementary(?:\s+materials?)?|supplemental(?:\s+materials?)?)\b",
+    re.IGNORECASE,
+)
+_NON_CORE_SECTION_RE = re.compile(
+    r"^(?:"
+    r"references?|reference\s+list|(?:selected\s+)?bibliography|works\s+cited|literature\s+cited|"
+    r"(?:funding\s+(?:and\s+)?)?acknowledg?e?ments?(?:\s+and\s+funding)?|acknowlegements?|"
+    r"ethics(?:\s+(?:and\s+safety\s+)?(?:statement|considerations?|checklist))?|"
+    r"ethical\s+(?:statement|considerations?|checklist)|"
+    r"(?:broader(?:\s+societal)?|societal)\s+impacts?(?:\s+statement)?|impact\s+statement|"
+    r"(?:authors?['’]?\s+)?contributions?(?:\s+statement)?|(?:core\s+)?contributors?|author\s+list|"
+    r"reproducibility(?:\s+(?:statement|checklist))?|"
+    r"limitations?(?:\s+of\s+(?:the\s+)?(?:work|study|approach|method|model))?"
+    r"(?:\s+and\s+(?:future\s+(?:work|directions)|broader\s+impacts?))?"
+    r")\b",
+    re.IGNORECASE,
+)
+_PLAIN_NON_CORE_EXACT_RE = re.compile(
+    r"^(?:\d+(?:\.\d+)*\.?\s+)?(?:"
+    r"references?|reference\s+list|bibliography|works\s+cited|literature\s+cited|"
+    r"acknowledg?e?ments?|acknowlegements?|"
+    r"ethics(?:\s+statement)?|broader\s+impacts?(?:\s+statement)?|impact\s+statement|"
+    r"author\s+contributions?|contributors?|reproducibility(?:\s+statement)?|"
+    r"limitations?|appendix|appendices|supplementary(?:\s+materials?)?|supplemental(?:\s+materials?)?"
+    r")\s*:?\s*$",
+    re.IGNORECASE,
+)
+
+
+def _clean_heading_text(raw: str) -> str:
+    """Strip inline Markdown emphasis and trailing colons from a heading title."""
+    cleaned = re.sub(r"[*_`]+", "", raw).strip()
+    cleaned = re.sub(r":+\s*$", "", cleaned).strip()
+    return re.sub(r"\s+", " ", cleaned)
+
+
+def _is_non_core_heading(line: str) -> bool:
+    """Return True if a Markdown heading line begins a non-core trailing/back-matter section."""
+    hashes = 0
+    is_bold = False
+    m_atx = _ATX_HEADING_RE.match(line)
+    if m_atx:
+        hashes = len(m_atx.group(1))
+        title = _clean_heading_text(m_atx.group(2))
+    else:
+        m_bold = _BOLD_HEADING_RE.match(line)
+        if m_bold:
+            is_bold = True
+            title = _clean_heading_text(m_bold.group(2))
+        else:
+            return bool(_PLAIN_NON_CORE_EXACT_RE.match(line.strip()))
+
+    if not title:
+        return False
+
+    unnumbered = re.sub(r"^\d+(?:\.\d+)*\.?\s+", "", title).strip()
+    if _APPENDIX_OR_SUPP_RE.match(unnumbered):
+        return True
+    if re.match(r"^[A-Z]\.\d+(?:\.\d+)*\b", title):
+        return True
+    if re.match(r"^[A-Z]\.(?:\s|$)", title):
+        # Preserve Roman-numeral core sections like "I. Introduction" or "V. Conclusion".
+        if re.match(r"^[IVX]\.", title) and _CORE_SECTION_RE.search(title):
+            return False
+        return True
+    if (1 <= hashes <= 3 or is_bold) and re.match(r"^[A-HJ-Z]\s+[A-Za-z]", title):
+        return True
+    if _CORE_SECTION_RE.search(unnumbered):
+        return False
+    return bool(_NON_CORE_SECTION_RE.match(unnumbered))
+
+
+def strip_non_core_sections(markdown_text: str, min_position: float = 0.25) -> Tuple[str, int]:
+    """Strip non-core trailing/back-matter sections once encountered (respecting fenced code blocks).
+
+    Removes back-matter starting at the first qualifying heading at or after `min_position`
+    of the document: References, Bibliography, Works/Literature Cited, Acknowledgments,
+    Ethics Statement, Broader Impact/Impact Statement, Author Contributions/Contributors,
+    Reproducibility Statement, Limitations, Appendix/Appendices, Supplementary Material, and
+    lettered appendix headings (e.g. `Appendix A`, `# A. ...`), while preserving core
+    sections such as Abstract, Introduction, Background, Method/Architecture,
+    Experiments/Results, Ablations, and Conclusion. Returns `(text, removed_lines_count)`.
+    """
+    if not markdown_text:
+        return markdown_text, 0
+    lines = markdown_text.splitlines()
+    n_lines = len(lines)
+    in_fence = False
+    start: Optional[int] = None
+    for i, line in enumerate(lines):
+        if _FENCE_RE.match(line):
+            in_fence = not in_fence
+            continue
+        if not in_fence and i >= n_lines * min_position and _is_non_core_heading(line):
+            start = i
+            break
+    if start is None:
+        return markdown_text, 0
+    return "\n".join(lines[:start]), n_lines - start
+
+
+def strip_bibliography(markdown_text: str, min_position: float = 0.3) -> Tuple[str, int]:
+    """Remove a trailing References/Bibliography section; keep appendices that follow it.
+
+    The reference list runs from the bibliography heading to the next appendix-like heading
+    ("Appendix", "A Experimental Details", "Supplementary Material") or the end of the document.
+    A heading in the first `min_position` of the document is ignored (e.g. a "Related Work /
+    References" mention in a table of contents). Returns (text, number_of_removed_lines).
+    """
+    lines = markdown_text.splitlines()
+    start = None
+    in_fence = False
+    for i, line in enumerate(lines):
+        if _FENCE_RE.match(line):
+            in_fence = not in_fence
+            continue
+        if not in_fence and i >= len(lines) * min_position and _BIB_HEADING_RE.match(line):
+            start = i  # keep the last match: the real bibliography is at the back
+    if start is None:
+        return markdown_text, 0
+    end = len(lines)
+    for j in range(start + 1, len(lines)):
+        if _ANY_HEADING_RE.match(lines[j]) and _BACK_MATTER_RE.match(lines[j]):
+            end = j
+            break
+    kept = lines[:start] + lines[end:]
+    return "\n".join(kept), end - start
 
 
 def compute_content_hash(
@@ -207,10 +357,16 @@ class StructureAwareChunker:
         target_chars: int = 1800,
         max_chars: int = 2600,
         overlap_blocks: int = 0,
+        core_body_only: bool = False,
+        max_chunks_per_paper: Optional[int] = None,
     ) -> None:
+        if max_chunks_per_paper is not None and max_chunks_per_paper < 0:
+            raise ValueError("max_chunks_per_paper must be >= 0 or None")
         self.target_chars = target_chars
         self.max_chars = max_chars
         self.overlap_blocks = overlap_blocks
+        self.core_body_only = core_body_only
+        self.max_chunks_per_paper = max_chunks_per_paper
 
     def chunk_paper(
         self,
@@ -220,7 +376,12 @@ class StructureAwareChunker:
         pillar: str,
         markdown_text: str,
     ) -> List[DocumentChunk]:
-        """Split a paper into deterministic `DocumentChunk` objects."""
+        """Split a paper into deterministic `DocumentChunk` objects (reference lists are stripped first)."""
+        if self.max_chunks_per_paper == 0:
+            return []
+        if self.core_body_only:
+            markdown_text, _ = strip_non_core_sections(markdown_text)
+        markdown_text, _ = strip_bibliography(markdown_text)
         sections = _split_into_sections(markdown_text)
         all_chunks: List[DocumentChunk] = []
 
@@ -302,5 +463,7 @@ class StructureAwareChunker:
                         contains_table=has_tbl,
                     )
                 )
+                if self.max_chunks_per_paper is not None and len(all_chunks) >= self.max_chunks_per_paper:
+                    return all_chunks
 
         return all_chunks

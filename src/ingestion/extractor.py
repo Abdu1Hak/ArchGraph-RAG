@@ -21,6 +21,8 @@ from typing import Any, Callable, Dict, List, Optional, Sequence, Union
 from src.config import settings
 from src.ingestion.chunker import DocumentChunk, estimate_tokens
 from src.ingestion.cost_estimator import ExtractionCache
+from src.ingestion.rate_limiter import get_governor
+from src.usage import interaction_usage, record_usage
 from src.schema.ontology import (
     EXTRACTION_PROMPT_VERSION,
     ChunkExtractionPayload,
@@ -106,8 +108,11 @@ class GeminiGraphExtractor:
         client: Any = None,
         llm_callable: Optional[LLMCallable] = None,
         max_parse_retries: int = 1,
+        governor: Any = None,
     ) -> None:
         self.cache = cache
+        self.governor = governor
+        self.last_model_used: Optional[str] = None
         self.model_name = model_name or settings.extraction_model
         self.min_confidence = settings.min_extraction_confidence if min_confidence is None else min_confidence
         self.max_parse_retries = max_parse_retries
@@ -135,20 +140,28 @@ class GeminiGraphExtractor:
                 return out[0], int(out[1]), int(out[2])
             return out, estimate_tokens(EXTRACTION_SYSTEM_PROMPT) + estimate_tokens(user_input), estimate_tokens(out or "")
 
-        interaction = self.client.interactions.create(
-            model=self.model_name,
-            system_instruction=EXTRACTION_SYSTEM_PROMPT,
-            input=user_input,
-            response_format={
-                "type": "text",
-                "mime_type": "application/json",
-                "schema": self.response_schema,
-            },
-            store=False,
-        )
-        usage = getattr(interaction, "usage", None)
-        in_tok = int(getattr(usage, "total_input_tokens", 0) or 0)
-        out_tok = int(getattr(usage, "total_output_tokens", 0) or 0)
+        def call(model: str) -> Any:
+            return self.client.interactions.create(
+                model=model,
+                system_instruction=EXTRACTION_SYSTEM_PROMPT,
+                input=user_input,
+                response_format={
+                    "type": "text",
+                    "mime_type": "application/json",
+                    "schema": self.response_schema,
+                },
+                store=False,
+            )
+
+        # One chunk per call (no batching), paced under RPM/TPM; daily-quota 429s step down the fallback chain.
+        governor = self.governor or get_governor()
+        est = (estimate_tokens(EXTRACTION_SYSTEM_PROMPT) + estimate_tokens(user_input)
+               + settings.extraction_output_tokens_per_chunk)
+        interaction, model = governor.call_with_fallback(
+            settings.text_model_chain(self.model_name), call, est, actual_tokens=lambda i: interaction_usage(i)[2])
+        self.last_model_used = model
+        in_tok, out_tok, _ = interaction_usage(interaction)
+        record_usage("extractor", model, in_tok, out_tok, requests=1)
         return interaction.output_text or "", in_tok, out_tok
 
     def extract_chunk(self, chunk: DocumentChunk) -> ExtractionResult:
@@ -187,7 +200,7 @@ class GeminiGraphExtractor:
                 content_hash=chunk.content_hash,
                 chunk_id=chunk.chunk_id,
                 paper_id=chunk.paper_id,
-                model=self.model_name,
+                model=self.last_model_used or self.model_name,
                 payload_json=unfiltered.model_dump_json(),
                 input_tokens=result.input_tokens,
                 output_tokens=result.output_tokens,

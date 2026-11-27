@@ -1,0 +1,25 @@
+paper_id: leviathan_2023_speculative
+markdown: |
+  # Fast Inference from Transformers via Speculative Decoding
+
+  {BANNER}
+
+  ## Abstract
+
+  Speculative decoding computes several tokens in parallel by using a small approximation model to propose continuations that the large target model then verifies in a single forward pass.
+
+  ## 2 Why It Works
+
+  Autoregressive decoding of large models is memory-bandwidth bound, so one forward pass costs roughly the same for one token as for a few tokens.
+
+  ## 3 Method
+
+  Speculative sampling accepts or rejects each drafted token so that the output distribution is identical to sampling from the target model.
+
+  ## 4 Results
+
+  Applied to T5-XXL, speculative decoding achieves a 2x-3x acceleration compared with the standard T5X implementation, with identical outputs.
+relationships:
+  - [leviathan_2023_speculative, Paper, INTRODUCES, Speculative Decoding, InferenceTechnique, "Speculative decoding computes several tokens in parallel by using a small approximation model"]
+  - [Speculative Decoding, InferenceTechnique, REQUIRES, Draft Model, InferenceTechnique, "by using a small approximation model to propose continuations that the large target model then verifies"]
+  - [Speculative Decoding, InferenceTechnique, MITIGATES, Autoregressive Decoding Latency, Bottleneck, "speculative decoding achieves a 2x-3x acceleration compared with the standard T5X implementation", "2x-3x"]

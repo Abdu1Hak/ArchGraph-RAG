@@ -617,11 +617,19 @@ _CATEGORY_HINTS = {
 }
 
 
-def _entity(name: str, etype: str) -> Dict[str, Any]:
+def _entity(name: str, etype: str, hints: Optional[Dict[str, Dict[str, Any]]] = None) -> Dict[str, Any]:
     ent: Dict[str, Any] = {"entity_type": etype, "canonical_name": name, "confidence": 0.93}
     if etype == "ArchComponent":
         low = name.lower()
         ent["category"] = next((cat for hint, cat in _CATEGORY_HINTS.items() if hint in low), "other")
+    hint = (hints or {}).get(name.lower())
+    if hint:  # full-corpus only: aliases / description / category recorded for this surface
+        if hint.get("aliases"):
+            ent["aliases"] = list(hint["aliases"])
+        if hint.get("description"):
+            ent["description"] = hint["description"]
+        if hint.get("category") and etype == "ArchComponent":
+            ent["category"] = hint["category"]
     return ent
 
 
@@ -636,7 +644,14 @@ class RecordedExtractionLLM:
     response_schema) -> str. `calls` counts invocations so tests can assert cache behavior.
     """
 
-    def __init__(self, recordings: Optional[Dict[str, List[Dict[str, Any]]]] = None) -> None:
+    def __init__(self, recordings: Optional[Dict[str, List[Dict[str, Any]]]] = None, full_corpus: bool = False) -> None:
+        """`full_corpus=True` adds the 38-paper recordings and entity hints (data/fixtures/full_corpus)."""
+        self.entity_hints: Dict[str, Dict[str, Any]] = {}
+        if full_corpus:
+            from src.ingestion.full_corpus_fixtures import full_corpus_recordings, load_full_corpus_fixtures
+
+            recordings = full_corpus_recordings(RECORDED_RELATIONSHIPS if recordings is None else recordings)
+            self.entity_hints = load_full_corpus_fixtures()["entity_hints"]
         self.recordings = RECORDED_RELATIONSHIPS if recordings is None else recordings
         self.calls = 0
 
@@ -650,5 +665,5 @@ class RecordedExtractionLLM:
                 if _normalize_ws(rel["evidence_quote"]) in text:
                     relationships.append(rel)
                     for name, etype in ((rel["source_name"], rel["source_type"]), (rel["target_name"], rel["target_type"])):
-                        entities.setdefault((name.lower(), etype), _entity(name, etype))
+                        entities.setdefault((name.lower(), etype), _entity(name, etype, self.entity_hints))
         return json.dumps({"entities": list(entities.values()), "relationships": relationships})

@@ -1,0 +1,26 @@
+paper_id: brown_2020_gpt3
+markdown: |
+  # Language Models are Few-Shot Learners
+
+  {BANNER}
+
+  ## Abstract
+
+  GPT-3 is an autoregressive language model with 175 billion parameters, 10x more than any previous non-sparse language model.
+
+  GPT-3 is applied without any gradient updates or fine-tuning, with tasks and few-shot demonstrations specified purely via text interaction with the model.
+
+  ## 2 Approach
+
+  GPT-3 uses alternating dense and locally banded sparse attention patterns in the layers of the transformer, similar to the Sparse Transformer.
+
+  GPT-3 is trained on 300 billion tokens drawn from a filtered Common Crawl mixture together with WebText, books and Wikipedia.
+
+  ## 3 Results
+
+  On TriviaQA, GPT-3 reaches 71.2% accuracy in the few-shot setting, matching or exceeding fine-tuned open-domain systems.
+relationships:
+  - [brown_2020_gpt3, Paper, INTRODUCES, GPT-3, ModelFamily, "GPT-3 is an autoregressive language model with 175 billion parameters"]
+  - [GPT-3, ModelFamily, ADOPTS_COMPONENT, In-Context Learning, InferenceTechnique, "GPT-3 is applied without any gradient updates or fine-tuning, with tasks and few-shot demonstrations specified purely via text interaction"]
+  - [GPT-3, ModelFamily, ADOPTS_COMPONENT, Sparse Attention, ArchComponent, "GPT-3 uses alternating dense and locally banded sparse attention patterns"]
+  - [GPT-3, ModelFamily, EVALUATED_ON, TriviaQA, BenchmarkOrDataset, "On TriviaQA, GPT-3 reaches 71.2% accuracy in the few-shot setting", "71.2% few-shot"]

@@ -1,0 +1,24 @@
+paper_id: xiao_2023_streamingllm
+markdown: |
+  # Efficient Streaming Language Models with Attention Sinks
+
+  {BANNER}
+
+  ## Abstract
+
+  Window attention, which only caches the most recent key-value states, fails once the text length surpasses the cache size, because the initial tokens are evicted.
+
+  We observe an attention sink: a surprisingly large amount of attention score is allocated to the initial tokens, even if they are not semantically important.
+
+  ## 3 StreamingLLM
+
+  StreamingLLM keeps the KV of a few initial sink tokens together with a rolling cache of recent tokens, enabling LLMs trained with a finite attention window to generalize to infinite sequence lengths without any fine-tuning.
+
+  ## 4 Results
+
+  StreamingLLM enables Llama-2, MPT, Falcon and Pythia to perform stable language modeling on up to 4 million tokens, with up to a 22.2x speedup over the sliding window recomputation baseline.
+relationships:
+  - [xiao_2023_streamingllm, Paper, INTRODUCES, StreamingLLM, InferenceTechnique, "StreamingLLM keeps the KV of a few initial sink tokens"]
+  - [StreamingLLM, InferenceTechnique, REQUIRES, Attention Sinks, ArchComponent, "StreamingLLM keeps the KV of a few initial sink tokens together with a rolling cache of recent tokens"]
+  - [Sliding Window Attention, ArchComponent, CAUSES_BOTTLENECK, Initial Token Eviction Collapse, Bottleneck, "Window attention, which only caches the most recent key-value states, fails once the text length surpasses the cache size"]
+  - [StreamingLLM, InferenceTechnique, MITIGATES, Initial Token Eviction Collapse, Bottleneck, "enabling LLMs trained with a finite attention window to generalize to infinite sequence lengths without any fine-tuning"]

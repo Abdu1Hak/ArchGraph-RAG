@@ -1,8 +1,10 @@
 """Centralized configuration and cost/threshold parameters for LLM Architecture KG-RAG."""
 
 from pathlib import Path
-from pydantic import Field
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from typing import Any, List, Tuple, Type
+
+from pydantic import Field, field_validator
+from pydantic_settings import BaseSettings, PydanticBaseSettingsSource, SettingsConfigDict
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -17,11 +19,15 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    # Gemini API Configuration (Current SDK >= 2.30.1 models)
+    # Gemini API Configuration (free tier: flash-lite 15 RPM / 250K TPM / 500 RPD per model)
     gemini_api_key: str = Field(default="", alias="GEMINI_API_KEY")
-    extraction_model: str = Field(default="gemini-3.8-flash", alias="EXTRACTION_MODEL")
-    router_model: str = Field(default="gemini-3.8-flash", alias="ROUTER_MODEL")
-    generation_model: str = Field(default="gemini-4-argon", alias="GENERATION_MODEL")
+    extraction_model: str = Field(default="gemini-3.5-flash-lite", alias="EXTRACTION_MODEL")
+    router_model: str = Field(default="gemini-3.5-flash-lite", alias="ROUTER_MODEL")
+    generation_model: str = Field(default="gemini-3.5-flash-lite", alias="GENERATION_MODEL")
+    # Daily-quota fallback chain for text models, tried in order after the primary model.
+    fallback_model_1: str = Field(default="gemini-3.5-flash-lite", alias="FALLBACK_MODEL_1")
+    fallback_model_2: str = Field(default="gemini-3.1-flash-lite", alias="FALLBACK_MODEL_2")
+    fallback_model_3: str = Field(default="gemma-4-31b-it", alias="FALLBACK_MODEL_3")
     embedding_model: str = Field(default="gemini-embedding-001", alias="EMBEDDING_MODEL")
     embedding_dim: int = Field(default=768, alias="EMBEDDING_DIM")
 
@@ -81,6 +87,51 @@ class Settings(BaseSettings):
     @property
     def extraction_cache_path(self) -> Path:
         return self.cache_dir / "extractions.sqlite"
+
+    @field_validator("gemini_api_key", "extraction_model", "router_model", "generation_model", "embedding_model",
+                     "fallback_model_1", "fallback_model_2", "fallback_model_3", mode="before")
+    @classmethod
+    def _strip_quotes(cls, v: Any) -> Any:
+        """Accept KEY="value", KEY='value' and stray whitespace in .env."""
+        if isinstance(v, str):
+            v = v.strip()
+            while len(v) >= 2 and v[0] == v[-1] and v[0] in "\"'":
+                v = v[1:-1].strip()
+        return v
+
+    @classmethod
+    def settings_customise_sources(
+        cls,
+        settings_cls: Type[BaseSettings],
+        init_settings: PydanticBaseSettingsSource,
+        env_settings: PydanticBaseSettingsSource,
+        dotenv_settings: PydanticBaseSettingsSource,
+        file_secret_settings: PydanticBaseSettingsSource,
+    ) -> Tuple[PydanticBaseSettingsSource, ...]:
+        # .env wins over inherited process environment variables, so swapping GEMINI_API_KEY in .env takes
+        # effect on the next run even if an old key is still exported in the shell. Without a .env file
+        # (containers), plain environment variables are used as usual.
+        return init_settings, dotenv_settings, env_settings, file_secret_settings
+
+    @property
+    def fallback_models(self) -> List[str]:
+        """FALLBACK_MODEL_1..3, non-empty, de-duplicated, in order."""
+        out: List[str] = []
+        for m in (self.fallback_model_1, self.fallback_model_2, self.fallback_model_3):
+            if m and m not in out:
+                out.append(m)
+        return out
+
+    def text_model_chain(self, primary: str) -> List[str]:
+        """Primary model first, then the fallback chain, without duplicates."""
+        return list(dict.fromkeys([m for m in [primary] + self.fallback_models if m]))
+
+    def reload(self) -> "Settings":
+        """Re-read .env in place, so every module holding `settings` sees new values (e.g. a swapped key)."""
+        fresh = type(self)()
+        for name in type(self).model_fields:
+            object.__setattr__(self, name, getattr(fresh, name))
+        return self
 
     @property
     def postgres_dsn(self) -> str:

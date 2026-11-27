@@ -1,0 +1,25 @@
+paper_id: dai_2024_deepseekmoe
+markdown: |
+  # DeepSeekMoE: Towards Ultimate Expert Specialization in Mixture-of-Experts Language Models
+
+  {BANNER}
+
+  ## Abstract
+
+  DeepSeekMoE improves expert specialization with two strategies: finely segmenting the experts into mN smaller ones and activating mK of them, and isolating K_s experts as shared experts that are always activated.
+
+  ## 3 Architecture
+
+  Fine-grained expert segmentation keeps the total parameter count and computation constant while making far more combinations of activated experts possible.
+
+  Shared expert isolation captures common knowledge in the shared experts, mitigating redundancy among the routed experts.
+
+  ## 4 Results
+
+  DeepSeekMoE 2B achieves performance comparable to GShard 2.9B, which has 1.5x the expert parameters and computation.
+relationships:
+  - [dai_2024_deepseekmoe, Paper, INTRODUCES, DeepSeekMoE, ArchComponent, "DeepSeekMoE improves expert specialization with two strategies"]
+  - [DeepSeekMoE, ArchComponent, EXTENDS, Mixture-of-Experts, ArchComponent, "DeepSeekMoE improves expert specialization with two strategies: finely segmenting the experts"]
+  - [DeepSeekMoE, ArchComponent, REQUIRES, Fine-Grained Expert Segmentation, ArchComponent, "Fine-grained expert segmentation keeps the total parameter count and computation constant"]
+  - [DeepSeekMoE, ArchComponent, REQUIRES, Shared Expert Isolation, ArchComponent, "isolating K_s experts as shared experts that are always activated"]
+  - [Shared Expert Isolation, ArchComponent, MITIGATES, Expert Knowledge Redundancy, Bottleneck, "Shared expert isolation captures common knowledge in the shared experts, mitigating redundancy among the routed experts."]

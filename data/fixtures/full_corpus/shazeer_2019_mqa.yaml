@@ -1,0 +1,24 @@
+paper_id: shazeer_2019_mqa
+markdown: |
+  # Fast Transformer Decoding: One Write-Head is All You Need
+
+  {BANNER}
+
+  ## Abstract
+
+  Incremental decoding with multi-head attention is often slow because repeatedly loading the large key and value tensors is bound by memory bandwidth.
+
+  We propose multi-query attention, a variant where the keys and values are shared across all of the different attention heads.
+
+  ## 3 Multi-Query Attention
+
+  Multi-query attention keeps h query heads but uses a single key head and a single value head, which greatly reduces the size of the KV cache.
+
+  ## 4 Results
+
+  Multi-query attention gives much faster decoder inference with only minor quality degradation relative to the multi-head baseline.
+relationships:
+  - [shazeer_2019_mqa, Paper, INTRODUCES, Multi-Query Attention, ArchComponent, "We propose multi-query attention, a variant where the keys and values are shared across all of the different attention heads."]
+  - [Multi-Query Attention, ArchComponent, EXTENDS, Multi-Head Attention, ArchComponent, "a variant where the keys and values are shared across all of the different attention heads"]
+  - [Multi-Query Attention, ArchComponent, MITIGATES, KV Cache Memory Bandwidth Bottleneck, Bottleneck, "uses a single key head and a single value head, which greatly reduces the size of the KV cache"]
+  - [Multi-Head Attention, ArchComponent, CAUSES_BOTTLENECK, KV Cache Memory Bandwidth Bottleneck, Bottleneck, "Incremental decoding with multi-head attention is often slow because repeatedly loading the large key and value tensors is bound by memory bandwidth."]

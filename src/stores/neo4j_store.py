@@ -319,15 +319,55 @@ class Neo4jGraphStore:
     def has_entity(self, entity_id: str) -> bool:
         return bool(self._read("MATCH (e:Entity {entity_id: $id}) RETURN 1 AS x LIMIT 1", {"id": entity_id}))
 
+    def load_entities(self) -> List[ResolvedEntityNode]:
+        """All entity nodes, used to hydrate the query-time EntityResolver in live mode."""
+        rows = self._read(
+            "MATCH (e:Entity) RETURN e.entity_id AS entity_id, e.entity_type AS entity_type, "
+            "coalesce(e.canonical_name, e.title, e.entity_id) AS canonical_name, coalesce(e.aliases, []) AS aliases, "
+            "e.category AS category, coalesce(e.description, '') AS description", {})
+        out = []
+        for r in rows:
+            try:
+                out.append(ResolvedEntityNode(entity_id=r["entity_id"], entity_type=EntityType(r["entity_type"]),
+                                              canonical_name=r["canonical_name"], aliases=list(r["aliases"]),
+                                              category=r["category"], description=r.get("description") or ""))
+            except ValueError:
+                logger.warning("Skipping entity with unknown type: %s", r)
+        return out
+
     def neighbors(self, entity_id: str) -> List[Dict[str, Any]]:
         """1-hop semantic neighbors (both directions; excludes IN_PAPER / MENTIONED_IN plumbing)."""
         return self._read(
             "MATCH (e:Entity {entity_id: $id})-[r]-(o:Entity) WHERE NOT type(r) IN ['IN_PAPER', 'MENTIONED_IN'] "
             "RETURN startNode(r).entity_id AS source, type(r) AS relation_type, endNode(r).entity_id AS target, "
-            "o.entity_id AS neighbor, o.canonical_name AS neighbor_name, r.source_chunk_ids AS source_chunk_ids "
+            "o.entity_id AS neighbor, o.canonical_name AS neighbor_name, coalesce(r.source_chunk_ids, []) AS source_chunk_ids, "
+            "coalesce(r.evidence_quotes, []) AS evidence_quotes "
             "ORDER BY relation_type, neighbor",
             {"id": entity_id},
         )
+
+    def export_graph(self, include_chunks: bool = False) -> Dict[str, Any]:
+        """Whole graph for visualization (see `InMemoryGraphStore.export_graph` for the shape)."""
+        nodes = self._read(
+            "MATCH (e:Entity) OPTIONAL MATCH (e)-[m:MENTIONED_IN]->(:Chunk) "
+            "WITH e, count(m) AS mentions OPTIONAL MATCH (ch:Chunk)-[:IN_PAPER]->(e) "
+            "WITH e, mentions, count(ch) AS paper_chunks "
+            "RETURN e.entity_id AS entity_id, coalesce(e.canonical_name, e.title, e.entity_id) AS canonical_name, "
+            "coalesce(e.entity_type, CASE WHEN e:Paper THEN 'Paper' ELSE 'Entity' END) AS entity_type, "
+            "e.category AS category, coalesce(e.aliases, []) AS aliases, e.paper_id AS paper_id, "
+            "mentions + paper_chunks AS chunk_count ORDER BY entity_id", {})
+        rel_filter = "" if include_chunks else "WHERE NOT type(r) IN ['IN_PAPER', 'MENTIONED_IN'] "
+        edges = self._read(
+            "MATCH (s)-[r]->(t) " + rel_filter +
+            "RETURN coalesce(s.entity_id, s.chunk_id) AS source, type(r) AS relation_type, "
+            "coalesce(t.entity_id, t.chunk_id) AS target, coalesce(r.source_chunk_ids, []) AS source_chunk_ids, "
+            "coalesce(r.evidence_quotes, []) AS evidence_quotes ORDER BY source, relation_type, target", {})
+        if include_chunks:
+            nodes += self._read(
+                "MATCH (c:Chunk) RETURN c.chunk_id AS entity_id, c.chunk_id AS canonical_name, 'Chunk' AS entity_type, "
+                "null AS category, [] AS aliases, c.paper_id AS paper_id, c.section_path AS section_path, "
+                "0 AS chunk_count ORDER BY entity_id", {})
+        return {"nodes": nodes, "edges": edges}
 
     def delete_by_prefix(self, prefixes: Sequence[str]) -> None:
         """Remove benchmark/test data: entities and chunks whose id starts with any prefix."""
@@ -439,8 +479,42 @@ class InMemoryGraphStore:
             other = t if s == entity_id else s
             out.append({"source": s, "relation_type": rt, "target": t, "neighbor": other,
                         "neighbor_name": self.nodes.get(other, {}).get("canonical_name"),
-                        "source_chunk_ids": list(props.get("source_chunk_ids", []))})
+                        "source_chunk_ids": list(props.get("source_chunk_ids", [])),
+                        "evidence_quotes": list(props.get("evidence_quotes", []))})
         return sorted(out, key=lambda r: (r["relation_type"], r["neighbor"]))
+
+    def export_graph(self, include_chunks: bool = False) -> Dict[str, Any]:
+        """Whole graph for visualization.
+
+        nodes: Entity rows {entity_id, canonical_name, entity_type, category, aliases, paper_id, chunk_count}
+        (chunk_count = MENTIONED_IN links, or the paper's chunks for a Paper) plus, with include_chunks,
+        Chunk rows {entity_id: chunk_id, entity_type: "Chunk", paper_id, section_path}.
+        edges: {source, relation_type, target, source_chunk_ids, evidence_quotes}; IN_PAPER / MENTIONED_IN
+        plumbing only with include_chunks.
+        """
+        chunk_count: Dict[str, int] = {}
+        for (s, rt, t) in self.rels:
+            if rt == "MENTIONED_IN":
+                chunk_count[s] = chunk_count.get(s, 0) + 1
+            elif rt == "IN_PAPER":
+                chunk_count[t] = chunk_count.get(t, 0) + 1
+        nodes: List[Dict[str, Any]] = []
+        for nid, n in sorted(self.nodes.items()):
+            if "Entity" in n["labels"]:
+                nodes.append({"entity_id": nid, "canonical_name": n.get("canonical_name") or n.get("title") or nid,
+                              "entity_type": n.get("entity_type") or ("Paper" if "Paper" in n["labels"] else "Entity"),
+                              "category": n.get("category"), "aliases": list(n.get("aliases", [])),
+                              "paper_id": n.get("paper_id"), "chunk_count": chunk_count.get(nid, 0)})
+            elif include_chunks and "Chunk" in n["labels"]:
+                nodes.append({"entity_id": nid, "canonical_name": nid, "entity_type": "Chunk", "category": None,
+                              "aliases": [], "paper_id": n.get("paper_id"), "section_path": n.get("section_path"),
+                              "chunk_count": 0})
+        edges = [{"source": s, "relation_type": rt, "target": t,
+                  "source_chunk_ids": list(p.get("source_chunk_ids", [])),
+                  "evidence_quotes": list(p.get("evidence_quotes", []))}
+                 for (s, rt, t), p in self.rels.items()
+                 if include_chunks or rt not in ("IN_PAPER", "MENTIONED_IN")]
+        return {"nodes": nodes, "edges": sorted(edges, key=lambda e: (e["source"], e["relation_type"], e["target"]))}
 
     def find_paths(self, source_id: str, target_id: str, rel_type: str, hops: int) -> List[List[Dict[str, Any]]]:
         out: Dict[str, List[Tuple[str, Dict[str, Any]]]] = {}

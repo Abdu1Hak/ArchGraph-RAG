@@ -25,14 +25,18 @@ class OfflineCorpus:
     resolver: EntityResolver
 
 
-def build_offline_corpus(vector_store: Optional[InMemoryVectorStore] = None) -> OfflineCorpus:
-    """Run Phase 1 offline over the seed papers, then index chunks + resolved entity_ids for Phase 2."""
+def build_offline_corpus(vector_store: Optional[InMemoryVectorStore] = None, seed_only: bool = True) -> OfflineCorpus:
+    """Run Phase 1 offline, then index chunks + resolved entity_ids for Phase 2.
+
+    seed_only=True (default, used by every scorecard): the 12 seed papers, unchanged.
+    seed_only=False: all 50 manifest papers with the full-corpus fixtures and recordings.
+    """
     graph = InMemoryGraphStore()
-    extractor = GeminiGraphExtractor(ExtractionCache(":memory:"), llm_callable=RecordedExtractionLLM())
+    extractor = GeminiGraphExtractor(ExtractionCache(":memory:"), llm_callable=RecordedExtractionLLM(full_corpus=not seed_only))
     pipeline = Phase1IngestionPipeline(
-        extractor, graph, lambda p: load_or_synthesize_seed_markdown(p, prefer_cached=False)
+        extractor, graph, lambda p: load_or_synthesize_seed_markdown(p, prefer_cached=False, full_corpus=not seed_only)
     )
-    report = pipeline.run(load_manifest(seed_only=True), max_budget_usd=1.0)
+    report = pipeline.run(load_manifest(seed_only=seed_only), max_budget_usd=1.0)
     embedder = DeterministicMockEmbedder()
     vectors = vector_store or InMemoryVectorStore(embedder=embedder)
     vectors.index_chunks(report.chunks, report.mentions)

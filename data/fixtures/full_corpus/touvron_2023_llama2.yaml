@@ -1,0 +1,26 @@
+paper_id: touvron_2023_llama2
+markdown: |
+  # Llama 2: Open Foundation and Fine-Tuned Chat Models
+
+  {BANNER}
+
+  ## 2 Pretraining
+
+  Llama 2 is trained on 2 trillion tokens of publicly available data, 40% more than LLaMA-1, and doubles the context length to 4096 tokens.
+
+  Llama 2 keeps the LLaMA-1 architecture with pre-normalization using RMSNorm, the SwiGLU activation and rotary positional embeddings.
+
+  The 34B and 70B Llama 2 models use grouped-query attention to improve inference scalability.
+
+  ## 3 Fine-tuning
+
+  Llama 2-Chat is aligned with supervised fine-tuning followed by RLHF with rejection sampling and Proximal Policy Optimization (PPO).
+
+  Llama 2-Chat introduces Ghost Attention (GAtt) to help the model respect a system instruction across multi-turn dialogue.
+relationships:
+  - [touvron_2023_llama2, Paper, INTRODUCES, Llama 2, ModelFamily, "Llama 2 is trained on 2 trillion tokens of publicly available data"]
+  - [Llama 2, ModelFamily, EXTENDS, LLaMA-1, ModelFamily, "Llama 2 keeps the LLaMA-1 architecture"]
+  - [Llama 2, ModelFamily, ADOPTS_COMPONENT, Pre-RMSNorm, ArchComponent, "Llama 2 keeps the LLaMA-1 architecture with pre-normalization using RMSNorm"]
+  - [Llama 2, ModelFamily, ADOPTS_COMPONENT, Grouped-Query Attention, ArchComponent, "The 34B and 70B Llama 2 models use grouped-query attention to improve inference scalability."]
+  - [Llama 2, ModelFamily, ADOPTS_COMPONENT, PPO, TrainingMethod, "Llama 2-Chat is aligned with supervised fine-tuning followed by RLHF with rejection sampling and Proximal Policy Optimization (PPO)."]
+  - [Llama 2, ModelFamily, ADOPTS_COMPONENT, Ghost Attention, TrainingMethod, "Llama 2-Chat introduces Ghost Attention (GAtt)"]

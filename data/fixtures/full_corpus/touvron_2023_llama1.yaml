@@ -1,0 +1,15 @@
+# Full-corpus appendix for a seed paper (appended; the 12-paper text and chunk_ids are unchanged).
+paper_id: touvron_2023_llama1
+appendix: true
+markdown: |
+
+  ## 2.5 Normalization Placement
+
+  LLaMA's Pre-RMSNorm combines the Pre-LN placement of Xiong et al. (2020), normalizing the input of each sub-layer, with RMSNorm in place of LayerNorm.
+
+  Normalizing the input of each transformer sub-layer instead of its output, as GPT-3 also does, improves training stability.
+relationships:
+  - [Pre-RMSNorm, ArchComponent, EXTENDS, Pre-LN, ArchComponent, "LLaMA's Pre-RMSNorm combines the Pre-LN placement of Xiong et al. (2020)"]
+  - [Pre-RMSNorm, ArchComponent, REQUIRES, RMSNorm, ArchComponent, "with RMSNorm in place of LayerNorm"]
+  - [LLaMA, ModelFamily, ADOPTS_COMPONENT, Pre-RMSNorm, ArchComponent, "LLaMA's Pre-RMSNorm combines the Pre-LN placement"]
+  - [Pre-RMSNorm, ArchComponent, MITIGATES, Learning Rate Warm-up Instability, Bottleneck, "Normalizing the input of each transformer sub-layer instead of its output, as GPT-3 also does, improves training stability."]

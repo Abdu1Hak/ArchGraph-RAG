@@ -102,7 +102,7 @@ def verbalize_aggregates(result: TemplateResult) -> List[VerbalizedFact]:
         ids = tuple(dict.fromkeys(c for h in hops for c in h["source_chunk_ids"]))
         sources = ", ".join(sorted({_name(h, "source") for h in hops}))
         noun = "source" if agg["count"] == 1 else "sources"
-        facts.append(VerbalizedFact(f"{agg['target_name'] or agg['target']} is {passive} by {agg['count']} {noun} "
+        facts.append(VerbalizedFact(f"Corpus aggregate: {agg['target_name'] or agg['target']} is {passive} by {agg['count']} {noun} "
                                     f"({sources}) {cite(ids)}.", ids, "aggregate",
                                     tuple((h["source"], h["relation_type"], h["target"]) for h in hops)))
     return facts

@@ -1,0 +1,21 @@
+paper_id: press_2021_alibi
+markdown: |
+  # Train Short, Test Long: Attention with Linear Biases Enables Input Length Extrapolation
+
+  {BANNER}
+
+  ## Abstract
+
+  ALiBi does not add positional embeddings to word embeddings; instead, it biases query-key attention scores with a penalty that is proportional to their distance.
+
+  ## 3 Method
+
+  Each attention head uses a fixed, head-specific slope m drawn from a geometric sequence, and the bias -m * |i - j| is added to the attention logits before the softmax.
+
+  ## 4 Results
+
+  ALiBi trained on 1024 tokens extrapolates to inputs of 2048 tokens and achieves the same perplexity as a sinusoidal model trained on 2048 tokens, while training 11% faster and using 11% less memory.
+relationships:
+  - [press_2021_alibi, Paper, INTRODUCES, Attention with Linear Biases (ALiBi), ArchComponent, "ALiBi does not add positional embeddings to word embeddings"]
+  - [ALiBi, ArchComponent, REPLACES_IN, Sinusoidal Positional Encoding, ArchComponent, "ALiBi does not add positional embeddings to word embeddings; instead, it biases query-key attention scores", Transformer]
+  - [ALiBi, ArchComponent, MITIGATES, Length Extrapolation Failure, Bottleneck, "ALiBi trained on 1024 tokens extrapolates to inputs of 2048 tokens"]

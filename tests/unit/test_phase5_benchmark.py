@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections import Counter
 from dataclasses import replace
+import json
 
 import pytest
 
@@ -20,6 +21,7 @@ from src.evaluation.benchmark_runner import (
     strip_citations,
     summarize,
 )
+from src.evaluation.faithfulness import FaithfulnessReport, evaluate_faithfulness
 from src.generation.synthesizer import INSUFFICIENT_TEXT, GroundedAnswerSynthesizer, is_abstention
 from src.ingestion.offline_demo import build_offline_corpus
 
@@ -180,3 +182,147 @@ def test_runner_is_deterministic_and_complete(corpus, questions) -> None:
         assert a == b and len(a) == 5
     assert r1["systems"]["S3"]["summary"]["one_time_cost_usd"] > r1["systems"]["S2"]["summary"]["one_time_cost_usd"]
     assert r1["oracle"]["oracle_satisfiable"] == r1["oracle"]["answerable"] == 4
+
+
+# ---------------------------------------------------------------------------
+# Claim-level faithfulness & benchmark integration
+# ---------------------------------------------------------------------------
+
+
+def test_faithfulness_supported_claims_and_forward_attribution(corpus) -> None:
+    cids = [
+        "deepseek_2024_v2::s02::c00",
+        "dubey_2024_llama3::s01::c00",
+        "vaswani_2017_transformer::s04::c00",
+    ]
+    chunks = {c.chunk_id: c for c in corpus.vectors.fetch_chunks_by_ids(cids)}
+    answer = (
+        "Based on the retrieved evidence:\n"
+        "MLA compresses keys and values via W^{DKV}. "
+        "Compared with GQA, MLA reduces the KV cache by 93.3% [deepseek_2024_v2::s02::c00].\n"
+        "- Llama 3 uses a RoPE base frequency of 500,000 [dubey_2024_llama3::s01::c00].\n"
+        "- Transformers scale attention logits by 1/sqrt(d_k) [vaswani_2017_transformer::s04::c00]."
+    )
+    rep = evaluate_faithfulness(answer, chunks)
+    assert isinstance(rep, FaithfulnessReport)
+    assert rep.total_claims == 4 and rep.supported_claims == 4
+    assert rep.unsupported_claims == 0 and rep.numeric_mismatch_claims == 0
+    assert rep.faithfulness_score == 1.0
+    assert rep.claims[0].cited_ids == ["deepseek_2024_v2::s02::c00"]
+
+    trailing_uncited = evaluate_faithfulness(
+        "MLA reduces the KV cache by 93.3% [deepseek_2024_v2::s02::c00]. This trailing claim is uncited.",
+        chunks,
+    )
+    assert trailing_uncited.total_claims == 2 and trailing_uncited.supported_claims == 1
+    assert trailing_uncited.uncited_claims == 1 and trailing_uncited.faithfulness_score == 0.5
+
+
+def test_faithfulness_catches_fabricated_numbers_entities_and_negations(corpus) -> None:
+    cids = [
+        "deepseek_2024_v2::s02::c00",
+        "deepseek_2024_v3::s06::c00",
+        "su_2021_rope::s02::c00",
+        "touvron_2023_llama1::s04::c00",
+        "peng_2023_yarn::s04::c00",
+    ]
+    chunks = {c.chunk_id: c for c in corpus.vectors.fetch_chunks_by_ids(cids)}
+    answer = (
+        "- MLA reduces the KV cache by 93.3% [deepseek_2024_v2::s02::c00].\n"
+        "- MLA reduces the KV cache by 99.9% [deepseek_2024_v2::s02::c00].\n"
+        "- DeepSeek-V2 uses FlashAttention-3 for latent compression [deepseek_2024_v2::s02::c00].\n"
+        "- Chinchilla takes 2.788M H800 GPU hours for full training [deepseek_2024_v3::s06::c00].\n"
+        "- RoPE rotates the value vectors at every position [su_2021_rope::s02::c00].\n"
+        "- LLaMA uses grouped-query attention in every layer [touvron_2023_llama1::s04::c00].\n"
+        "- YaRN adds inference overhead when extending context [peng_2023_yarn::s04::c00]."
+    )
+    rep = evaluate_faithfulness(answer, chunks)
+    assert rep.total_claims == 7 and rep.supported_claims == 1
+    assert rep.unsupported_claims == 6 and rep.numeric_mismatch_claims == 1
+    assert rep.claims[0].supported is True
+    assert rep.claims[1].numeric_mismatch is True and "99.9%" in rep.claims[1].unmatched_numbers
+    assert rep.claims[2].entity_mismatch is True and "FlashAttention-3" in rep.claims[2].unmatched_entities
+    assert rep.claims[3].entity_mismatch is True and "Chinchilla" in rep.claims[3].unmatched_entities
+    assert rep.claims[4].negation_mismatch is True
+    assert rep.claims[5].negation_mismatch is True
+    assert rep.claims[6].negation_mismatch is True
+
+
+def test_faithfulness_refusals_abstentions_and_entailment_scorer(corpus) -> None:
+    chunks = {c.chunk_id: c for c in corpus.vectors.fetch_chunks_by_ids(["deepseek_2024_v2::s02::c00"])}
+    assert evaluate_faithfulness("I can only answer corpus questions.", chunks, refused=True).faithfulness_score is None
+    assert evaluate_faithfulness(INSUFFICIENT_TEXT, chunks, abstained=True).faithfulness_score is None
+    assert evaluate_faithfulness("Based on the retrieved evidence:", chunks).faithfulness_score is None
+
+    claim = "MLA cuts key-value cache memory by 93.3% [deepseek_2024_v2::s02::c00]."
+    assert evaluate_faithfulness(claim, chunks, entailment_scorer=lambda c, p: 0.92).faithfulness_score == 1.0
+    rejected = evaluate_faithfulness(claim, chunks, entailment_scorer=lambda c, p: 0.15)
+    assert rejected.faithfulness_score == 0.0 and rejected.claims[0].entailment_score == 0.15
+
+
+def test_grade_and_summarize_include_faithfulness_answerable(corpus) -> None:
+    ct = _text(corpus)
+    q = EvalQuestion(
+        id="Q1",
+        stratum="single_hop",
+        hop_count=1,
+        stress_type="direct",
+        question="By how much does MLA cut the KV cache?",
+        concept_groups=[["93.3%"]],
+        required_chunk_ids=["deepseek_2024_v2::s02::c00"],
+    )
+    oos = EvalQuestion(id="O1", stratum="out_of_scope", hop_count=0, stress_type="out_of_scope", question="weather in Tokyo?")
+    cid = "deepseek_2024_v2::s02::c00"
+
+    good_out = _out(f"MLA reduces the KV cache by 93.3% [{cid}].", cited_ids=[cid], context_chunk_ids=[cid])
+    bad_out = _out(f"MLA reduces the KV cache by 93.3% and 42% [{cid}].", cited_ids=[cid], context_chunk_ids=[cid])
+    oos_out = _out(INSUFFICIENT_TEXT, abstained=True)
+
+    g_good = grade(q, good_out, ct, "S")
+    g_bad = grade(q, bad_out, ct, "S")
+    g_oos = grade(oos, oos_out, ct, "S")
+    assert g_good.faithfulness_score == 1.0
+    assert g_bad.faithfulness_score == 0.0
+    assert g_oos.faithfulness_score is None
+
+    summary = summarize([q, oos], [g_good, g_bad, g_oos], [good_out, bad_out, oos_out])
+    assert summary["faithfulness_answerable"] == 50.0
+
+
+def test_benchmark_phase5_cli_supports_reranker_ablate_and_faithfulness(monkeypatch, tmp_path, capsys) -> None:
+    import scripts.benchmark_phase5 as bp5
+
+    created_kinds = []
+
+    class DummyReranker:
+        name = "dummy-onnx"
+
+        def score(self, query, passages):
+            return [0.5 for _ in passages]
+
+    def fake_create_reranker(kind="token-interaction", **kwargs):
+        created_kinds.append(kind)
+        return DummyReranker()
+
+    import src.stores.reranker as reranker_mod
+
+    monkeypatch.setattr(reranker_mod, "create_reranker", fake_create_reranker)
+
+    q_path = tmp_path / "qs.json"
+    out_path = tmp_path / "out.json"
+    qs = [q.model_dump() for q in load_questions() if q.id in ("S01", "T02", "O01")]
+    q_path.write_text(json.dumps({"questions": qs}), encoding="utf-8")
+
+    monkeypatch.setattr(
+        "sys.argv",
+        ["benchmark_phase5.py", "--questions", str(q_path), "--out", str(out_path), "--reranker", "onnx", "--ablate"],
+    )
+    rc = bp5.main()
+    stdout = capsys.readouterr().out
+    assert rc == 0
+    assert created_kinds == ["onnx"]
+    assert "Faithfulness" in stdout
+    assert "ABLATION:" in stdout
+    saved = json.loads(out_path.read_text(encoding="utf-8"))
+    assert {"S1", "S2", "S3", "S3-no-ppr", "S3-no-2turn", "S3-base"} <= set(saved["systems"])
+    assert saved["systems"]["S3"]["summary"]["faithfulness_answerable"] is not None

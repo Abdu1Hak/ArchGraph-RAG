@@ -1,0 +1,17 @@
+# Full-corpus appendix for a seed paper: appended after the 12-paper text, so seed chunk_ids are unchanged.
+paper_id: vaswani_2017_transformer
+appendix: true
+markdown: |
+
+  ## 5.4 Residual Connections and Layer Normalization
+
+  The output of each sub-layer is LayerNorm(x + Sublayer(x)): layer normalization is applied after the residual addition, an arrangement later called Post-LN.
+
+  Post-LN places LayerNorm on the main residual path between blocks, so gradients near the output layers are large at initialization and training relies on a learning-rate warm-up stage.
+
+  We use a warm-up of 4000 steps during which the learning rate increases linearly, and decrease it proportionally to the inverse square root of the step number afterwards.
+relationships:
+  - [vaswani_2017_transformer, Paper, INTRODUCES, Post-LN, ArchComponent, "layer normalization is applied after the residual addition, an arrangement later called Post-LN"]
+  - [Transformer, ModelFamily, ADOPTS_COMPONENT, Post-LN, ArchComponent, "The output of each sub-layer is LayerNorm(x + Sublayer(x)): layer normalization is applied after the residual addition"]
+  - [Post-LN, ArchComponent, REQUIRES, LayerNorm, ArchComponent, "The output of each sub-layer is LayerNorm(x + Sublayer(x))"]
+  - [Post-LN, ArchComponent, CAUSES_BOTTLENECK, Learning Rate Warm-up Instability, Bottleneck, "gradients near the output layers are large at initialization and training relies on a learning-rate warm-up stage"]

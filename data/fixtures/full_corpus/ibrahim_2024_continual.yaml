@@ -1,0 +1,24 @@
+paper_id: ibrahim_2024_continual
+markdown: |
+  # Simple and Scalable Strategies to Continually Pre-train Large Language Models
+
+  {BANNER}
+
+  ## Abstract
+
+  A simple and scalable combination of learning rate re-warming, learning rate re-decaying, and replay of previous data matches the performance of fully re-training from scratch on all available data.
+
+  ## 3 Method
+
+  Re-warming and re-decaying the learning rate is necessary to adapt to new data, but it increases forgetting of the previous distribution.
+
+  Replaying as little as 1% to 5% of the previous pre-training data mitigates forgetting under a weak distribution shift.
+
+  ## 4 Results
+
+  The strategies are validated for 405M and 10B parameter models when continuing pre-training from the English Pile to German Common Crawl.
+relationships:
+  - [ibrahim_2024_continual, Paper, INTRODUCES, Continual Pre-training, TrainingMethod, "A simple and scalable combination of learning rate re-warming, learning rate re-decaying, and replay of previous data"]
+  - [Continual Pre-training, TrainingMethod, REQUIRES, Data Replay, TrainingMethod, "learning rate re-decaying, and replay of previous data"]
+  - [Continual Pre-training, TrainingMethod, CAUSES_BOTTLENECK, Catastrophic Forgetting, Bottleneck, "Re-warming and re-decaying the learning rate is necessary to adapt to new data, but it increases forgetting"]
+  - [Data Replay, TrainingMethod, MITIGATES, Catastrophic Forgetting, Bottleneck, "Replaying as little as 1% to 5% of the previous pre-training data mitigates forgetting"]

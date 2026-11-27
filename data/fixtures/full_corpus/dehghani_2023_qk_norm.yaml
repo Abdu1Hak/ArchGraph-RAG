@@ -1,0 +1,23 @@
+paper_id: dehghani_2023_qk_norm
+markdown: |
+  # Scaling Vision Transformers to 22 Billion Parameters
+
+  {BANNER}
+
+  ## Abstract
+
+  ViT-22B is a 22-billion-parameter Vision Transformer trained with a recipe for highly efficient and stable training.
+
+  ## 3 Model
+
+  At this scale, attention logits in some heads grow without bound, producing nearly one-hot attention weights and a divergent training loss.
+
+  QK-Norm applies LayerNorm to the queries and keys before the dot-product attention, which keeps the attention logits bounded.
+
+  ViT-22B adopts QK-Norm in every attention layer, uses parallel attention and feed-forward layers, and omits biases in the QKV projections and LayerNorms.
+relationships:
+  - [dehghani_2023_qk_norm, Paper, INTRODUCES, ViT-22B, ModelFamily, "ViT-22B is a 22-billion-parameter Vision Transformer"]
+  - [dehghani_2023_qk_norm, Paper, INTRODUCES, QK-Norm, ArchComponent, "QK-Norm applies LayerNorm to the queries and keys before the dot-product attention"]
+  - [QK-Norm, ArchComponent, MITIGATES, Attention Logit Growth Instability, Bottleneck, "QK-Norm applies LayerNorm to the queries and keys before the dot-product attention, which keeps the attention logits bounded."]
+  - [QK-Norm, ArchComponent, REQUIRES, LayerNorm, ArchComponent, "QK-Norm applies LayerNorm to the queries and keys"]
+  - [ViT-22B, ModelFamily, ADOPTS_COMPONENT, QK-Norm, ArchComponent, "ViT-22B adopts QK-Norm in every attention layer"]

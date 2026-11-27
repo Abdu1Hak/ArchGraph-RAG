@@ -1,0 +1,22 @@
+paper_id: ding_2024_longrope
+markdown: |
+  # LongRoPE: Extending LLM Context Window Beyond 2 Million Tokens
+
+  {BANNER}
+
+  ## Abstract
+
+  LongRoPE extends the context window of pre-trained LLMs to 2048k tokens, with only up to 1k fine-tuning steps at training lengths within 256k.
+
+  ## 3 Method
+
+  LongRoPE uses an evolutionary search to find non-uniform rescaling factors for each RoPE dimension and for the initial token positions, rather than interpolating all dimensions uniformly.
+
+  A progressive extension strategy first fine-tunes a 256k-length model and then applies a second positional interpolation to reach 2048k.
+
+  LongRoPE readjusts the rescale factors at 8k length to recover performance in the original short context window.
+relationships:
+  - [ding_2024_longrope, Paper, INTRODUCES, LongRoPE, TrainingMethod, "LongRoPE extends the context window of pre-trained LLMs to 2048k tokens"]
+  - [LongRoPE, TrainingMethod, EXTENDS, Position Interpolation, TrainingMethod, "rather than interpolating all dimensions uniformly"]
+  - [LongRoPE, TrainingMethod, EXTENDS, Rotary Position Embedding, ArchComponent, "LongRoPE uses an evolutionary search to find non-uniform rescaling factors for each RoPE dimension"]
+  - [LongRoPE, TrainingMethod, MITIGATES, Length Extrapolation Failure, Bottleneck, "A progressive extension strategy first fine-tunes a 256k-length model and then applies a second positional interpolation to reach 2048k."]

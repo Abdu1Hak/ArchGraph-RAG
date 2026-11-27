@@ -1,0 +1,20 @@
+paper_id: hsieh_2024_ruler
+markdown: |
+  # RULER: What's the Real Context Size of Your Long-Context Language Models?
+
+  {BANNER}
+
+  ## Abstract
+
+  RULER is a synthetic benchmark with flexible configurations for evaluating long-context language models beyond simple needle-in-a-haystack retrieval.
+
+  ## 2 Tasks
+
+  RULER covers four task categories: retrieval, multi-hop tracing, aggregation, and question answering, at configurable sequence lengths.
+
+  ## 4 Results
+
+  Although almost all evaluated models achieve near-perfect accuracy on vanilla needle-in-a-haystack, only half of the models claiming 32K or more tokens maintain satisfactory performance at 32K on RULER.
+relationships:
+  - [hsieh_2024_ruler, Paper, INTRODUCES, RULER, BenchmarkOrDataset, "RULER is a synthetic benchmark with flexible configurations for evaluating long-context language models"]
+  - [RULER, BenchmarkOrDataset, EXTENDS, Needle-in-a-Haystack, BenchmarkOrDataset, "evaluating long-context language models beyond simple needle-in-a-haystack retrieval"]

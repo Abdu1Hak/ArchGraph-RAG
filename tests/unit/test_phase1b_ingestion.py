@@ -11,7 +11,7 @@ import httpx
 import pytest
 
 from src.ingestion.arxiv_fetcher import ArxivFetcher, PaperMeta, PdfDownloadError, load_manifest, load_or_synthesize_seed_markdown
-from src.ingestion.chunker import StructureAwareChunker
+from src.ingestion.chunker import StructureAwareChunker, strip_non_core_sections
 from src.ingestion.cost_estimator import BudgetExceededError, CostBudgetEstimator, ExtractionCache
 from src.ingestion.extractor import EXTRACTION_SYSTEM_PROMPT, GeminiGraphExtractor
 from src.ingestion.offline_fixtures import SYNTHETIC_BANNER, RecordedExtractionLLM
@@ -303,3 +303,205 @@ def test_pipeline_is_idempotent_and_builds_two_hop_chain() -> None:
         assert hop["source_chunk_ids"]
         assert any(q in store.get_chunk_text(cid) for cid in hop["source_chunk_ids"] for q in hop["evidence_quotes"])
     assert store.get_relationship("paper::deepseek_2024_v2", "INTRODUCES", "model_family::deepseek_v2") is not None
+
+
+# ---------------------------------------------------------------------------
+# Core-body filtering & chunk capping
+# ---------------------------------------------------------------------------
+
+
+_CORE_AND_BACK_MATTER_MD = """# Paper Title
+
+## Abstract
+
+Core abstract summarizing multi-head latent attention.
+
+## 1 Introduction
+
+Core introduction motivating KV cache compression.
+
+## 2 Background
+
+Core background on multi-head and grouped-query attention.
+
+## 3 Method and Architecture
+
+Core architectural details of latent KV projection.
+
+## 4 Experiments and Results
+
+Core benchmark results across sequence lengths.
+
+### 4.1 Impact of Block Size
+
+Core evaluation of block size impact on throughput.
+
+## 5 Ablations
+
+Core ablation study comparing latent dimensions.
+
+### 6. Conclusion, Limitations, and Future Directions
+
+Core conclusion summarizing findings and future directions.
+
+## Limitations
+
+Non-core standalone limitations section.
+
+## Acknowledgments
+
+Non-core acknowledgments.
+
+## References
+
+[1] Vaswani et al. Attention is all you need. 2017.
+
+## Appendix A
+
+Appendix details that should be excluded in core-body mode.
+"""
+
+
+@pytest.mark.parametrize("heading", [
+    "## References",
+    "## Bibliography",
+    "## Works Cited",
+    "## Literature Cited",
+    "## Acknowledgments",
+    "## Acknowledgements",
+    "## Ethics Statement",
+    "## Ethics",
+    "## Broader Impact",
+    "## Impact Statement",
+    "## Author Contributions",
+    "## Contributors",
+    "## Reproducibility Statement",
+    "## Limitations",
+    "## Appendix",
+    "## Appendices",
+    "## Supplementary Material",
+    "## Appendix A",
+    "# A. Proof Details",
+    "## B.1 Additional Plots",
+    "## A Additional Experiments",
+])
+def test_strip_non_core_sections_strips_all_back_matter_variants(heading: str) -> None:
+    md = "\n".join([
+        "# Paper",
+        "## Abstract",
+        "Abstract body.",
+        "## 1 Introduction",
+        "Intro body.",
+        "## 2 Method",
+        "Method body.",
+        "## 3 Conclusion",
+        "Conclusion body.",
+        heading,
+        "Trailing non-core content line 1.",
+        "Trailing non-core content line 2.",
+    ])
+    stripped, removed = strip_non_core_sections(md)
+    assert removed >= 3
+    assert "Conclusion body." in stripped
+    assert "Trailing non-core content" not in stripped
+
+
+def test_strip_non_core_sections_preserves_core_and_combined_conclusion() -> None:
+    stripped, removed = strip_non_core_sections(_CORE_AND_BACK_MATTER_MD)
+    assert removed > 0
+    for must_keep in (
+        "Core abstract",
+        "Core introduction",
+        "Core background",
+        "Core architectural details",
+        "Core benchmark results",
+        "Core evaluation of block size impact",
+        "Core ablation study",
+        "Core conclusion summarizing findings",
+    ):
+        assert must_keep in stripped
+    for must_drop in (
+        "Non-core standalone limitations section",
+        "Non-core acknowledgments",
+        "Vaswani et al.",
+        "Appendix details",
+    ):
+        assert must_drop not in stripped
+
+
+def test_strip_non_core_sections_respects_code_fences_min_position_and_roman_numerals() -> None:
+    fenced_and_roman = "\n".join([
+        "# I. Introduction",
+        "Intro body.",
+        "```markdown",
+        "## References",
+        "## Appendix A",
+        "```",
+        "~~~text",
+        "# A. Not an appendix",
+        "~~~",
+        "# II. Method",
+        "Method body.",
+        "# V. Conclusion",
+        "Conclusion body.",
+    ])
+    kept, removed = strip_non_core_sections(fenced_and_roman)
+    assert removed == 0 and kept == fenced_and_roman
+
+    early = "# References\n\nEarly mention in ToC.\n\n# 1 Introduction\n\nline\nline\nline\nline\nline\n"
+    kept_early, removed_early = strip_non_core_sections(early, min_position=0.25)
+    assert removed_early == 0 and kept_early == early
+
+
+def test_chunker_core_body_only_max_chunks_and_backward_compatibility() -> None:
+    default_chunker = StructureAwareChunker()
+    assert default_chunker.core_body_only is False
+    assert default_chunker.max_chunks_per_paper is None
+
+    default_chunks = default_chunker.chunk_paper("p", "Paper", 2024, "architecture", _CORE_AND_BACK_MATTER_MD)
+    default_text = " ".join(c.raw_text for c in default_chunks)
+    # Default mode strips References via strip_bibliography while keeping Limitations/Acknowledgments/Appendix A.
+    assert "Vaswani et al." not in default_text
+    assert "Non-core standalone limitations section." in default_text
+    assert "Appendix details" in default_text
+
+    core_chunker = StructureAwareChunker(core_body_only=True)
+    core_chunks = core_chunker.chunk_paper("p", "Paper", 2024, "architecture", _CORE_AND_BACK_MATTER_MD)
+    core_text = " ".join(c.raw_text for c in core_chunks)
+    assert len(core_chunks) < len(default_chunks)
+    assert "Core conclusion summarizing findings" in core_text
+    assert "Non-core standalone limitations section." not in core_text
+    assert "Appendix details" not in core_text
+
+    capped_chunker = StructureAwareChunker(core_body_only=True, max_chunks_per_paper=3)
+    capped_chunks = capped_chunker.chunk_paper("p", "Paper", 2024, "architecture", _CORE_AND_BACK_MATTER_MD)
+    assert len(capped_chunks) == 3
+    assert [c.chunk_id for c in capped_chunks] == [c.chunk_id for c in core_chunks[:3]]
+    assert [c.content_hash for c in capped_chunks] == [c.content_hash for c in core_chunks[:3]]
+
+    assert StructureAwareChunker(max_chunks_per_paper=0).chunk_paper("p", "P", 2024, "architecture", _CORE_AND_BACK_MATTER_MD) == []
+    with pytest.raises(ValueError):
+        StructureAwareChunker(max_chunks_per_paper=-1)
+
+
+def test_ingest_cli_manifest_and_core_body_flags() -> None:
+    from scripts.ingest_phase1 import parse_args
+
+    default_args = parse_args([])
+    assert default_args.seed_only is True and default_args.manifest is None
+    assert default_args.core_body_only is False and default_args.max_chunks_per_paper is None
+
+    all50_args = parse_args(["--all-50"])
+    assert all50_args.seed_only is False
+
+    manifest_args = parse_args(["--manifest", "data/manifest/corpus_35_papers.yaml", "--core-body-only", "--max-chunks-per-paper", "18"])
+    assert manifest_args.manifest == Path("data/manifest/corpus_35_papers.yaml")
+    assert manifest_args.seed_only is False
+    assert manifest_args.core_body_only is True
+    assert manifest_args.max_chunks_per_paper == 18
+
+    manifest_seed_args = parse_args(["--manifest", "data/manifest/corpus_35_papers.yaml", "--seed-only"])
+    assert manifest_seed_args.seed_only is True
+    assert len(load_manifest(manifest_path=manifest_args.manifest, seed_only=manifest_args.seed_only)) == 35
+    seed_papers = load_manifest(manifest_path=manifest_seed_args.manifest, seed_only=manifest_seed_args.seed_only)
+    assert len(seed_papers) == 9 and all(p.seed_set for p in seed_papers)

@@ -18,31 +18,33 @@ from __future__ import annotations
 from dataclasses import dataclass, field, replace
 import math
 import re
-from typing import Any, Dict, List, Mapping, Optional, Protocol, Sequence, Tuple, Union
+from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple, Union
 
 import numpy as np
 
 from src.ingestion.chunker import DocumentChunk
 from src.stores.embedders import DeterministicMockEmbedder, Embedder, GeminiEmbedder  # noqa: F401 (re-export)
+from src.stores.reranker import (  # noqa: F401 (re-export)
+    CrossEncoderReranker,
+    GeminiApiReranker,
+    OnnxCrossEncoderReranker,
+    TokenInteractionReranker,
+    create_reranker,
+    symbol_tokens,
+    tokenize,
+)
 
 DEFAULT_RRF_K = 60
-_STOPWORDS = {
-    "a", "an", "the", "of", "in", "on", "for", "to", "and", "or", "is", "are", "was", "be", "by", "with",
-    "what", "which", "how", "does", "do", "that", "this", "it", "its", "as", "at", "from", "use", "uses",
-    "used", "we", "our", "their", "than", "into", "per", "via", "about", "why", "when", "who",
-}
-_TOKEN_RE = re.compile(r"[a-z0-9]+(?:[.,][0-9]+)*")
-_SYMBOL_RE = re.compile(r"[^\s?!,;]*[\^_{}\\][^\s?!,;]*|\d[\d,.]*\d")
 
 
-def tokenize(text: str) -> List[str]:
-    """Lower-case lexical tokens; '500,000' -> '500000', 'W^{DKV}' -> ['w', 'dkv']; stopwords dropped."""
-    return [t.replace(",", "") for t in _TOKEN_RE.findall(text.lower()) if t not in _STOPWORDS]
+def embedder_id(embedder: Any) -> str:
+    """Stable identity of the embedding function (vectors from different embedders are not comparable)."""
+    return getattr(embedder, "name", None) or f"{type(embedder).__name__}@{getattr(embedder, 'dim', '?')}"
 
 
-def symbol_tokens(text: str) -> List[str]:
-    """Formula / number tokens that must match verbatim: 'W^{DKV}', '500,000', 'c_t^{KV}'."""
-    return [s.rstrip(".").lower() for s in _SYMBOL_RE.findall(text) if len(s) >= 3]
+def _norm_for_lookup(text: str) -> str:
+    t = re.sub(r"[-_\u2013\u2014]", " ", text.lower())
+    return re.sub(r"\s+", " ", t)
 
 
 @dataclass(frozen=True)
@@ -113,57 +115,6 @@ def rrf_fuse(rankings: Sequence[Sequence[str]], rrf_k: int = DEFAULT_RRF_K) -> L
 
 
 # ---------------------------------------------------------------------------
-# Stage-2 reranking
-# ---------------------------------------------------------------------------
-
-
-class CrossEncoderReranker(Protocol):
-    """Scores (query, passage) pairs jointly. Plug in a local cross-encoder or an API model."""
-
-    name: str
-
-    def score(self, query: str, passages: Sequence[str]) -> List[float]: ...
-
-
-class TokenInteractionReranker:
-    """Fast deterministic cross-scorer over the candidate set.
-
-    Per query term: idf (computed over the candidates) x saturated tf; plus a bonus for query
-    bigrams that appear adjacently in the passage, and a strong bonus for verbatim symbol tokens
-    ('W^{DKV}', '500,000'). Unlike RRF it sees query and passage together, so it can promote the
-    one candidate that contains the exact identifier the user typed.
-    """
-
-    name = "token-interaction"
-
-    def __init__(self, k1: float = 1.2, bigram_weight: float = 1.0, symbol_weight: float = 4.0) -> None:
-        self.k1, self.bigram_weight, self.symbol_weight = k1, bigram_weight, symbol_weight
-
-    def score(self, query: str, passages: Sequence[str]) -> List[float]:
-        q_terms = list(dict.fromkeys(tokenize(query)))
-        q_bigrams = set(zip(q_terms, q_terms[1:]))
-        q_symbols = symbol_tokens(query)
-        docs = [tokenize(p) for p in passages]
-        n = max(len(docs), 1)
-        df = {t: sum(1 for d in docs if t in d) for t in q_terms}
-        out = []
-        for passage, toks in zip(passages, docs):
-            tf: Dict[str, int] = {}
-            for t in toks:
-                tf[t] = tf.get(t, 0) + 1
-            s = 0.0
-            for t in q_terms:
-                if tf.get(t):
-                    idf = math.log(1 + (n - df[t] + 0.5) / (df[t] + 0.5))
-                    s += idf * tf[t] * (self.k1 + 1) / (tf[t] + self.k1)
-            s += self.bigram_weight * sum(1 for bg in zip(toks, toks[1:]) if bg in q_bigrams)
-            low = passage.lower()
-            s += self.symbol_weight * sum(1 for sym in q_symbols if sym in low)
-            out.append(s)
-        return out
-
-
-# ---------------------------------------------------------------------------
 # Shared base
 # ---------------------------------------------------------------------------
 
@@ -188,7 +139,7 @@ class _VectorStoreBase:
         """Stage 1: hybrid RRF top `candidate_k`. Stage 2: rerank (query, context_prefixed_text) pairs."""
         if candidate_k < top_k:
             raise ValueError("candidate_k must be >= top_k")
-        reranker = reranker or TokenInteractionReranker()
+        reranker = reranker or getattr(self, "default_reranker", None) or TokenInteractionReranker()
         cands = self.search_hybrid_rrf(query_text, top_k=candidate_k, rrf_k=rrf_k, ef_search=ef_search, filters=filters)
         scores = reranker.score(query_text, [c.context_prefixed_text for c in cands])
         order = sorted(range(len(cands)), key=lambda i: (-scores[i], cands[i].rank))
@@ -207,12 +158,16 @@ class _VectorStoreBase:
 class InMemoryVectorStore(_VectorStoreBase):
     """Exact cosine + Okapi BM25 + RRF over an in-process dict. Same interface as `PgVectorStore`."""
 
-    def __init__(self, embedder: Optional[Embedder] = None, bm25_k1: float = 1.5, bm25_b: float = 0.75) -> None:
+    def __init__(self, embedder: Optional[Embedder] = None, bm25_k1: float = 1.5, bm25_b: float = 0.75,
+                 default_reranker: Optional[CrossEncoderReranker] = None) -> None:
         self.embedder = embedder or DeterministicMockEmbedder()
+        self.default_reranker = default_reranker
         self.rows: Dict[str, RetrievedChunk] = {}
         self.vectors: Dict[str, np.ndarray] = {}
         self.k1, self.b = bm25_k1, bm25_b
         self._bm25: Optional[Tuple[Dict[str, Dict[str, int]], Dict[str, int], Dict[str, int], float]] = None
+        self._norm_text: Optional[Dict[str, str]] = None
+        self.row_embedder: Dict[str, str] = {}
 
     def init_schema(self) -> None:
         return None
@@ -223,13 +178,17 @@ class InMemoryVectorStore(_VectorStoreBase):
     def index_chunks(self, chunks: Sequence[DocumentChunk], entity_ids_by_chunk: Optional[Mapping[str, Sequence[str]]] = None) -> int:
         """Upsert by chunk_id; re-embeds only chunks whose content_hash changed. Returns #embedded."""
         ents = entity_ids_by_chunk or {}
-        changed = [c for c in chunks if c.chunk_id not in self.rows or self.rows[c.chunk_id].content_hash != c.content_hash]
+        model = embedder_id(self.embedder)
+        changed = [c for c in chunks if c.chunk_id not in self.rows or self.rows[c.chunk_id].content_hash != c.content_hash
+                   or self.row_embedder.get(c.chunk_id) != model]
         vecs = self.embedder.embed_documents([c.context_prefixed_text for c in changed], [c.content_hash for c in changed]) if changed else []
         for c, v in zip(changed, vecs):
             self.vectors[c.chunk_id] = np.asarray(v, dtype=np.float32)
+            self.row_embedder[c.chunk_id] = model
         for c in chunks:
             self.rows[c.chunk_id] = _row_from_chunk(c, ents.get(c.chunk_id, ()))
         self._bm25 = None
+        self._norm_text = None
         return len(changed)
 
     def _candidates(self, filters: Any) -> List[RetrievedChunk]:
@@ -300,6 +259,13 @@ class InMemoryVectorStore(_VectorStoreBase):
         """Graph -> Text bridge: rows in the requested order; unknown ids are skipped."""
         return [self.rows[c] for c in dict.fromkeys(chunk_ids) if c in self.rows]
 
+    def text_exists(self, normalized_phrase: str) -> bool:
+        """Whole-token phrase lookup over all indexed chunk text (lower-case, hyphens/underscores as spaces)."""
+        if self._norm_text is None or len(self._norm_text) != len(self.rows):
+            self._norm_text = {cid: _norm_for_lookup(r.context_prefixed_text) for cid, r in self.rows.items()}
+        pat = re.compile(r"(?<![a-z0-9])" + re.escape(normalized_phrase) + r"(?![a-z0-9])")
+        return any(pat.search(t) for t in self._norm_text.values())
+
 
 # ---------------------------------------------------------------------------
 # PostgreSQL + pgvector store
@@ -328,6 +294,7 @@ def schema_statements(dim: int = 768) -> List[str]:
     content_hash          TEXT NOT NULL,
     entity_ids            TEXT[] NOT NULL DEFAULT '{{}}',
     embedding             vector({dim}) NOT NULL,
+    embedding_model       TEXT NOT NULL DEFAULT '',
     tsv                   tsvector GENERATED ALWAYS AS (to_tsvector('english', context_prefixed_text)) STORED,
     updated_at            TIMESTAMPTZ NOT NULL DEFAULT now()
 )""",
@@ -337,15 +304,16 @@ def schema_statements(dim: int = 768) -> List[str]:
         "CREATE INDEX IF NOT EXISTS chunks_entity_ids_gin ON chunks USING gin (entity_ids)",
         "CREATE INDEX IF NOT EXISTS chunks_paper_id ON chunks (paper_id)",
         "CREATE INDEX IF NOT EXISTS chunks_pillar_year ON chunks (pillar, pub_year)",
+        "ALTER TABLE chunks ADD COLUMN IF NOT EXISTS embedding_model TEXT NOT NULL DEFAULT ''",
     ]
 
 
 _UPSERT_SQL = f"""
-INSERT INTO chunks ({", ".join(_COLUMNS)}, embedding)
-VALUES ({", ".join(f"%({c})s" for c in _COLUMNS)}, %(embedding)s::vector)
+INSERT INTO chunks ({", ".join(_COLUMNS)}, embedding, embedding_model)
+VALUES ({", ".join(f"%({c})s" for c in _COLUMNS)}, %(embedding)s::vector, %(embedding_model)s)
 ON CONFLICT (chunk_id) DO UPDATE SET
     {", ".join(f"{c} = EXCLUDED.{c}" for c in _COLUMNS if c != "chunk_id")},
-    embedding = EXCLUDED.embedding, updated_at = now()
+    embedding = EXCLUDED.embedding, embedding_model = EXCLUDED.embedding_model, updated_at = now()
 """
 
 
@@ -372,7 +340,7 @@ class PgVectorStore(_VectorStoreBase):
     """psycopg v3 store. Pass `connection` (tests) or a DSN (defaults to settings.postgres_dsn)."""
 
     def __init__(self, connection: Any = None, dsn: Optional[str] = None, embedder: Optional[Embedder] = None,
-                 dim: Optional[int] = None) -> None:
+                 dim: Optional[int] = None, default_reranker: Optional[CrossEncoderReranker] = None) -> None:
         if connection is None:
             import psycopg
 
@@ -381,6 +349,7 @@ class PgVectorStore(_VectorStoreBase):
             connection = psycopg.connect(dsn or settings.postgres_dsn)
         self.conn = connection
         self.embedder = embedder or DeterministicMockEmbedder()
+        self.default_reranker = default_reranker
         self.dim = int(dim or getattr(self.embedder, "dim", 768))
 
     def close(self) -> None:
@@ -407,10 +376,12 @@ class PgVectorStore(_VectorStoreBase):
 
     def index_chunks(self, chunks: Sequence[DocumentChunk], entity_ids_by_chunk: Optional[Mapping[str, Sequence[str]]] = None) -> int:
         ents = entity_ids_by_chunk or {}
-        existing = {r["chunk_id"]: r["content_hash"] for r in self._run(
-            [("SELECT chunk_id, content_hash FROM chunks WHERE chunk_id = ANY(%(ids)s)", {"ids": [c.chunk_id for c in chunks]})],
-            fetch=True)}
-        changed = [c for c in chunks if existing.get(c.chunk_id) != c.content_hash]
+        model = embedder_id(self.embedder)
+        existing = {r["chunk_id"]: (r["content_hash"], r["embedding_model"]) for r in self._run(
+            [("SELECT chunk_id, content_hash, embedding_model FROM chunks WHERE chunk_id = ANY(%(ids)s)",
+              {"ids": [c.chunk_id for c in chunks]})], fetch=True)}
+        # Re-embed when the text changed OR the row was embedded by a different embedder (e.g. mock -> Gemini).
+        changed = [c for c in chunks if existing.get(c.chunk_id) != (c.content_hash, model)]
         vecs = self.embedder.embed_documents([c.context_prefixed_text for c in changed], [c.content_hash for c in changed]) if changed else []
         stmts: List[Tuple[str, Optional[Dict[str, Any]]]] = []
         for c, v in zip(changed, vecs):
@@ -418,6 +389,7 @@ class PgVectorStore(_VectorStoreBase):
             params = {col: getattr(row, col) for col in _COLUMNS}
             params["entity_ids"] = list(row.entity_ids)
             params["embedding"] = _vec_literal(v)
+            params["embedding_model"] = model
             stmts.append((_UPSERT_SQL, params))
         changed_ids = {c.chunk_id for c in changed}
         for c in chunks:
@@ -427,6 +399,12 @@ class PgVectorStore(_VectorStoreBase):
         if stmts:
             self._run(stmts)
         return len(changed)
+
+    def count_other_embedders(self, model: Optional[str] = None) -> int:
+        """Rows whose vectors came from a different embedder than `model` (default: this store's)."""
+        rows = self._run([("SELECT count(*) AS n FROM chunks WHERE embedding_model <> %(m)s",
+                           {"m": model or embedder_id(self.embedder)})], fetch=True)
+        return int(rows[0]["n"]) if rows else 0
 
     def _to_rows(self, rows: List[Dict[str, Any]], mode: str, score_key: str = "score") -> List[RetrievedChunk]:
         out = []
@@ -494,6 +472,13 @@ ORDER BY f.score DESC, c.chunk_id LIMIT %(k)s"""
                           filters: Any = None) -> List[RetrievedChunk]:
         stmts = self.hybrid_statements(query_text, self.embedder.embed_query(query_text), top_k, rrf_k, ef_search, filters)
         return self._to_rows(self._run(stmts, fetch=True), "hybrid_rrf")
+
+    def text_exists(self, normalized_phrase: str) -> bool:
+        """Whole-token phrase lookup over all indexed chunk text, done in SQL (value bound as a parameter)."""
+        pattern = "(^|[^a-z0-9])" + re.escape(normalized_phrase) + "([^a-z0-9]|$)"
+        rows = self._run([("SELECT 1 AS hit FROM chunks WHERE regexp_replace(lower(context_prefixed_text), '[-_[:space:]]+', ' ', 'g') "
+                           "~ %(pat)s LIMIT 1", {"pat": pattern})], fetch=True)
+        return bool(rows)
 
     def fetch_chunks_by_ids(self, chunk_ids: Sequence[str]) -> List[RetrievedChunk]:
         ids = list(dict.fromkeys(chunk_ids))

@@ -1,0 +1,19 @@
+paper_id: dao_2023_flashattention2
+markdown: |
+  # FlashAttention-2: Faster Attention with Better Parallelism and Work Partitioning
+
+  {BANNER}
+
+  ## Abstract
+
+  FlashAttention-2 improves on FlashAttention with better work partitioning, reaching around 2x speedup and 50-73% of the theoretical maximum FLOPs/s on A100 GPUs.
+
+  ## 3 Method
+
+  FlashAttention-2 reduces the number of non-matmul FLOPs, parallelizes the attention computation over the sequence length dimension in addition to batch and heads, and distributes work between warps to reduce shared-memory communication.
+
+  FlashAttention-2 supports multi-query attention and grouped-query attention natively.
+relationships:
+  - [dao_2023_flashattention2, Paper, INTRODUCES, FlashAttention-2, InferenceTechnique, "FlashAttention-2 improves on FlashAttention with better work partitioning"]
+  - [FlashAttention-2, InferenceTechnique, EXTENDS, FlashAttention, InferenceTechnique, "FlashAttention-2 improves on FlashAttention with better work partitioning, reaching around 2x speedup", "~2x speedup"]
+  - [FlashAttention-2, InferenceTechnique, MITIGATES, Low GPU Occupancy, Bottleneck, "parallelizes the attention computation over the sequence length dimension in addition to batch and heads"]

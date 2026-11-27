@@ -25,9 +25,16 @@ from src.schema.ontology import RelationType
 from src.stores.pgvector_store import CrossEncoderReranker, TokenInteractionReranker
 
 PLUMBING_RELS = ("IN_PAPER", "MENTIONED_IN")
-T1_RELS = ("EXTENDS", "REPLACES_IN")
-T2_RELS = ("ADOPTS_COMPONENT", "MODIFIES_HYPERPARAMETER", "REPLACES_IN", "EVALUATED_ON", "OUTPERFORMS_ON", "REQUIRES")
-T3_RELS = ("MITIGATES", "CAUSES_BOTTLENECK", "ADOPTS_COMPONENT")
+# All 10 semantic edge types (excluding only plumbing edges IN_PAPER / MENTIONED_IN) so multi-hop
+# lineage and bottleneck templates never hit artificial walls across semantic relationships.
+T1_RELS = (
+    "EXTENDS", "REPLACES_IN", "REQUIRES", "ADOPTS_COMPONENT",
+    "CAUSES_BOTTLENECK", "MITIGATES", "MODIFIES_HYPERPARAMETER",
+    "OUTPERFORMS_ON", "EVALUATED_ON",
+)
+T2_RELS = ("ADOPTS_COMPONENT", "MODIFIES_HYPERPARAMETER", "REPLACES_IN", "EVALUATED_ON", "OUTPERFORMS_ON", "REQUIRES", "MITIGATES", "CAUSES_BOTTLENECK")
+T3_RELS = T1_RELS
+T3_MAX_HOPS = 3
 _ENTITY_ID_RE = re.compile(r"^[a-z_]+::[a-z0-9_]{1,160}$")
 
 
@@ -48,7 +55,7 @@ _HOPS = (
 
 CYPHER: Dict[CypherTemplateId, str] = {
     CypherTemplateId.T1_COMPONENT_LINEAGE: (
-        "MATCH p = (root:Entity {entity_id: $root_entity_id})-[:EXTENDS|REPLACES_IN*1..3]-(x:Entity) "
+        "MATCH p = (root:Entity {entity_id: $root_entity_id})-[:EXTENDS|REPLACES_IN|REQUIRES|ADOPTS_COMPONENT|CAUSES_BOTTLENECK|MITIGATES|MODIFIES_HYPERPARAMETER|OUTPERFORMS_ON|EVALUATED_ON*1..3]-(x:Entity) "
         f"RETURN {_HOPS} ORDER BY length(p), x.entity_id LIMIT $limit"
     ),
     CypherTemplateId.T2_MODEL_ARCHITECTURE_DIFF: (
@@ -57,7 +64,7 @@ CYPHER: Dict[CypherTemplateId, str] = {
         f"RETURN {_HOPS} ORDER BY m.entity_id, type(r), x.entity_id LIMIT $limit"
     ).replace("'", '"'),
     CypherTemplateId.T3_BOTTLENECK_SOLVERS: (
-        "MATCH p = (b:Entity {entity_id: $bottleneck_id})-[:MITIGATES|CAUSES_BOTTLENECK|ADOPTS_COMPONENT*1..2]-(x:Entity) "
+        "MATCH p = (b:Entity {entity_id: $bottleneck_id})-[:MITIGATES|CAUSES_BOTTLENECK|ADOPTS_COMPONENT|REQUIRES|EXTENDS*1..3]-(x:Entity) "
         f"RETURN {_HOPS} ORDER BY length(p), x.entity_id LIMIT $limit"
     ),
     CypherTemplateId.T4_BRIDGE_PATH_2_TO_3_HOP: (
@@ -134,6 +141,10 @@ def validate_params(template_id: CypherTemplateId, params: Dict[str, Any]) -> Di
         p["relation_type"] = RelationType(p["relation_type"]).value
         p.setdefault("category", None)
         p["min_year"] = int(p["min_year"]) if p.get("min_year") is not None else None
+        p["min_sources"] = max(1, int(p.get("min_sources", 1)))
+        if p.get("anchor_entity_id") is not None and (not isinstance(p["anchor_entity_id"], str) or len(p["anchor_entity_id"]) > 200):
+            raise ValueError("anchor_entity_id must be a string <= 200 chars")
+        p["limit"] = max(1, min(int(p.get("limit", 200)), 500))  # aggregation needs the whole relation
     if template_id == CypherTemplateId.T6_DYNAMIC_SUBGRAPH_FALLBACK:
         seeds = p["seed_entity_ids"]
         if isinstance(seeds, str) or not all(isinstance(s, str) for s in seeds):
@@ -209,7 +220,7 @@ def _run_in_memory(store: Any, tid: CypherTemplateId, p: Dict[str, Any]) -> List
     if tid == CypherTemplateId.T2_MODEL_ARCHITECTURE_DIFF:
         return [[_hop(store, k, v)] for k, v in store.rels.items() if k[0] in p["model_ids"] and k[1] in T2_RELS]
     if tid == CypherTemplateId.T3_BOTTLENECK_SOLVERS:
-        return _walk(_adjacency(store, T3_RELS), p["bottleneck_id"], 2)
+        return _walk(_adjacency(store, T3_RELS), p["bottleneck_id"], T3_MAX_HOPS)
     if tid == CypherTemplateId.T4_BRIDGE_PATH_2_TO_3_HOP:
         return _shortest_paths(_adjacency(store, None), p["entity_a_id"], p["entity_b_id"], 3)
     if tid == CypherTemplateId.T5_CORPUS_AGGREGATION:
@@ -251,13 +262,14 @@ class CypherTemplateCatalog:
         if hasattr(store, "rels"):
             paths = _run_in_memory(store, tid, p)[: p["limit"]]
         else:
-            cypher_params = {k: v for k, v in p.items() if k not in ("model_a_id", "model_b_id")}
+            cypher_params = {k: v for k, v in p.items() if k not in ("model_a_id", "model_b_id", "anchor_entity_id", "min_sources")}
             paths = [row["hops"] for row in store._read(CYPHER[tid], cypher_params)]
         result = TemplateResult(tid, p, paths)
         if tid == CypherTemplateId.T2_MODEL_ARCHITECTURE_DIFF:
             result.aggregates = self._diff(p, paths)
         if tid == CypherTemplateId.T5_CORPUS_AGGREGATION:
-            result.aggregates = self._aggregate(paths)
+            result.paths = self._filter_aggregation(result.paths, p.get("anchor_entity_id"), p["min_sources"])
+            result.aggregates = self._aggregate(result.paths)
         if tid == CypherTemplateId.T6_DYNAMIC_SUBGRAPH_FALLBACK:
             self._rerank_hops(result, query)
         return result
@@ -271,6 +283,36 @@ class CypherTemplateCatalog:
             return [{"model": m, "connected": sorted(v)} for m, v in by_model.items()]
         a, b = (by_model.get(m, set()) for m in p["model_ids"][:2])
         return [{"shared": sorted(a & b), "only_a": sorted(a - b), "only_b": sorted(b - a)}]
+
+    @staticmethod
+    def _filter_aggregation(paths: List[List[Dict[str, Any]]], anchor: Optional[str], min_sources: int) -> List[List[Dict[str, Any]]]:
+        """Python-side T5 filters, identical for both backends.
+
+        anchor: keep edges reachable from the anchor along the relation, direction-preserving and
+        transitive ("every variant that extends MHA, directly or through another variant": MLA->GQA->MHA;
+        "everything DeepSeek-V3 adopts": V3->X). min_sources: keep targets with >= N distinct sources.
+        """
+        if anchor:
+            keep, frontier_back, frontier_fwd = set(), {anchor}, {anchor}
+            for _ in range(len(paths)):
+                grew = False
+                for i, path in enumerate(paths):
+                    h = path[0]
+                    if i in keep:
+                        continue
+                    if h["target"] in frontier_back:
+                        keep.add(i); frontier_back.add(h["source"]); grew = True
+                    elif h["source"] in frontier_fwd:
+                        keep.add(i); frontier_fwd.add(h["target"]); grew = True
+                if not grew:
+                    break
+            paths = [p for i, p in enumerate(paths) if i in keep]
+        if min_sources > 1:
+            sources: Dict[str, Set[str]] = {}
+            for path in paths:
+                sources.setdefault(path[0]["target"], set()).add(path[0]["source"])
+            paths = [p for p in paths if len(sources[p[0]["target"]]) >= min_sources]
+        return paths
 
     @staticmethod
     def _aggregate(paths: List[List[Dict[str, Any]]]) -> List[Dict[str, Any]]:
@@ -288,6 +330,19 @@ class CypherTemplateCatalog:
         if not hops:
             return
         scores = self.reranker.score(query or "", [verbalize_hop(h) for h in hops])
-        order = sorted(range(len(hops)), key=lambda i: (-scores[i], hops[i]["relation_type"], hops[i]["target"]))[: self.t6_top_k]
-        result.paths = [[hops[i]] for i in order]
-        result.hop_scores = [float(scores[i]) for i in order]
+        ranked = sorted(range(len(hops)), key=lambda i: (-scores[i], hops[i]["relation_type"], hops[i]["target"]))
+        seeds = [s for s in (result.params.get("seed_entity_ids") or []) if not str(s).startswith("paper::")]
+        chosen: List[int] = []
+        # Seed stratification: guarantee each non-paper seed gets its top 2 highest-scoring hops
+        # before a single multi-word paper title seed can crowd out all t6_top_k slots.
+        for seed in seeds:
+            seed_hits = [i for i in ranked if (hops[i]["source"] == seed or hops[i]["target"] == seed) and i not in chosen]
+            chosen.extend(seed_hits[:2])
+        for i in ranked:
+            if len(chosen) >= max(self.t6_top_k, len(chosen)):
+                break
+            if i not in chosen:
+                chosen.append(i)
+        chosen = sorted(chosen[: max(self.t6_top_k, len(seeds) * 2)], key=lambda i: (-scores[i], hops[i]["relation_type"], hops[i]["target"]))
+        result.paths = [[hops[i]] for i in chosen]
+        result.hop_scores = [float(scores[i]) for i in chosen]

@@ -1,0 +1,22 @@
+paper_id: lin_2023_awq
+markdown: |
+  # AWQ: Activation-aware Weight Quantization for LLM Compression and Acceleration
+
+  {BANNER}
+
+  ## Abstract
+
+  AWQ observes that weights are not equally important: protecting only 1% of salient weight channels, chosen by activation magnitude rather than weight magnitude, greatly reduces quantization error.
+
+  ## 3 Method
+
+  Instead of keeping salient weights in mixed precision, AWQ scales up the salient channels before quantization, which keeps the kernel hardware-friendly with uniform low-bit weights.
+
+  Unlike GPTQ, AWQ does not rely on backpropagation or reconstruction, so it generalizes across domains without overfitting the calibration set.
+
+  ## 4 Results
+
+  With 4-bit weight-only quantization, the TinyChat inference framework achieves more than 3x speedup over the FP16 Hugging Face implementation on desktop and mobile GPUs.
+relationships:
+  - [lin_2023_awq, Paper, INTRODUCES, Activation-aware Weight Quantization (AWQ), InferenceTechnique, "AWQ observes that weights are not equally important"]
+  - [AWQ, InferenceTechnique, MITIGATES, LLM Weight Memory Footprint, Bottleneck, "With 4-bit weight-only quantization, the TinyChat inference framework achieves more than 3x speedup", ">3x speedup"]

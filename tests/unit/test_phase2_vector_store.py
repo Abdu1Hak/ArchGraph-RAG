@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import math
+import time
 from types import SimpleNamespace
 from typing import Any, List, Tuple
 
@@ -12,14 +14,22 @@ from src.ingestion.chunker import StructureAwareChunker
 from src.ingestion.offline_demo import build_offline_corpus
 from src.stores.embedders import DeterministicMockEmbedder, GeminiEmbedder
 from src.stores.pgvector_store import (
+    CrossEncoderReranker,
+    GeminiApiReranker,
     InMemoryVectorStore,
+    OnnxCrossEncoderReranker,
     PgVectorStore,
     TokenInteractionReranker,
+    create_reranker,
     filter_sql,
     rrf_fuse,
     schema_statements,
     symbol_tokens,
     tokenize,
+)
+from src.stores.reranker import (
+    OnnxCrossEncoderReranker as DirectOnnxCrossEncoderReranker,
+    create_reranker as direct_create_reranker,
 )
 
 
@@ -139,3 +149,124 @@ def test_offline_corpus_bridges(corpus) -> None:
     assert top.paper_id == "deepseek_2024_v2" and "arch_component::multi_head_latent_attention" in top.entity_ids
     assert any(n["neighbor"] == "arch_component::grouped_query_attention"
                for n in g.neighbors("arch_component::multi_head_latent_attention"))
+
+
+def test_create_reranker_factory_and_reexports() -> None:
+    assert OnnxCrossEncoderReranker is DirectOnnxCrossEncoderReranker
+    assert create_reranker is direct_create_reranker
+
+    tok_reranker = create_reranker("token-interaction")
+    assert isinstance(tok_reranker, TokenInteractionReranker)
+    assert isinstance(tok_reranker, CrossEncoderReranker)
+
+    onnx_reranker = create_reranker("onnx")
+    assert isinstance(onnx_reranker, OnnxCrossEncoderReranker)
+    assert isinstance(onnx_reranker, CrossEncoderReranker)
+
+    with pytest.raises(ValueError):
+        create_reranker("unknown-kind")
+
+
+def test_onnx_reranker_mock_session_declared_inputs_and_clamping() -> None:
+    seen_feeds: List[dict] = []
+
+    class _MockTok:
+        def encode_batch(self, pairs):
+            return [SimpleNamespace(ids=[101, 200, 102], attention_mask=[1, 1, 1], type_ids=[0, 0, 1]) for _ in pairs]
+
+    class _MockSession:
+        def get_inputs(self):
+            return [SimpleNamespace(name="input_ids"), SimpleNamespace(name="attention_mask")]
+
+        def run(self, output_names, feed):
+            seen_feeds.append(feed)
+            batch_n = feed["input_ids"].shape[0]
+            logits = np.array([[-100.0], [0.0], [100.0]], dtype=np.float32)[:batch_n]
+            return [logits]
+
+    reranker = create_reranker("onnx-cross-encoder", batch_size=2, session=_MockSession(), tokenizer=_MockTok())
+    assert isinstance(reranker, CrossEncoderReranker)
+    assert reranker.score("q", []) == []
+
+    scores = reranker.score("q", ["p1", "p2", "p3"])
+    assert len(scores) == 3
+    assert len(seen_feeds) == 2
+    assert all(set(f.keys()) == {"input_ids", "attention_mask"} for f in seen_feeds)
+    assert all(math.isfinite(s) and 0.0 < s < 1.0 for s in scores)
+    assert scores[0] < 1e-6 and scores[1] == pytest.approx(0.5)
+
+
+def test_onnx_cross_encoder_real_model_scores_and_latency(corpus) -> None:
+    reranker = OnnxCrossEncoderReranker()
+    assert isinstance(reranker, CrossEncoderReranker)
+    assert reranker.score("How does MLA work?", []) == []
+
+    query = "How does Multi-Head Latent Attention compress the KV cache?"
+    relevant = (
+        "Multi-Head Latent Attention (MLA) projects keys and values into a low-rank latent vector "
+        "c_t^{KV} = W^{DKV} h_t, reducing KV cache memory dramatically during inference."
+    )
+    irrelevant = "Sourdough bread requires wild yeast fermentation and baking in a preheated Dutch oven."
+    pair_scores = reranker.score(query, [relevant, irrelevant])
+    assert len(pair_scores) == 2
+    assert all(math.isfinite(s) and 0.0 < s < 1.0 for s in pair_scores)
+    assert pair_scores[0] > pair_scores[1] + 0.5
+
+    passages_15 = [r.context_prefixed_text for r in list(corpus.vectors.rows.values())[:15]]
+    assert len(passages_15) == 15
+    t0 = time.perf_counter()
+    scores_15 = reranker.score(query, passages_15)
+    latency_ms = (time.perf_counter() - t0) * 1000.0
+    assert len(scores_15) == 15
+    assert all(math.isfinite(s) and 0.0 < s < 1.0 for s in scores_15)
+    assert latency_ms < 10_000.0
+
+    hits = corpus.vectors.search_hybrid_reranked(query, top_k=3, candidate_k=15, reranker=reranker)
+    assert len(hits) == 3
+    assert hits[0].mode == f"hybrid_rrf+{reranker.name}"
+
+
+def test_gemini_api_reranker_batched_structured_json_mock_client() -> None:
+    calls: List[dict] = []
+
+    def create(**kw: Any) -> Any:
+        calls.append(kw)
+        return SimpleNamespace(
+            output_text='{"scores": [{"index": 1, "score": 0.94}, {"index": 0, "score": 0.08}, {"index": 2, "score": 1.25}]}',
+            usage=SimpleNamespace(total_input_tokens=120, total_output_tokens=24, total_tokens=144),
+        )
+
+    client = SimpleNamespace(interactions=SimpleNamespace(create=create))
+    reranker = create_reranker("api", client=client)
+    assert isinstance(reranker, GeminiApiReranker)
+    assert isinstance(reranker, CrossEncoderReranker)
+    assert reranker.score("q", []) == [] and len(calls) == 0
+
+    scores = reranker.score("How does MLA work?", ["irrelevant text", "MLA uses W^{DKV}", "also relevant"])
+    assert len(calls) == 1
+    assert calls[0]["model"] == "gemini-3.5-flash-lite"
+    assert calls[0]["response_format"]["mime_type"] == "application/json"
+    assert "schema" in calls[0]["response_format"]
+    assert scores == [0.08, 0.94, 1.0]
+    assert reranker.api_calls == 1
+
+
+def test_vector_store_uses_default_reranker_when_explicit_reranker_is_omitted(corpus) -> None:
+    calls: List[dict] = []
+
+    def create(**kw: Any) -> Any:
+        calls.append(kw)
+        return SimpleNamespace(
+            output_text='{"scores": [{"index": 0, "score": 0.91}, {"index": 1, "score": 0.42}]}',
+            usage=SimpleNamespace(total_input_tokens=80, total_output_tokens=16, total_tokens=96),
+        )
+
+    store = InMemoryVectorStore(default_reranker=create_reranker("api", client=SimpleNamespace(interactions=SimpleNamespace(create=create))))
+    first_two = list(corpus.report.chunks)[:2]
+    store.index_chunks(first_two)
+    hits = store.search_hybrid_reranked("attention", top_k=2, candidate_k=2)
+    assert len(calls) == 1
+    assert hits[0].mode.startswith("hybrid_rrf+api:")
+    assert hits[0].score == pytest.approx(0.91)
+
+

@@ -1,0 +1,27 @@
+paper_id: shao_2024_grpo
+markdown: |
+  # DeepSeekMath: Pushing the Limits of Mathematical Reasoning in Open Language Models
+
+  {BANNER}
+
+  ## Abstract
+
+  DeepSeekMath 7B continues pre-training DeepSeek-Coder-Base-v1.5 7B with 120B math-related tokens sourced from Common Crawl and reaches 51.7% on the competition-level MATH benchmark without external toolkits.
+
+  ## 4 Group Relative Policy Optimization
+
+  Group Relative Policy Optimization (GRPO) is a variant of Proximal Policy Optimization (PPO) that foregoes the value function (critic) model.
+
+  GRPO samples a group of outputs for each question and uses the average reward of the group as the baseline for estimating the advantage.
+
+  Because it drops the critic, GRPO significantly reduces training memory compared with PPO.
+
+  GRPO adds the KL divergence between the trained policy and the reference policy directly to the loss, rather than adding a per-token KL penalty to the reward.
+
+  DeepSeekMath-RL is trained with GRPO starting from DeepSeekMath-Instruct 7B.
+relationships:
+  - [shao_2024_grpo, Paper, INTRODUCES, Group Relative Policy Optimization (GRPO), TrainingMethod, "Group Relative Policy Optimization (GRPO) is a variant of Proximal Policy Optimization (PPO)"]
+  - [GRPO, TrainingMethod, EXTENDS, PPO, TrainingMethod, "Group Relative Policy Optimization (GRPO) is a variant of Proximal Policy Optimization (PPO) that foregoes the value function (critic) model."]
+  - [GRPO, TrainingMethod, MITIGATES, RLHF Critic Value Model Overhead, Bottleneck, "Because it drops the critic, GRPO significantly reduces training memory compared with PPO."]
+  - [DeepSeekMath, ModelFamily, ADOPTS_COMPONENT, GRPO, TrainingMethod, "DeepSeekMath-RL is trained with GRPO starting from DeepSeekMath-Instruct 7B."]
+  - [DeepSeekMath, ModelFamily, EVALUATED_ON, MATH, BenchmarkOrDataset, "reaches 51.7% on the competition-level MATH benchmark without external toolkits", "51.7%"]

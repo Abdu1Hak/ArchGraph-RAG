@@ -1,0 +1,23 @@
+paper_id: zhang_2019_rmsnorm
+markdown: |
+  # Root Mean Square Layer Normalization
+
+  {BANNER}
+
+  ## Abstract
+
+  RMSNorm regularizes the summed inputs to a neuron in one layer according to their root mean square (RMS), giving the model re-scaling invariance and implicit learning rate adaptation.
+
+  ## 3 Method
+
+  RMSNorm simplifies LayerNorm by removing the mean-centering operation and normalizing only by the root mean square statistic.
+
+  Partial RMSNorm (pRMSNorm) estimates the RMS statistic from only p% of the summed inputs.
+
+  ## 4 Results
+
+  RMSNorm achieves performance comparable to LayerNorm while reducing the running time by 7% to 64% on different models.
+relationships:
+  - [zhang_2019_rmsnorm, Paper, INTRODUCES, RMSNorm, ArchComponent, "RMSNorm regularizes the summed inputs to a neuron in one layer according to their root mean square (RMS)"]
+  - [RMSNorm, ArchComponent, EXTENDS, LayerNorm, ArchComponent, "RMSNorm simplifies LayerNorm by removing the mean-centering operation"]
+  - [RMSNorm, ArchComponent, MITIGATES, LayerNorm Computational Overhead, Bottleneck, "RMSNorm achieves performance comparable to LayerNorm while reducing the running time by 7% to 64%", "-7% to -64% running time"]

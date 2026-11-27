@@ -1,0 +1,25 @@
+paper_id: lieber_2024_jamba
+markdown: |
+  # Jamba: A Hybrid Transformer-Mamba Language Model
+
+  {BANNER}
+
+  ## Abstract
+
+  Jamba interleaves blocks of Transformer and Mamba layers, and adds mixture-of-experts to some of these layers to increase model capacity while keeping active parameter usage manageable.
+
+  ## 2 Architecture
+
+  Each Jamba block uses one attention layer for every seven Mamba layers, and applies MoE in every other layer with 16 experts and top-2 routing.
+
+  Because only a few layers use attention, the KV cache of Jamba is 8x smaller than a comparable Transformer, which lets a single 80GB GPU hold a 140K-token context.
+
+  ## 3 Results
+
+  Jamba supports context lengths of up to 256K tokens with 12B active and 52B total parameters.
+relationships:
+  - [lieber_2024_jamba, Paper, INTRODUCES, Jamba, ModelFamily, "Jamba interleaves blocks of Transformer and Mamba layers"]
+  - [Jamba, ModelFamily, EXTENDS, Mamba, ModelFamily, "Jamba interleaves blocks of Transformer and Mamba layers"]
+  - [Jamba, ModelFamily, ADOPTS_COMPONENT, Mixture-of-Experts, ArchComponent, "adds mixture-of-experts to some of these layers to increase model capacity"]
+  - [Jamba, ModelFamily, ADOPTS_COMPONENT, Top-2 Expert Routing, ArchComponent, "applies MoE in every other layer with 16 experts and top-2 routing"]
+  - [Jamba, ModelFamily, MITIGATES, KV Cache Memory Bandwidth Bottleneck, Bottleneck, "the KV cache of Jamba is 8x smaller than a comparable Transformer", "-8x KV cache"]

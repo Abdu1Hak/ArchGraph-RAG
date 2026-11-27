@@ -1,0 +1,24 @@
+paper_id: gu_2023_mamba
+markdown: |
+  # Mamba: Linear-Time Sequence Modeling with Selective State Spaces
+
+  {BANNER}
+
+  ## Abstract
+
+  Mamba is a simplified end-to-end architecture without attention or even MLP blocks, built on selective state space models (SSMs).
+
+  Selective SSMs let the SSM parameters be functions of the input, so the model can selectively propagate or forget information along the sequence length dimension.
+
+  ## 3 Hardware-aware Algorithm
+
+  Mamba computes the recurrence with a hardware-aware parallel scan that keeps the expanded state in SRAM instead of materializing it in HBM.
+
+  ## 4 Results
+
+  Mamba enjoys 5x higher inference throughput than Transformers and linear scaling in sequence length, and Mamba-3B matches Transformers twice its size.
+relationships:
+  - [gu_2023_mamba, Paper, INTRODUCES, Mamba, ModelFamily, "Mamba is a simplified end-to-end architecture without attention or even MLP blocks"]
+  - [Mamba, ModelFamily, ADOPTS_COMPONENT, Selective State Space Model, ArchComponent, "built on selective state space models (SSMs)"]
+  - [Mamba, ModelFamily, MITIGATES, Quadratic Self-Attention Complexity, Bottleneck, "Mamba enjoys 5x higher inference throughput than Transformers and linear scaling in sequence length", "linear in sequence length"]
+  - [Mamba, ModelFamily, REQUIRES, Hardware-aware Parallel Scan, InferenceTechnique, "Mamba computes the recurrence with a hardware-aware parallel scan"]

@@ -1,0 +1,27 @@
+paper_id: kaplan_2020_scaling
+markdown: |
+  # Scaling Laws for Neural Language Models
+
+  {BANNER}
+
+  ## Abstract
+
+  Language modeling cross-entropy loss scales as a power law with model size, dataset size, and the amount of compute used for training, with trends spanning more than seven orders of magnitude.
+
+  ## 2 Setup
+
+  The scaling laws are fit on decoder-only Transformers trained on the WebText2 dataset.
+
+  ## 6 Optimal Allocation of the Compute Budget
+
+  As the compute budget grows, most of the increase should go to model size: the optimal model size grows roughly as C^0.73 while the number of training tokens grows much more slowly.
+
+  Large models are significantly more sample-efficient, so compute-efficient training stops well before convergence.
+
+  ## 7 Discussion
+
+  Architectural details such as network width or depth have minimal effects within a wide range, compared with the total number of non-embedding parameters.
+relationships:
+  - [kaplan_2020_scaling, Paper, INTRODUCES, Kaplan Scaling Laws, TrainingMethod, "Language modeling cross-entropy loss scales as a power law with model size, dataset size, and the amount of compute"]
+  - [Kaplan Scaling Laws, TrainingMethod, EVALUATED_ON, WebText2, BenchmarkOrDataset, "The scaling laws are fit on decoder-only Transformers trained on the WebText2 dataset."]
+  - [Kaplan Scaling Laws, TrainingMethod, MODIFIES_HYPERPARAMETER, Compute-Optimal Model Size, HyperparameterOrMetric, "the optimal model size grows roughly as C^0.73", "N_opt ~ C^0.73"]

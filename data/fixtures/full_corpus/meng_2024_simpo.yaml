@@ -1,0 +1,26 @@
+paper_id: meng_2024_simpo
+markdown: |
+  # SimPO: Simple Preference Optimization with a Reference-Free Reward
+
+  {BANNER}
+
+  ## Abstract
+
+  SimPO uses the average log probability of a sequence as the implicit reward, which removes the need for a reference model and makes training more compute and memory efficient.
+
+  SimPO builds on Direct Preference Optimization (DPO) but drops its frozen reference policy.
+
+  ## 3 Method
+
+  SimPO adds a target reward margin gamma to the Bradley-Terry objective so that the reward of the winning response exceeds that of the losing response by at least gamma.
+
+  Length normalization of the reward prevents SimPO from exploiting response length.
+
+  ## 4 Results
+
+  SimPO outperforms DPO by up to 6.4 points on AlpacaEval 2 and by up to 7.5 points on Arena-Hard.
+relationships:
+  - [meng_2024_simpo, Paper, INTRODUCES, SimPO, TrainingMethod, "SimPO uses the average log probability of a sequence as the implicit reward"]
+  - [SimPO, TrainingMethod, EXTENDS, Direct Preference Optimization (DPO), TrainingMethod, "SimPO builds on Direct Preference Optimization (DPO) but drops its frozen reference policy."]
+  - [SimPO, TrainingMethod, MITIGATES, Reference Model Memory Overhead, Bottleneck, "which removes the need for a reference model and makes training more compute and memory efficient"]
+  - [SimPO, TrainingMethod, OUTPERFORMS_ON, AlpacaEval 2, BenchmarkOrDataset, "SimPO outperforms DPO by up to 6.4 points on AlpacaEval 2", "+6.4 over DPO"]

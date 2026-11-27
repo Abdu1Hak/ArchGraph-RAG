@@ -6,6 +6,7 @@ import hashlib
 from pathlib import Path
 import re
 import sqlite3
+import threading
 from typing import Dict, List, Optional, Protocol, Sequence, Union
 
 import numpy as np
@@ -59,6 +60,9 @@ class DeterministicMockEmbedder:
 
     def __init__(self, dim: int = 768, bow_weight: float = 0.35) -> None:
         self.dim = dim
+        self.name = f"mock-deterministic@{dim}"
+        # Concept-group vectors are not semantic enough for query-time Tier-3 entity linking.
+        self.supports_semantic_linking = False
         self.bow_weight = bow_weight
         self._basis: Dict[str, np.ndarray] = {}
         self._word_to_group = {w: g for g, words in CONCEPT_GROUPS.items() for w in words}
@@ -97,15 +101,21 @@ class GeminiEmbedder:
         dim: Optional[int] = None,
         cache_path: Union[str, Path, None] = None,
         batch_size: int = 64,
+        governor: object = None,
+        max_batch_tokens: int = 8_000,
     ) -> None:
         self.model = model or settings.embedding_model
         self.dim = dim or settings.embedding_dim
         self.batch_size = batch_size
+        self.max_batch_tokens = max_batch_tokens
+        self.governor = governor
         self._client = client
+        self.name = f"{self.model}@{self.dim}"
         path = cache_path if cache_path is not None else settings.cache_dir / "embeddings.sqlite"
         if str(path) != ":memory:":
             Path(path).parent.mkdir(parents=True, exist_ok=True)
-        self._db = sqlite3.connect(str(path))
+        self._db = sqlite3.connect(str(path), check_same_thread=False)
+        self._db_lock = threading.RLock()
         with self._db:
             self._db.execute(
                 "CREATE TABLE IF NOT EXISTS embeddings (cache_key TEXT PRIMARY KEY, vector BLOB NOT NULL)"
@@ -128,16 +138,37 @@ class GeminiEmbedder:
     def _call(self, texts: List[str], task: str) -> List[np.ndarray]:
         from google.genai import types
 
+        from src.ingestion.chunker import estimate_tokens
+        from src.ingestion.rate_limiter import get_governor
+        from src.usage import record_usage
+
+        est = sum(estimate_tokens(t) for t in texts)
+        governor = self.governor or get_governor()
+        waited = governor.wait_needed(self.model, est)
+
+        def call(model: str):
+            return self.client.models.embed_content(
+                model=model,
+                contents=texts,
+                config=types.EmbedContentConfig(output_dimensionality=self.dim, task_type=task),
+            )
+
+        # No fallback model for embeddings: a different model would produce incompatible vectors.
+        resp, _ = governor.call_with_fallback([self.model], call, est)
         self.api_calls += 1
-        resp = self.client.models.embed_content(
-            model=self.model,
-            contents=texts,
-            config=types.EmbedContentConfig(output_dimensionality=self.dim, task_type=task),
-        )
+        meta = getattr(resp, "usage_metadata", None)
+        actual = int(getattr(meta, "prompt_token_count", 0) or 0)
+        if actual:
+            governor.record_actual(self.model, actual)
+        record_usage("embedder", self.model, actual or est, 0, requests=1, estimated=not actual, waited_s=waited)
         # Truncated (MRL) Gemini embeddings are not unit-norm; normalize for cosine search.
         return [_unit(np.asarray(e.values, dtype=np.float32)) for e in resp.embeddings]
 
     def _embed_cached(self, texts: Sequence[str], hashes: Sequence[str], task: str) -> List[np.ndarray]:
+        with self._db_lock:
+            return self._embed_cached_locked(texts, hashes, task)
+
+    def _embed_cached_locked(self, texts: Sequence[str], hashes: Sequence[str], task: str) -> List[np.ndarray]:
         out: List[Optional[np.ndarray]] = [None] * len(texts)
         missing: List[int] = []
         for i, h in enumerate(hashes):
@@ -146,8 +177,12 @@ class GeminiEmbedder:
                 out[i] = np.frombuffer(row[0], dtype=np.float32)
             else:
                 missing.append(i)
-        for start in range(0, len(missing), self.batch_size):
-            idx = missing[start : start + self.batch_size]
+        hits = len(texts) - len(missing)
+        if hits:
+            from src.usage import record_usage
+
+            record_usage("embedder", self.model, cache_hits=hits)
+        for idx in self._batches(missing, texts):
             vecs = self._call([texts[i] for i in idx], task)
             with self._db:
                 for i, v in zip(idx, vecs):
@@ -155,9 +190,51 @@ class GeminiEmbedder:
                     self._db.execute("INSERT OR REPLACE INTO embeddings VALUES (?, ?)", (self._key(hashes[i], task), v.tobytes()))
         return [v for v in out if v is not None]
 
+    def _batches(self, indices: List[int], texts: Sequence[str]) -> List[List[int]]:
+        """Batches bounded by count AND estimated tokens, so one request never approaches the 30K TPM cap."""
+        from src.ingestion.chunker import estimate_tokens
+
+        batches: List[List[int]] = []
+        cur: List[int] = []
+        cur_tok = 0
+        for i in indices:
+            tok = estimate_tokens(texts[i])
+            if cur and (len(cur) >= self.batch_size or cur_tok + tok > self.max_batch_tokens):
+                batches.append(cur)
+                cur, cur_tok = [], 0
+            cur.append(i)
+            cur_tok += tok
+        if cur:
+            batches.append(cur)
+        return batches
+
     def embed_documents(self, texts: Sequence[str], content_hashes: Optional[Sequence[str]] = None) -> List[np.ndarray]:
         hashes = list(content_hashes) if content_hashes else [hashlib.sha256(t.encode()).hexdigest() for t in texts]
         return self._embed_cached(texts, hashes, "RETRIEVAL_DOCUMENT")
+
+    def lookup_cached_documents(self, texts: Sequence[str], content_hashes: Optional[Sequence[str]] = None) -> Dict[int, np.ndarray]:
+        """Return `{index: unit_vector}` for already-cached RETRIEVAL_DOCUMENT texts (0 API calls)."""
+        if not texts:
+            return {}
+        hashes = list(content_hashes) if content_hashes else [hashlib.sha256(t.encode()).hexdigest() for t in texts]
+        key_to_indices: Dict[str, List[int]] = {}
+        for i, h in enumerate(hashes):
+            key_to_indices.setdefault(self._key(h, "RETRIEVAL_DOCUMENT"), []).append(i)
+        keys = list(key_to_indices)
+        out: Dict[int, np.ndarray] = {}
+        with self._db_lock:
+            for start in range(0, len(keys), 500):
+                batch_keys = keys[start : start + 500]
+                placeholders = ",".join("?" for _ in batch_keys)
+                rows = self._db.execute(
+                    f"SELECT cache_key, vector FROM embeddings WHERE cache_key IN ({placeholders})",
+                    batch_keys,
+                ).fetchall()
+                for cache_key, blob in rows:
+                    vec = np.frombuffer(blob, dtype=np.float32)
+                    for idx in key_to_indices.get(cache_key, ()):
+                        out[idx] = vec
+        return out
 
     def embed_query(self, text: str) -> np.ndarray:
         return self._embed_cached([text], [hashlib.sha256(text.encode()).hexdigest()], "RETRIEVAL_QUERY")[0]

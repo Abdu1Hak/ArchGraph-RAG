@@ -1,0 +1,22 @@
+paper_id: lightman_2023_prm
+markdown: |
+  # Let's Verify Step by Step
+
+  {BANNER}
+
+  ## Abstract
+
+  Process supervision provides feedback for each intermediate reasoning step, whereas outcome supervision provides feedback only for the final result.
+
+  ## 3 Methods
+
+  We release PRM800K, a dataset of 800,000 step-level human feedback labels used to train our process reward model.
+
+  ## 4 Results
+
+  The process-supervised reward model solves 78% of problems from a representative subset of the MATH test set, significantly outperforming outcome supervision.
+relationships:
+  - [lightman_2023_prm, Paper, INTRODUCES, Process Reward Model (PRM), TrainingMethod, "We release PRM800K, a dataset of 800,000 step-level human feedback labels used to train our process reward model."]
+  - [Process Reward Model, TrainingMethod, EXTENDS, Reward Model, TrainingMethod, "Process supervision provides feedback for each intermediate reasoning step, whereas outcome supervision provides feedback only for the final result."]
+  - [Process Reward Model, TrainingMethod, REQUIRES, PRM800K, BenchmarkOrDataset, "a dataset of 800,000 step-level human feedback labels used to train our process reward model"]
+  - [Process Reward Model, TrainingMethod, OUTPERFORMS_ON, MATH, BenchmarkOrDataset, "The process-supervised reward model solves 78% of problems from a representative subset of the MATH test set", "78% solved"]

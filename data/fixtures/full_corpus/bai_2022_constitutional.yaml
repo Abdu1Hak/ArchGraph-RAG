@@ -1,0 +1,21 @@
+paper_id: bai_2022_constitutional
+markdown: |
+  # Constitutional AI: Harmlessness from AI Feedback
+
+  {BANNER}
+
+  ## Abstract
+
+  Constitutional AI trains a harmless AI assistant through self-improvement, without any human labels identifying harmful outputs; the only human oversight is a list of principles, the constitution.
+
+  ## 2 Method
+
+  In the supervised stage, the model critiques and revises its own responses according to the constitution, and the original model is fine-tuned on the revised responses.
+
+  In the RL stage, a preference model is trained on AI-generated comparisons, and the policy is trained with RL from AI Feedback (RLAIF).
+
+  RLAIF replaces the human preference labels of RLHF with AI-generated comparisons.
+relationships:
+  - [bai_2022_constitutional, Paper, INTRODUCES, Constitutional AI, TrainingMethod, "Constitutional AI trains a harmless AI assistant through self-improvement"]
+  - [Constitutional AI, TrainingMethod, ADOPTS_COMPONENT, RLAIF, TrainingMethod, "the policy is trained with RL from AI Feedback (RLAIF)"]
+  - [RLAIF, TrainingMethod, EXTENDS, RLHF, TrainingMethod, "RLAIF replaces the human preference labels of RLHF with AI-generated comparisons."]

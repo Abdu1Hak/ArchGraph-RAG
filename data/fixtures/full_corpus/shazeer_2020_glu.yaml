@@ -1,0 +1,28 @@
+paper_id: shazeer_2020_glu
+markdown: |
+  # GLU Variants Improve Transformer
+
+  {BANNER}
+
+  ## Abstract
+
+  Gated Linear Units consist of the component-wise product of two linear projections, one of which is first passed through a sigmoid function.
+
+  We test variants of GLU in the feed-forward sublayers of the Transformer, using nonlinear functions other than sigmoid such as GELU and Swish.
+
+  ## 2 Gated Linear Units in Transformers
+
+  SwiGLU replaces the first linear layer and the ReLU activation of the feed-forward network with Swish(xW) * xV, followed by the output projection.
+
+  To keep the parameter count and computation constant, the hidden dimension d_ff of the gated variants is reduced by a factor of 2/3.
+
+  ## 3 Results
+
+  GEGLU and SwiGLU produce the best perplexities on the span-filling pre-training objective and improve downstream GLUE and SuperGLUE scores.
+relationships:
+  - [shazeer_2020_glu, Paper, INTRODUCES, SwiGLU, ArchComponent, "We test variants of GLU in the feed-forward sublayers of the Transformer"]
+  - [shazeer_2020_glu, Paper, INTRODUCES, GeGLU, ArchComponent, "We test variants of GLU in the feed-forward sublayers of the Transformer"]
+  - [SwiGLU, ArchComponent, EXTENDS, Gated Linear Unit, ArchComponent, "using nonlinear functions other than sigmoid such as GELU and Swish"]
+  - [GeGLU, ArchComponent, EXTENDS, Gated Linear Unit, ArchComponent, "using nonlinear functions other than sigmoid such as GELU and Swish"]
+  - [SwiGLU, ArchComponent, REPLACES_IN, ReLU, ArchComponent, "SwiGLU replaces the first linear layer and the ReLU activation of the feed-forward network", Transformer FFN]
+  - [SwiGLU, ArchComponent, EVALUATED_ON, GLUE, BenchmarkOrDataset, "GEGLU and SwiGLU produce the best perplexities on the span-filling pre-training objective and improve downstream GLUE and SuperGLUE scores."]

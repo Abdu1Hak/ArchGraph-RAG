@@ -42,7 +42,7 @@ from dataclasses import dataclass
 from difflib import SequenceMatcher
 from pathlib import Path
 import re
-from typing import Callable, Dict, Iterable, List, Optional, Set, Tuple
+from typing import Any, Callable, Dict, Iterable, List, Optional, Set, Tuple
 import numpy as np
 import yaml
 
@@ -143,6 +143,11 @@ def is_acronym_match(short_str: str, long_str: str) -> bool:
     s = re.sub(r"[^a-zA-Z0-9]", "", short_str).lower()
     if len(s) < 2:
         return False
+    return s in acronym_variants(long_str)
+
+
+def acronym_variants(long_str: str) -> Set[str]:
+    """Every initialism `is_acronym_match` accepts for `long_str`."""
     variants: Set[str] = set()
     for splitter in (r"[\s\-]+", r"\s+"):
         raw_words = [w for w in re.split(splitter, long_str.strip()) if w]
@@ -159,7 +164,7 @@ def is_acronym_match(short_str: str, long_str: str) -> bool:
             variants.add(initials)
             if len(words) >= 3:
                 variants.add(words[0][:2] + initials[1:])
-    return s in variants
+    return variants
 
 
 def split_name_and_parenthetical_acronym(
@@ -242,6 +247,16 @@ def has_version_conflict(name_a: str, name_b: str) -> bool:
     return True
 
 
+def _signature_conflict(sig_a: Iterable[str], sig_b: Iterable[str]) -> bool:
+    """`has_version_conflict` on precomputed signatures."""
+    sig_a, sig_b = set(sig_a), set(sig_b)
+    if sig_a == sig_b:
+        return False
+    if not sig_a or not sig_b:
+        return (sig_a or sig_b) != {"v:1"}
+    return True
+
+
 def is_contrastive_sibling(name_a: str, name_b: str) -> bool:
     """True if the names share context but differ in exactly one dissimilar token.
 
@@ -301,6 +316,82 @@ def slugify_entity_id(entity_type: EntityType, canonical_name: str) -> str:
     return f"{prefix}::{slug}"
 
 
+# Query-time linking: words that never carry entity identity in a user question.
+_QUERY_STOPWORDS = {
+    "how", "what", "which", "why", "when", "where", "who", "whom", "whose", "does", "did", "do", "is", "are", "was",
+    "were", "be", "been", "being", "has", "have", "had", "can", "could", "would", "should", "will", "may", "might",
+    "the", "a", "an", "of", "in", "on", "at", "to", "for", "from", "by", "with", "into", "onto", "and", "or", "but",
+    "then", "than", "that", "this", "these", "those", "it", "its", "their", "there", "them", "they", "each", "every",
+    "between", "versus", "vs", "compare", "compared", "explain", "describe", "trace", "evolve", "evolved", "evolution",
+    "lineage", "change", "changed", "become", "became", "give", "show", "list", "name", "about", "use", "used", "uses",
+    "using", "paper", "papers", "via", "also", "both", "all", "any", "some", "same", "other", "s", "please", "tell",
+    "me", "we", "our", "you", "your", "i", "so", "as", "if", "not", "no", "yes", "much", "many", "more", "most",
+}
+# Generic head words dropped from a phrase before lexical comparison ('post-norm layer' ~ 'post-norm').
+_QUERY_GENERIC_TOKENS = {
+    "layer", "model", "method", "technique", "mechanism", "component", "approach", "architecture", "design",
+    "placement", "variant", "version", "scheme", "module", "block", "idea", "concept", "strategy",
+}
+_QUERY_WORD_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9\-\.']*")
+TIER2_QUERY_THRESHOLD = 0.88
+
+
+@dataclass
+class QueryEntityLink:
+    """One query-time link from a user phrase to a graph node (shown in routing telemetry and the UI)."""
+
+    phrase: str
+    entity_id: str
+    canonical_name: str
+    tier: str  # TIER_1_EXACT | TIER_1_PAPER_INTRODUCES | TIER_2_LEXICAL | TIER_3_SEMANTIC (+ _PAPER_INTRODUCES)
+    score: float
+    matched_surface: str = ""
+
+
+def extract_query_phrases(question: str, max_phrases: int = 8, max_tokens: int = 6) -> List[str]:
+    """Candidate entity phrases: maximal runs of non-stopword tokens ('post-norm layer', 'pre-norm layer')."""
+    runs: List[List[str]] = [[]]
+    for raw in _QUERY_WORD_RE.findall(question):
+        word = re.sub(r"'s$", "", raw.strip(".-'"))
+        if not word or word.lower() in _QUERY_STOPWORDS:
+            if runs[-1]:
+                runs.append([])
+            continue
+        runs[-1].append(word)
+    out: List[str] = []
+    for run in runs:
+        content = [w for w in run if w.lower() not in _QUERY_GENERIC_TOKENS]
+        if not content:
+            continue
+        phrase = " ".join(run[:max_tokens])
+        if phrase.lower() not in {p.lower() for p in out}:
+            out.append(phrase)
+    return out[:max_phrases]
+
+
+def _content_tokens(text: str) -> List[str]:
+    return [t for t in mention_tokens(text) if t not in _QUERY_STOPWORDS]
+
+
+# Opposed modifiers: a phrase carrying one side never links to a node that only carries the other side
+# ('pre-norm' -> 'Post-LN', 'multi-query' -> 'Multi-Head Attention'). Embeddings rate these pairs ~0.95.
+_CONTRAST_PAIRS = (("pre", "post"), ("head", "query"), ("encoder", "decoder"), ("absolute", "relative"),
+                   ("dense", "sparse"), ("single", "multi"), ("online", "offline"))
+
+
+def _contrast_conflict(phrase_tokens: Set[str], node_surfaces: Iterable[str]) -> bool:
+    return _contrast_conflict_tokens(phrase_tokens, {t for s in node_surfaces for t in mention_tokens(s)})
+
+
+def _contrast_conflict_tokens(phrase_tokens: Set[str], node_tokens: Iterable[str]) -> bool:
+    node_tokens = set(node_tokens)
+    for a, b in _CONTRAST_PAIRS:
+        for x, y in ((a, b), (b, a)):
+            if x in phrase_tokens and y in node_tokens and x not in node_tokens:
+                return True
+    return False
+
+
 @dataclass
 class ResolutionDecisionLog:
     """Audit trail record for every entity resolution decision (useful for debugging & Phase 5)."""
@@ -349,6 +440,14 @@ class EntityResolver:
         # Lazily built mention index: token tuple -> entity_ids
         self._mention_index: Optional[Dict[Tuple[str, ...], Set[str]]] = None
         self._mention_max_len = 0
+        # Query-time linking: paper_entity_id -> concept ids it INTRODUCES (recorded during resolution)
+        self.paper_introduces: Dict[str, List[str]] = {}
+        # Query-time Tier 3 cache: entity_id -> (node representation text, unit vector)
+        self.query_node_embeddings: Dict[str, Tuple[str, np.ndarray]] = {}
+        self.allow_live_node_embed: bool = True
+        self._paper_mention_index: Optional[Dict[Tuple[str, ...], Set[str]]] = None
+        self._paper_mention_max_len = 0
+        self._query_feature_cache: Dict[str, Tuple[tuple, Dict[str, object]]] = {}
 
         if seed_aliases_path and seed_aliases_path.exists():
             self.load_seed_aliases(seed_aliases_path)
@@ -419,6 +518,7 @@ class EntityResolver:
         self.compact_alias_index.setdefault((node.entity_type, key.replace(" ", "")), node.entity_id)
         self.global_alias_index.setdefault(key, node.entity_id)
         self._mention_index = None
+        self._paper_mention_index = None
 
     def _register_node(self, node: ResolvedEntityNode) -> None:
         """Register a canonical node and index all its surface forms."""
@@ -692,6 +792,11 @@ class EntityResolver:
         )
         if src_entity.entity_id == tgt_entity.entity_id:
             return None
+        if (rel.relation_type.value == "INTRODUCES" and src_entity.entity_type == EntityType.PAPER
+                and tgt_entity.entity_type in (EntityType.MODEL_FAMILY, EntityType.ARCH_COMPONENT)):
+            intro = self.paper_introduces.setdefault(src_entity.entity_id, [])
+            if tgt_entity.entity_id not in intro:
+                intro.append(tgt_entity.entity_id)
 
         return ResolvedGraphEdge(
             source_entity_id=src_entity.entity_id,
@@ -756,6 +861,273 @@ class EntityResolver:
     def resolve_Text_mentions_in_chunk(self, raw_text: str) -> List[str]:
         """Backward-compatible alias of `resolve_text_mentions_in_chunk`."""
         return self.resolve_text_mentions_in_chunk(raw_text)
+
+    # ------------------------------------------------------------------
+    # Query-time entity linking (user questions -> graph nodes)
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _paper_surface_ok(key: str) -> bool:
+        """Paper surfaces are linkable only if multi-word or >= 4 characters ('GQA' alone is too ambiguous)."""
+        return len(key.split()) >= 2 or len(key.replace(" ", "")) >= 4
+
+    def _build_paper_mention_index(self) -> Dict[Tuple[str, ...], Set[str]]:
+        concept_keys = {k for (etype, k) in self.alias_index if etype != EntityType.PAPER}
+        index: Dict[Tuple[str, ...], Set[str]] = {}
+        max_len = 0
+        for node in self.nodes.values():
+            if node.entity_type != EntityType.PAPER:
+                continue
+            for surface in [node.canonical_name] + list(node.aliases):
+                key = normalize_surface_key(surface)
+                # A short title that is also a concept name ('GQA', 'DeepSeek-V2', 'LLaMA') names the concept.
+                if not key or key in concept_keys or "_" in surface or not self._paper_surface_ok(key):
+                    continue
+                toks = tuple(mention_tokens(surface))
+                if toks:
+                    index.setdefault(toks, set()).add(node.entity_id)
+                    max_len = max(max_len, len(toks))
+        self._paper_mention_max_len = max_len
+        return index
+
+    def find_paper_mentions(self, text: str) -> List[str]:
+        """Paper entity_ids whose title or distinctive short title occurs in `text` (longest span wins)."""
+        if self._paper_mention_index is None:
+            self._paper_mention_index = self._build_paper_mention_index()
+        index, tokens = self._paper_mention_index, mention_tokens(text)
+        spans: List[Tuple[int, int, Set[str]]] = []
+        for start in range(len(tokens)):
+            for length in range(1, min(self._paper_mention_max_len, len(tokens) - start) + 1):
+                ids = index.get(tuple(tokens[start : start + length]))
+                if ids:
+                    spans.append((start, start + length, ids))
+        spans.sort(key=lambda s: (-(s[1] - s[0]), s[0]))
+        taken = [False] * len(tokens)
+        found: List[str] = []
+        for start, end, ids in spans:
+            if any(taken[start:end]):
+                continue
+            for i in range(start, end):
+                taken[i] = True
+            found.extend(sorted(i for i in ids if i not in found))
+        return found
+
+    def _paper_links(self, paper_id: str, phrase: str, tier: str, score: float, surface: str,
+                     introduces_fn: Optional[Callable[[str], List[str]]],
+                     accept: Callable[[str], bool]) -> List[QueryEntityLink]:
+        """The paper node plus every ModelFamily / ArchComponent the paper INTRODUCES."""
+        links = [QueryEntityLink(phrase, paper_id, self.nodes[paper_id].canonical_name, tier, round(score, 4), surface)]
+        introduced = introduces_fn(paper_id) if introduces_fn is not None else self.paper_introduces.get(paper_id, [])
+        for eid in introduced:
+            if eid != paper_id and accept(eid) and eid not in {l.entity_id for l in links}:
+                name = self.nodes[eid].canonical_name if eid in self.nodes else eid
+                links.append(QueryEntityLink(phrase, eid, name, f"{tier}_PAPER_INTRODUCES", round(score, 4), surface))
+        return links
+
+    def _query_features(self, node: ResolvedEntityNode) -> Dict[str, object]:
+        """Per-node Tier-2 features, cached until the node's names/description change."""
+        stamp = (node.canonical_name, tuple(node.aliases), node.description, node.category)
+        cached = self._query_feature_cache.get(node.entity_id)
+        if cached is not None and cached[0] == stamp:
+            return cached[1]
+        surfaces = []
+        for s in [node.canonical_name] + list(node.aliases):
+            ns = normalize_surface_key(s)
+            if not ns or "_" in s:
+                continue  # paper_id aliases are not natural-language surfaces
+            toks = [t for t in _content_tokens(s) if t not in _QUERY_GENERIC_TOKENS]
+            acr = frozenset(acronym_variants(s)) if " " in ns and node.entity_type != EntityType.PAPER else frozenset()
+            surfaces.append((s, ns, ns.replace(" ", ""), frozenset(toks), len(toks), acr))
+        feats: Dict[str, object] = {
+            "sig": frozenset(extract_version_signature(node.canonical_name)),
+            "surfaces": surfaces,
+            "tokens": frozenset(t for s in [node.canonical_name] + list(node.aliases) for t in mention_tokens(s)),
+            "context": frozenset(_content_tokens(f"{node.description} {node.category or ''}")),
+        }
+        self._query_feature_cache[node.entity_id] = (stamp, feats)
+        return feats
+
+    def _tier2_query_rank(self, phrase: str, allow_papers: bool) -> List[Tuple[float, str, str]]:
+        """(score, entity_id, matched_surface) sorted best-first; lexical + token/description overlap."""
+        core_toks = [t for t in _content_tokens(phrase) if t not in _QUERY_GENERIC_TOKENS] or _content_tokens(phrase)
+        if not core_toks:
+            return []
+        core = " ".join(core_toks)
+        core_compact = core.replace(" ", "")
+        core_set = set(core_toks)
+        phrase_sig = frozenset(extract_version_signature(phrase))
+        sm_spaced, sm_compact = SequenceMatcher(None), SequenceMatcher(None)
+        sm_spaced.set_seq2(core)
+        sm_compact.set_seq2(core_compact)
+        floor = TIER2_QUERY_THRESHOLD - 0.04
+        core_acronym = core_compact if len(core_toks) == 1 and len(core_compact) >= 3 else ""
+        ranked: List[Tuple[float, str, str]] = []
+        for node in self.nodes.values():
+            if node.entity_type == EntityType.PAPER and not allow_papers:
+                continue
+            f = self._query_features(node)
+            if _signature_conflict(phrase_sig, f["sig"]):
+                continue  # 'GPT-4' never fuzzy-matches 'GPT-3'
+            if _contrast_conflict_tokens(core_set, f["tokens"]):
+                continue  # 'pre norm' never matches a node named only 'post norm'
+            best, best_surface = 0.0, ""
+            for s, ns, cs, surf_toks, n_toks, acr in f["surfaces"]:
+                score = 0.0
+                # Only a ratio that could still clear the threshold (after the +0.04 context bonus) is computed.
+                sm_spaced.set_seq1(ns)
+                if sm_spaced.real_quick_ratio() >= floor and sm_spaced.quick_ratio() >= floor:
+                    score = sm_spaced.ratio()
+                sm_compact.set_seq1(cs)
+                if sm_compact.real_quick_ratio() >= floor and sm_compact.quick_ratio() >= floor:
+                    score = max(score, sm_compact.ratio())
+                if core_compact != cs and (core_compact in cs or cs in core_compact):
+                    score = min(score, 0.8)  # 'training' is not 'uptraining'; 'attention' is not 'flashattention'
+                if core_acronym and core_acronym in acr:
+                    score = max(score, 0.95)
+                if n_toks >= 2 and surf_toks <= core_set and n_toks * 2 >= len(core_set):
+                    score = max(score, 0.9 + 0.05 * n_toks / len(core_set))
+                if score > best:
+                    best, best_surface = score, s
+            if best < floor or is_contrastive_sibling(core, best_surface):
+                continue
+            best += 0.04 * len(core_set & f["context"]) / len(core_set)  # description/category overlap: tie-breaker
+            ranked.append((round(min(best, 1.0), 4), node.entity_id, best_surface))
+        ranked.sort(key=lambda r: (-r[0], r[1]))
+        return ranked
+
+    @staticmethod
+    def query_node_text(node: ResolvedEntityNode) -> str:
+        return f"{node.canonical_name}: {node.description} ({', '.join(node.aliases)})"
+
+    def load_cached_query_node_embeddings(self, embedder: Any) -> int:
+        """Load pre-embedded node vectors from `embedder` SQLite cache (0 API calls)."""
+        lookup = getattr(embedder, "lookup_cached_documents", None)
+        if lookup is None:
+            return 0
+        nodes = list(self.nodes.values())
+        texts = [self.query_node_text(n) for n in nodes]
+        cached = lookup(texts)
+        loaded = 0
+        for idx, vec in cached.items():
+            node = nodes[idx]
+            arr = np.asarray(vec, dtype=np.float32)
+            norm = float(np.linalg.norm(arr))
+            self.query_node_embeddings[node.entity_id] = (texts[idx], arr / norm if norm > 0 else arr)
+            loaded += 1
+        return loaded
+
+    def prewarm_query_node_embeddings(self, embed_fn: Callable[[List[str]], List[Any]], batch_size: int = 128) -> int:
+        """Embed any missing entity node representations up front so live queries never stall."""
+        missing = [
+            n for n in self.nodes.values()
+            if self.query_node_embeddings.get(n.entity_id, ("",))[0] != self.query_node_text(n)
+        ]
+        if not missing:
+            return 0
+        embedded = 0
+        for start in range(0, len(missing), max(1, int(batch_size))):
+            batch = missing[start : start + max(1, int(batch_size))]
+            texts = [self.query_node_text(n) for n in batch]
+            for n, text, vec in zip(batch, texts, embed_fn(texts)):
+                arr = np.asarray(vec, dtype=np.float32)
+                norm = float(np.linalg.norm(arr))
+                self.query_node_embeddings[n.entity_id] = (text, arr / norm if norm > 0 else arr)
+                embedded += 1
+        return embedded
+
+    def _tier3_query_rank(self, phrase: str, embed_fn: Callable[[List[str]], List[List[float]]],
+                          allow_papers: bool) -> List[Tuple[float, str]]:
+        nodes = [n for n in self.nodes.values() if allow_papers or n.entity_type != EntityType.PAPER]
+        missing = [n for n in nodes if self.query_node_embeddings.get(n.entity_id, ("",))[0] != self.query_node_text(n)]
+        if missing and self.allow_live_node_embed:
+            texts = [self.query_node_text(n) for n in missing]
+            for n, text, vec in zip(missing, texts, embed_fn(texts)):
+                arr = np.asarray(vec, dtype=np.float32)
+                norm = float(np.linalg.norm(arr))
+                self.query_node_embeddings[n.entity_id] = (text, arr / norm if norm > 0 else arr)
+        available = [n for n in nodes if n.entity_id in self.query_node_embeddings]
+        if not available:
+            return []
+        q = np.asarray(embed_fn([phrase])[0], dtype=np.float32)
+        qn = float(np.linalg.norm(q))
+        if qn == 0:
+            return []
+        q = q / qn
+        ranked = [(float(np.dot(q, self.query_node_embeddings[n.entity_id][1])), n.entity_id) for n in available]
+        ranked.sort(key=lambda r: (-r[0], r[1]))
+        return ranked
+
+    def link_query_entity_detailed(
+        self,
+        phrase: str,
+        allow_papers: bool = True,
+        min_semantic_sim: float = 0.78,
+        embed_fn: Optional[Callable[[List[str]], List[List[float]]]] = None,
+        candidate_filter: Optional[Callable[[str], bool]] = None,
+        introduces_fn: Optional[Callable[[str], List[str]]] = None,
+    ) -> List[QueryEntityLink]:
+        """Link a free-text question phrase to graph nodes: Tier 1 exact -> Tier 2 lexical -> Tier 3 semantic.
+
+        Unlike `resolve_entity` (ingestion) this is untyped: the phrase can name any EntityType, including a
+        Paper by its title, in which case the concepts that paper INTRODUCES are linked too. Every tier keeps
+        the hard version guard, and Tier 3 also refuses contrastive siblings. Returns [] when nothing passes.
+        """
+        phrase = re.sub(r"\s+", " ", phrase or "").strip(" ?.,;:!\"'")
+        key = normalize_surface_key(phrase)
+        if len(key.replace(" ", "")) < 2:
+            return []
+        accept = candidate_filter or (lambda _eid: True)
+
+        # TIER 1: exact normalized / compact key across all entity types
+        concepts: List[str] = []
+        papers: List[str] = []
+        for etype in EntityType:
+            for eid in (self.alias_index.get((etype, key)), self.compact_alias_index.get((etype, key.replace(" ", "")))):
+                if not eid or eid in concepts or eid in papers or not accept(eid):
+                    continue
+                if etype == EntityType.PAPER:
+                    if allow_papers and self._paper_surface_ok(key):
+                        papers.append(eid)
+                elif not has_version_conflict(phrase, self.nodes[eid].canonical_name):
+                    concepts.append(eid)
+        if concepts:
+            return [QueryEntityLink(phrase, e, self.nodes[e].canonical_name, "TIER_1_EXACT", 1.0, phrase) for e in concepts]
+        if papers:
+            return self._paper_links(papers[0], phrase, "TIER_1_EXACT", 1.0, phrase, introduces_fn, accept)
+
+        # TIER 2: fuzzy lexical + token / description overlap (version guard + sibling guard inside)
+        for score, eid, surface in self._tier2_query_rank(phrase, allow_papers):
+            if score < TIER2_QUERY_THRESHOLD:
+                break
+            if accept(eid):
+                if self.nodes[eid].entity_type == EntityType.PAPER:
+                    return self._paper_links(eid, phrase, "TIER_2_LEXICAL", score, surface, introduces_fn, accept)
+                return [QueryEntityLink(phrase, eid, self.nodes[eid].canonical_name, "TIER_2_LEXICAL", score, surface)]
+
+        # TIER 3: embedding cosine similarity against cached node representations. Single-word phrases are
+        # excluded: real embedders score 'trained' ~ 'Uptraining' (0.85) and 'DeepSeek' ~ 'DeepSeekMath' (0.89).
+        fn = embed_fn or self.embed_fn
+        core_toks = [t for t in _content_tokens(phrase) if t not in _QUERY_GENERIC_TOKENS]
+        if fn is not None and len(core_toks) >= 2:
+            for sim, eid in self._tier3_query_rank(phrase, fn, allow_papers):
+                if sim < min_semantic_sim:
+                    break  # below the semantic floor: reject rather than guess
+                node = self.nodes[eid]
+                if has_version_conflict(phrase, node.canonical_name):
+                    continue
+                if _contrast_conflict(set(_content_tokens(phrase)), [node.canonical_name] + list(node.aliases)):
+                    continue
+                if accept(eid):
+                    text = self.query_node_text(node)
+                    if node.entity_type == EntityType.PAPER:
+                        return self._paper_links(eid, phrase, "TIER_3_SEMANTIC", sim, text, introduces_fn, accept)
+                    return [QueryEntityLink(phrase, eid, node.canonical_name, "TIER_3_SEMANTIC", round(sim, 4), text)]
+        return []
+
+    def link_query_entity(self, phrase: str, allow_papers: bool = True, min_semantic_sim: float = 0.78,
+                          **kwargs) -> List[str]:
+        """entity_ids for a question phrase (see `link_query_entity_detailed`)."""
+        return [l.entity_id for l in self.link_query_entity_detailed(phrase, allow_papers, min_semantic_sim, **kwargs)]
 
     @staticmethod
     def _record_provenance(

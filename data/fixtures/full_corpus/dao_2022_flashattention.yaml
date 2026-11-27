@@ -1,0 +1,27 @@
+paper_id: dao_2022_flashattention
+markdown: |
+  # FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness
+
+  {BANNER}
+
+  ## Abstract
+
+  FlashAttention is an IO-aware exact attention algorithm that uses tiling to reduce the number of memory reads and writes between GPU high bandwidth memory (HBM) and on-chip SRAM.
+
+  ## 2 Background
+
+  Standard attention implementations materialize the N x N attention matrix in HBM, so attention is bottlenecked by memory accesses rather than by FLOPs.
+
+  ## 3 Method
+
+  FlashAttention never materializes the N x N attention matrix in HBM: it computes the softmax incrementally over blocks and recomputes attention in the backward pass.
+
+  Its memory footprint is linear in sequence length, and it performs O(N^2 d^2 / M) HBM accesses, where M is the SRAM size.
+
+  ## 4 Results
+
+  FlashAttention trains GPT-2 3x faster than the HuggingFace implementation and gives a 15% end-to-end wall-clock speedup on BERT-large.
+relationships:
+  - [dao_2022_flashattention, Paper, INTRODUCES, FlashAttention, InferenceTechnique, "FlashAttention is an IO-aware exact attention algorithm that uses tiling"]
+  - [FlashAttention, InferenceTechnique, MITIGATES, HBM Read/Write Materialization Overhead, Bottleneck, "FlashAttention never materializes the N x N attention matrix in HBM"]
+  - [Multi-Head Attention, ArchComponent, CAUSES_BOTTLENECK, HBM Read/Write Materialization Overhead, Bottleneck, "Standard attention implementations materialize the N x N attention matrix in HBM, so attention is bottlenecked by memory accesses rather than by FLOPs."]

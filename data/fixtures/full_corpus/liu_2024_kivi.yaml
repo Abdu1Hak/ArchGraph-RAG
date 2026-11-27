@@ -1,0 +1,20 @@
+paper_id: liu_2024_kivi
+markdown: |
+  # KIVI: A Tuning-Free Asymmetric 2bit Quantization for KV Cache
+
+  {BANNER}
+
+  ## Abstract
+
+  KIVI is a tuning-free 2bit KV cache quantization algorithm that quantizes the key cache per-channel and the value cache per-token.
+
+  ## 3 Analysis
+
+  The key cache has a few outlier channels with large magnitudes, while the value cache shows no fixed outlier pattern, which is why keys and values need different quantization axes.
+
+  ## 4 Results
+
+  KIVI lets Llama, Falcon and Mistral models keep almost the same quality while using 2.6x less peak memory, enabling up to 4x larger batch sizes and 2.35x-3.47x higher throughput.
+relationships:
+  - [liu_2024_kivi, Paper, INTRODUCES, KIVI, InferenceTechnique, "KIVI is a tuning-free 2bit KV cache quantization algorithm"]
+  - [KIVI, InferenceTechnique, MITIGATES, KV Cache Memory Bandwidth Bottleneck, Bottleneck, "using 2.6x less peak memory, enabling up to 4x larger batch sizes", "-2.6x peak memory"]

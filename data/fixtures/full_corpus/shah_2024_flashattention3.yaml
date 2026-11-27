@@ -1,0 +1,19 @@
+paper_id: shah_2024_flashattention3
+markdown: |
+  # FlashAttention-3: Fast and Accurate Attention with Asynchrony and Low-precision
+
+  {BANNER}
+
+  ## Abstract
+
+  FlashAttention-3 speeds up attention on Hopper GPUs by exploiting asynchrony of the Tensor Cores and TMA through warp-specialization, interleaving block-wise matmul and softmax operations, and block quantization with incoherent processing for FP8.
+
+  ## 4 Results
+
+  FlashAttention-3 reaches up to 740 TFLOPs/s (75% utilization) in FP16 on H100 GPUs, 1.5-2.0x faster than FlashAttention-2.
+
+  In FP8, FlashAttention-3 reaches close to 1.2 PFLOPs/s with 2.6x lower numerical error than a baseline FP8 attention.
+relationships:
+  - [shah_2024_flashattention3, Paper, INTRODUCES, FlashAttention-3, InferenceTechnique, "FlashAttention-3 speeds up attention on Hopper GPUs"]
+  - [FlashAttention-3, InferenceTechnique, EXTENDS, FlashAttention-2, InferenceTechnique, "FlashAttention-3 reaches up to 740 TFLOPs/s (75% utilization) in FP16 on H100 GPUs, 1.5-2.0x faster than FlashAttention-2.", "1.5-2.0x faster"]
+  - [FlashAttention-3, InferenceTechnique, ADOPTS_COMPONENT, FP8 Block Quantization, InferenceTechnique, "block quantization with incoherent processing for FP8"]

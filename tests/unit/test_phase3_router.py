@@ -9,16 +9,20 @@ import pytest
 
 from src.ingestion.offline_demo import build_offline_corpus
 from src.retrieval.cypher_templates import CYPHER, CypherTemplateCatalog, CypherTemplateId as T, validate_params
+from src.retrieval.evidence_gap import EvidenceGapRefiner
+from src.retrieval.ppr import PersonalizedPageRankRetriever
 from src.retrieval.router import (
     GeminiRouterLLM,
     GraphVectorEngine,
     HeuristicRouterLLM,
     QueryIntent,
     QueryRouter,
+    RetrievalResult,
     RouteType as R,
     RoutingDecision,
 )
-from src.stores.neo4j_store import Neo4jGraphStore
+from src.stores.neo4j_store import InMemoryGraphStore, Neo4jGraphStore
+from src.stores.pgvector_store import RetrievedChunk
 
 MHA, GQA, MLA = ("arch_component::multi_head_attention", "arch_component::grouped_query_attention",
                  "arch_component::multi_head_latent_attention")
@@ -162,3 +166,214 @@ def test_heuristic_router_is_fast() -> None:
     for _ in range(200):
         llm.classify("Trace how MHA evolved through GQA to MLA, and give the exact W^{DKV} equation")
     assert (time.perf_counter() - t0) / 200 < 0.05
+
+
+# ---------------------------------------------------------------------------
+# HippoRAG PPR + Bounded 2-Turn Evidence-Gap Refinement + Ablations
+# ---------------------------------------------------------------------------
+
+
+def test_ppr_ranks_multihop_chain_and_excludes_plumbing_edges() -> None:
+    """PPR propagates across multi-hop semantic chains, down-weights INTRODUCES, and excludes IN_PAPER/MENTIONED_IN."""
+    export_calls = 0
+
+    class FakeGraph:
+        def __init__(self) -> None:
+            self.nodes = [
+                {"entity_id": "paper::p1", "canonical_name": "Paper 1", "entity_type": "Paper"},
+                {"entity_id": "model_family::m1", "canonical_name": "Model 1", "entity_type": "ModelFamily"},
+                {"entity_id": "arch_component::a1", "canonical_name": "Comp A1", "entity_type": "ArchComponent"},
+                {"entity_id": "arch_component::a2", "canonical_name": "Comp A2", "entity_type": "ArchComponent"},
+                {"entity_id": "bottleneck::b1", "canonical_name": "KV Bottleneck", "entity_type": "Bottleneck"},
+                {"entity_id": "model_family::distractor", "canonical_name": "Distractor", "entity_type": "ModelFamily"},
+            ]
+            self.edges = [
+                {"source": "paper::p1", "relation_type": "INTRODUCES", "target": "model_family::m1",
+                 "source_chunk_ids": ["c0"], "evidence_quotes": ["Paper 1 introduces Model 1"]},
+                {"source": "paper::p1", "relation_type": "INTRODUCES", "target": "model_family::distractor",
+                 "source_chunk_ids": ["c9"], "evidence_quotes": ["Paper 1 introduces Distractor"]},
+                {"source": "model_family::m1", "relation_type": "ADOPTS_COMPONENT", "target": "arch_component::a1",
+                 "source_chunk_ids": ["c1"], "evidence_quotes": ["Model 1 adopts Comp A1"]},
+                {"source": "arch_component::a1", "relation_type": "EXTENDS", "target": "arch_component::a2",
+                 "source_chunk_ids": ["c2"], "evidence_quotes": ["Comp A1 extends Comp A2"]},
+                {"source": "arch_component::a2", "relation_type": "MITIGATES", "target": "bottleneck::b1",
+                 "source_chunk_ids": ["c3"], "evidence_quotes": ["Comp A2 mitigates KV Bottleneck"]},
+                # Plumbing edges (defensively skipped even if a backend returns them).
+                {"source": "c1", "relation_type": "IN_PAPER", "target": "paper::p1",
+                 "source_chunk_ids": [], "evidence_quotes": []},
+                {"source": "model_family::m1", "relation_type": "MENTIONED_IN", "target": "c1",
+                 "source_chunk_ids": [], "evidence_quotes": []},
+            ]
+
+        def count_nodes(self, label=None) -> int:
+            return len(self.nodes)
+
+        def count_relationships(self) -> int:
+            return len(self.edges)
+
+        def export_graph(self, include_chunks: bool = False):
+            nonlocal export_calls
+            export_calls += 1
+            return {"nodes": list(self.nodes), "edges": list(self.edges)}
+
+    g = FakeGraph()
+    ppr = PersonalizedPageRankRetriever()
+    digraph = ppr.build_graph(g)
+    assert export_calls == 1 and ppr.cache_builds == 1
+    assert digraph["paper::p1"]["model_family::m1"]["weight"] == pytest.approx(0.35)
+    assert digraph["model_family::m1"]["arch_component::a1"]["weight"] == pytest.approx(1.0)
+    assert digraph["arch_component::a1"]["model_family::m1"]["weight"] == pytest.approx(0.75)
+    assert "c1" not in digraph
+
+    # Cache hit on repeated calls when node/edge counts are unchanged.
+    scores = ppr.score_nodes(g, endpoint_a=["model_family::m1", "paper::p1"], endpoint_b=["bottleneck::b1"])
+    assert export_calls == 1 and ppr.cache_builds == 1
+    assert scores["arch_component::a1"] > scores["model_family::distractor"]
+    assert scores["arch_component::a2"] > scores["model_family::distractor"]
+    # Paper seeds are excluded whenever concept seeds exist.
+    assert scores["model_family::m1"] > scores["paper::p1"]
+
+    paths = ppr.retrieve_paths(g, endpoint_a=["model_family::m1"], endpoint_b=["bottleneck::b1"], top_k=6, max_hops=2)
+    assert paths
+    rels = {h["relation_type"] for p in paths for h in p}
+    assert not (rels & {"IN_PAPER", "MENTIONED_IN"})
+    assert any(len(p) == 2 for p in paths)
+    assert all("ppr_score" in h and "source_chunk_ids" in h and "evidence_quotes" in h for p in paths for h in p)
+
+    # Mutating counts invalidates the cache.
+    g.nodes.append({"entity_id": "arch_component::a3", "canonical_name": "Comp A3", "entity_type": "ArchComponent"})
+    g.edges.append({"source": "arch_component::a2", "relation_type": "REQUIRES", "target": "arch_component::a3",
+                    "source_chunk_ids": ["c4"], "evidence_quotes": ["Comp A2 requires Comp A3"]})
+    ppr.build_graph(g)
+    assert export_calls == 2 and ppr.cache_builds == 2
+
+
+def test_ppr_on_inmemory_graph_store_excludes_plumbing(corpus) -> None:
+    ppr = PersonalizedPageRankRetriever()
+    paths = ppr.retrieve_paths(
+        corpus.graph,
+        endpoint_a=["model_family::deepseek_v3"],
+        endpoint_b=["bottleneck::kv_cache_memory_bandwidth"],
+        top_k=5,
+        max_hops=2,
+    )
+    assert paths
+    rels = {h["relation_type"] for p in paths for h in p}
+    assert not (rels & {"IN_PAPER", "MENTIONED_IN"})
+    assert all(h["source_chunk_ids"] and h["evidence_quotes"] and h["ppr_score"] > 0 for p in paths for h in p)
+
+
+def _chunk(cid: str, paper_id: str, text: str, entity_ids=()) -> RetrievedChunk:
+    return RetrievedChunk(
+        chunk_id=cid,
+        paper_id=paper_id,
+        paper_title=paper_id,
+        pub_year=2024,
+        pillar="architecture",
+        section_path="Method",
+        raw_text=text,
+        context_prefixed_text=f"[Paper: {paper_id} | Section: Method]\n{text}",
+        content_hash=cid,
+        entity_ids=tuple(entity_ids),
+        score=5.0,
+        rank=1,
+    )
+
+
+def test_evidence_gap_refiner_triggers_only_on_missing_evidence_and_is_bounded() -> None:
+    refiner = EvidenceGapRefiner(max_turns=99)  # hard-bounded at 2
+    assert refiner.max_turns == 2
+
+    d_hybrid = RoutingDecision(
+        question="Trace MLA lineage, and give the exact W^{DKV} equation",
+        standalone_query="Trace MLA lineage, and give the exact W^{DKV} equation",
+        route=R.HYBRID_PARALLEL,
+        original_route=R.HYBRID_PARALLEL,
+        query_intent=QueryIntent.LINEAGE_MULTI_HOP,
+        confidence=0.9,
+        resolved_entity_ids=[MLA],
+    )
+    # Missing W^{DKV} + second clause -> triggers Pass 2 (turn 1 -> gap)
+    c_only_lineage = _chunk(
+        "c1", "deepseek_2024_v2",
+        "Multi-head Latent Attention extends Grouped-Query Attention by compressing KV pairs.",
+        entity_ids=[MLA, GQA],
+    )
+    gap = refiner.assess(
+        "Trace MLA lineage, and what quality trade-off does GQA strike?",
+        d_hybrid,
+        [c_only_lineage],
+        current_turn=1,
+    )
+    assert gap.has_gap and gap.gap_query
+
+    # Hard-bounded at max_turns=2: current_turn=2 must never trigger a 3rd turn
+    assert refiner.assess("Trace MLA lineage, and what quality trade-off does GQA strike?", d_hybrid, [c_only_lineage], current_turn=2).has_gap is False
+
+    # Missing W^{DKV} symbolic equation -> triggers
+    gap_sym = refiner.assess(
+        "Trace MLA lineage, and give the exact W^{DKV} latent compression equation",
+        d_hybrid,
+        [c_only_lineage],
+        current_turn=1,
+    )
+    assert gap_sym.has_gap and "W^{DKV}" in (gap_sym.gap_query or "")
+
+    # Already covered in Pass 1 -> stays at 1 turn
+    c_complete = _chunk(
+        "c2", "deepseek_2024_v2",
+        "Multi-head Latent Attention (MLA) extends GQA via latent compression $c_t^{KV} = W^{DKV} h_t$.",
+        entity_ids=[MLA, GQA],
+    )
+    no_gap = refiner.assess(
+        "Trace MLA lineage, and give the exact W^{DKV} latent compression equation",
+        d_hybrid,
+        [c_complete],
+        current_turn=1,
+    )
+    assert not no_gap.has_gap
+
+    # OUT_OF_SCOPE is always skipped
+    d_oos = RoutingDecision(
+        question="What is the weather in Paris?",
+        standalone_query="What is the weather in Paris?",
+        route=R.OUT_OF_SCOPE,
+        original_route=R.OUT_OF_SCOPE,
+        query_intent=QueryIntent.UNSUPPORTED_DOMAIN,
+        confidence=0.95,
+    )
+    assert not refiner.assess(d_oos.question, d_oos, [], current_turn=1).has_gap
+
+
+def test_engine_ablation_toggles_and_two_turn_bound(corpus, tmp_path) -> None:
+    q_covered = "Trace how Multi-Head Attention evolved through GQA to Multi-head Latent Attention, and give the exact W^{DKV} latent compression equation"
+    q_gap = "The rotary extension method that needs 10x fewer tokens improves on which interpolation approach, which model family did it stretch to 128k tokens, and does it alter the architecture?"
+
+    # Full engine: covered compound query stays at 1 turn; missing-clause query uses 2 turns and retrieves s04
+    full_eng = GraphVectorEngine(QueryRouter(corpus.resolver, corpus.graph, corpus.vectors, telemetry_path=tmp_path / "full.jsonl"))
+    r_cov = full_eng.retrieve(q_covered)
+    assert r_cov.turns_used == 1 and not r_cov.evidence_gap_triggered and r_cov.gap_query is None
+
+    r_gap = full_eng.retrieve(q_gap)
+    assert r_gap.evidence_gap_triggered and r_gap.turns_used == 2 and r_gap.gap_query
+    assert "peng_2023_yarn::s04::c00" in r_gap.context_chunk_ids
+
+    # enable_ppr=False ablation
+    no_ppr = GraphVectorEngine(
+        QueryRouter(corpus.resolver, corpus.graph, corpus.vectors, telemetry_path=tmp_path / "noppr.jsonl"),
+        enable_ppr=False,
+    )
+    r_np = no_ppr.retrieve("Which bottleneck does the component adopted by DeepSeek-V3 mitigate?")
+    assert r_np.ppr_paths_added == 0
+
+    # enable_evidence_gap=False ablation
+    no_gap = GraphVectorEngine(
+        QueryRouter(corpus.resolver, corpus.graph, corpus.vectors, telemetry_path=tmp_path / "nogap.jsonl"),
+        enable_evidence_gap=False,
+    )
+    r_ng = no_gap.retrieve(q_gap)
+    assert not r_ng.evidence_gap_triggered and r_ng.turns_used == 1 and r_ng.gap_query is None
+
+    # RetrievalResult defaults remain backward-compatible
+    res = RetrievalResult(decision=r_cov.decision)
+    assert (res.evidence_gap_triggered, res.gap_query, res.turns_used, res.ppr_paths_added) == (False, None, 1, 0)

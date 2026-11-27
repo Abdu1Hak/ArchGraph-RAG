@@ -1,0 +1,21 @@
+paper_id: gao_2024_prolong
+markdown: |
+  # How to Train Long-Context Language Models (Effectively)
+
+  {BANNER}
+
+  ## Abstract
+
+  ProLong-8B is initialized from Llama-3 and trained on 40B tokens, reaching state-of-the-art long-context performance among similarly sized models at a context length of 128K.
+
+  ## 3 Data
+
+  Code repositories and books are excellent sources of long data, but they must be combined with high-quality short-context data.
+
+  ## 4 Evaluation
+
+  Evaluating with perplexity or simple needle-in-a-haystack tests is unreliable; ProLong instead evaluates on a broad set of downstream long-context tasks such as HELMET after supervised fine-tuning.
+relationships:
+  - [gao_2024_prolong, Paper, INTRODUCES, ProLong, ModelFamily, "ProLong-8B is initialized from Llama-3 and trained on 40B tokens"]
+  - [ProLong, ModelFamily, REQUIRES, Llama-3, ModelFamily, "ProLong-8B is initialized from Llama-3"]
+  - [ProLong, ModelFamily, EVALUATED_ON, HELMET, BenchmarkOrDataset, "ProLong instead evaluates on a broad set of downstream long-context tasks such as HELMET"]

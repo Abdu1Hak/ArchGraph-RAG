@@ -1,0 +1,27 @@
+paper_id: lambert_2024_tulu3
+markdown: |
+  # Tulu 3: Pushing Frontiers in Open Language Model Post-Training
+
+  {BANNER}
+
+  ## Abstract
+
+  Tulu 3 is a family of fully open post-trained models built on Llama 3.1 base models, with all data, code and training recipes released.
+
+  ## 3 Recipe
+
+  The Tulu 3 recipe applies supervised fine-tuning, then Direct Preference Optimization on on-policy preference data, then Reinforcement Learning with Verifiable Rewards (RLVR).
+
+  RLVR trains the model with PPO-style reinforcement learning where the reward is given only when a verification function confirms the answer is correct, instead of using a learned reward model.
+
+  ## 4 Results
+
+  Tulu 3 70B outperforms Llama 3.1 Instruct 70B and Qwen 2.5 Instruct 72B on the average of its evaluation suite.
+relationships:
+  - [lambert_2024_tulu3, Paper, INTRODUCES, Tulu 3, ModelFamily, "Tulu 3 is a family of fully open post-trained models built on Llama 3.1 base models"]
+  - [Tulu 3, ModelFamily, REQUIRES, Llama 3.1, ModelFamily, "built on Llama 3.1 base models"]
+  - [Tulu 3, ModelFamily, ADOPTS_COMPONENT, Supervised Fine-Tuning, TrainingMethod, "The Tulu 3 recipe applies supervised fine-tuning"]
+  - [Tulu 3, ModelFamily, ADOPTS_COMPONENT, DPO, TrainingMethod, "then Direct Preference Optimization on on-policy preference data"]
+  - [Tulu 3, ModelFamily, ADOPTS_COMPONENT, Reinforcement Learning with Verifiable Rewards (RLVR), TrainingMethod, "then Reinforcement Learning with Verifiable Rewards (RLVR)"]
+  - [RLVR, TrainingMethod, EXTENDS, PPO, TrainingMethod, "RLVR trains the model with PPO-style reinforcement learning"]
+  - [RLVR, TrainingMethod, REPLACES_IN, Reward Model, TrainingMethod, "the reward is given only when a verification function confirms the answer is correct, instead of using a learned reward model", RL reward]

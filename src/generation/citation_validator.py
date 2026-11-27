@@ -98,10 +98,26 @@ def validate_citations(answer: str, allowed_chunk_ids: Iterable[str], resolve: O
         bad = [c for c in cited if c not in allowed or c not in resolved]
         rep = SentenceReport(i, u, is_claim(u), [c for c in cited if c not in bad], bad)
         res.sentences.append(rep)
-        if rep.is_claim and not cited:
-            res.uncited_claims.append(u)
     res.invented_ids = [c for c in all_cited if c not in allowed]
     res.unresolved_ids = [c for c in all_cited if c in allowed and c not in resolved]
+    # Tweak A: Paragraph-level forward citation attribution.
+    # When two consecutive sentences stem from the same source and the LLM places the valid
+    # [chunk_id] at the end of the following sentence, inherit that trailing valid citation
+    # (only when the answer contains zero invented/unresolved IDs). Trailing uncited claims
+    # at the end of the response remain uncited.
+    if not res.invented_ids and not res.unresolved_ids:
+        for i in range(len(res.sentences) - 1):
+            cur = res.sentences[i]
+            if cur.is_claim and not cur.cited_ids and not cur.invalid_ids:
+                for nxt in res.sentences[i + 1 :]:
+                    if nxt.invalid_ids:
+                        break
+                    if nxt.cited_ids:
+                        cur.cited_ids = list(nxt.cited_ids)
+                        break
+    for rep in res.sentences:
+        if rep.is_claim and not rep.cited_ids and not rep.invalid_ids:
+            res.uncited_claims.append(rep.text)
     res.elapsed_ms = (time.perf_counter() - t0) * 1000
     return res
 

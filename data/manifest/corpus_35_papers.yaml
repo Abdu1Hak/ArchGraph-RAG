@@ -1,0 +1,323 @@
+# Curated 35-Paper Evolutionary Spine (2017 - 2026)
+# Frontier LLM Systems & Architecture Engineering across 5 interconnected pillars.
+
+title: "Research Corpus — Frontier LLM Systems & Architecture Engineering (2017–2026)"
+subtitle: "35 curated foundational and breakthrough arXiv papers across the 5 interconnected pillars of modern LLM engineering."
+
+pillars:
+  - id: "core_block"
+    name: "1. Core Transformer Block & Residuals"
+    summary: "Layer normalization, activations, residual streams, and conditional memory."
+  - id: "attention_sparsity"
+    name: "2. Attention & Sparse Compute"
+    summary: "KV-cache compression, hybrid local/global attention, and hardware-aligned sparsity."
+  - id: "scaling_context"
+    name: "3. Scaling, Context & Pre-Training"
+    summary: "Compute-optimal scaling laws, positional encoding, long-context mid-training, and FP8 MoE pre-training."
+  - id: "post_training_rlvr"
+    name: "4. Post-Training & RLVR Reasoning"
+    summary: "RLHF/PPO, RLAIF, DPO, PRMs, GRPO, and 2025–2026 reinforcement learning for verifiable reasoning."
+  - id: "inference_kernels"
+    name: "5. Inference Systems & GPU Kernels"
+    summary: "KV-cache paging, prefix caching, quantization, speculative decoding, and Hopper/Blackwell FlashAttention kernels."
+
+papers:
+  # ============================================================================
+  # PILLAR 1: Core Transformer Block & Residuals (7 Papers)
+  # ============================================================================
+  - paper_id: "vaswani_2017_transformer"
+    arxiv_id: "1706.03762"
+    title: "Attention Is All You Need"
+    year: 2017
+    org: "Google Brain"
+    pillar: "architecture"
+    pillar_group: "core_block"
+    seed_set: true
+  - paper_id: "zhang_2019_rmsnorm"
+    arxiv_id: "1910.07467"
+    title: "Root Mean Square Layer Normalization (RMSNorm)"
+    year: 2019
+    org: "Univ. of Edinburgh"
+    pillar: "architecture"
+    pillar_group: "core_block"
+    seed_set: false
+  - paper_id: "xiong_2020_preln"
+    arxiv_id: "2002.04745"
+    title: "On Layer Normalization in the Transformer Architecture (Pre-LN)"
+    year: 2020
+    org: "Microsoft Research"
+    pillar: "architecture"
+    pillar_group: "core_block"
+    seed_set: true
+  - paper_id: "shazeer_2020_glu"
+    arxiv_id: "2002.05202"
+    title: "GLU Variants Improve Transformer (SwiGLU)"
+    year: 2020
+    org: "Google"
+    pillar: "architecture"
+    pillar_group: "core_block"
+    seed_set: false
+  - paper_id: "deepseek_2025_mhc"
+    arxiv_id: "2512.24880"
+    title: "mHC: Manifold-Constrained Hyper-Connections"
+    year: 2025
+    org: "DeepSeek-AI"
+    pillar: "architecture"
+    pillar_group: "core_block"
+    seed_set: false
+  - paper_id: "deepseek_2026_engram"
+    arxiv_id: "2601.07372"
+    title: "Conditional Memory via Scalable Lookup: A New Axis of Sparsity for LLMs (Engram)"
+    year: 2026
+    org: "DeepSeek-AI"
+    pillar: "architecture"
+    pillar_group: "core_block"
+    seed_set: false
+  - paper_id: "kimi_2026_attnres"
+    arxiv_id: "2603.15031"
+    title: "Attention Residuals (AttnRes)"
+    year: 2026
+    org: "Moonshot AI / Kimi"
+    pillar: "architecture"
+    pillar_group: "core_block"
+    seed_set: false
+
+  # ============================================================================
+  # PILLAR 2: Attention & Sparse Compute (7 Papers)
+  # ============================================================================
+  - paper_id: "shazeer_2019_mqa"
+    arxiv_id: "1911.02150"
+    title: "Fast Transformer Decoding: One Write-Head is All You Need (MQA)"
+    year: 2019
+    org: "Google"
+    pillar: "architecture"
+    pillar_group: "attention_sparsity"
+    seed_set: false
+  - paper_id: "ainslie_2023_gqa"
+    arxiv_id: "2305.13245"
+    title: "GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints"
+    year: 2023
+    org: "Google Research"
+    pillar: "architecture"
+    pillar_group: "attention_sparsity"
+    seed_set: true
+  - paper_id: "deepseek_2024_v2"
+    arxiv_id: "2405.04434"
+    title: "DeepSeek-V2: A Strong, Economical, and Efficient Mixture-of-Experts Language Model (MLA)"
+    year: 2024
+    org: "DeepSeek-AI"
+    pillar: "architecture"
+    pillar_group: "attention_sparsity"
+    seed_set: true
+  - paper_id: "deepseek_2025_nsa"
+    arxiv_id: "2502.11089"
+    title: "Native Sparse Attention: Hardware-Aligned and Natively Trainable Sparse Attention (NSA)"
+    year: 2025
+    org: "DeepSeek-AI"
+    pillar: "architecture"
+    pillar_group: "attention_sparsity"
+    seed_set: false
+  - paper_id: "gemma_2025_gemma3"
+    arxiv_id: "2503.19786"
+    title: "Gemma 3 Technical Report (Interleaved Local/Global Attention & QK-Norm)"
+    year: 2025
+    org: "Google DeepMind"
+    pillar: "architecture"
+    pillar_group: "attention_sparsity"
+    seed_set: false
+  - paper_id: "deepseek_2025_v32_dsa"
+    arxiv_id: "2512.02556"
+    title: "DeepSeek-V3.2: Pushing the Frontier of Open Large Language Models (DSA)"
+    year: 2025
+    org: "DeepSeek-AI"
+    pillar: "architecture"
+    pillar_group: "attention_sparsity"
+    seed_set: false
+  - paper_id: "deepseek_2026_v4"
+    arxiv_id: "2606.19348"
+    title: "DeepSeek-V4: Towards Highly Efficient Million-Token Context Intelligence (CSA + HCA + mHC)"
+    year: 2026
+    org: "DeepSeek-AI"
+    pillar: "architecture"
+    pillar_group: "attention_sparsity"
+    seed_set: false
+
+  # ============================================================================
+  # PILLAR 3: Scaling, Context & Pre-Training (7 Papers)
+  # ============================================================================
+  - paper_id: "kaplan_2020_scaling"
+    arxiv_id: "2001.08361"
+    title: "Scaling Laws for Neural Language Models"
+    year: 2020
+    org: "OpenAI"
+    pillar: "pre_training"
+    pillar_group: "scaling_context"
+    seed_set: false
+  - paper_id: "su_2021_rope"
+    arxiv_id: "2104.09864"
+    title: "RoFormer: Enhanced Transformer with Rotary Position Embedding (RoPE)"
+    year: 2021
+    org: "Zhuiyi Technology"
+    pillar: "architecture"
+    pillar_group: "scaling_context"
+    seed_set: true
+  - paper_id: "hoffmann_2022_chinchilla"
+    arxiv_id: "2203.15556"
+    title: "Training Compute-Optimal Large Language Models (Chinchilla)"
+    year: 2022
+    org: "Google DeepMind"
+    pillar: "pre_training"
+    pillar_group: "scaling_context"
+    seed_set: true
+  - paper_id: "peng_2023_yarn"
+    arxiv_id: "2309.00071"
+    title: "YaRN: Efficient Context Window Extension of Large Language Models"
+    year: 2023
+    org: "Nous Research"
+    pillar: "mid_training"
+    pillar_group: "scaling_context"
+    seed_set: false
+  - paper_id: "gao_2024_prolong"
+    arxiv_id: "2410.02660"
+    title: "How to Train Long-Context Language Models (Effectively) (ProLong)"
+    year: 2024
+    org: "Princeton NLP"
+    pillar: "mid_training"
+    pillar_group: "scaling_context"
+    seed_set: false
+  - paper_id: "deepseek_2024_v3"
+    arxiv_id: "2412.19437"
+    title: "DeepSeek-V3 Technical Report (Aux-Loss-Free MoE & FP8 Pre-Training)"
+    year: 2024
+    org: "DeepSeek-AI"
+    pillar: "pre_training"
+    pillar_group: "scaling_context"
+    seed_set: true
+  - paper_id: "bian_2025_arch_scaling"
+    arxiv_id: "2510.18245"
+    title: "Scaling Laws Meet Model Architecture: Toward Inference-Efficient LLMs"
+    year: 2025
+    org: "ICLR 2026"
+    pillar: "pre_training"
+    pillar_group: "scaling_context"
+    seed_set: false
+
+  # ============================================================================
+  # PILLAR 4: Post-Training & RLVR Reasoning (8 Papers)
+  # ============================================================================
+  - paper_id: "ouyang_2022_instructgpt"
+    arxiv_id: "2203.02155"
+    title: "Training Language Models to Follow Instructions with Human Feedback (InstructGPT)"
+    year: 2022
+    org: "OpenAI"
+    pillar: "post_training"
+    pillar_group: "post_training_rlvr"
+    seed_set: false
+  - paper_id: "bai_2022_constitutional_ai"
+    arxiv_id: "2212.08073"
+    title: "Constitutional AI: Harmlessness from AI Feedback (RLAIF)"
+    year: 2022
+    org: "Anthropic"
+    pillar: "post_training"
+    pillar_group: "post_training_rlvr"
+    seed_set: false
+  - paper_id: "rafailov_2023_dpo"
+    arxiv_id: "2305.18290"
+    title: "Direct Preference Optimization: Your Language Model is Secretly a Reward Model (DPO)"
+    year: 2023
+    org: "Stanford"
+    pillar: "post_training"
+    pillar_group: "post_training_rlvr"
+    seed_set: false
+  - paper_id: "lightman_2023_prm"
+    arxiv_id: "2305.20050"
+    title: "Let's Verify Step by Step (Process vs. Outcome Reward Models)"
+    year: 2023
+    org: "OpenAI"
+    pillar: "post_training"
+    pillar_group: "post_training_rlvr"
+    seed_set: false
+  - paper_id: "deepseek_2025_r1"
+    arxiv_id: "2501.12948"
+    title: "DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via Reinforcement Learning (GRPO)"
+    year: 2025
+    org: "DeepSeek-AI"
+    pillar: "post_training"
+    pillar_group: "post_training_rlvr"
+    seed_set: true
+  - paper_id: "yu_2025_dapo"
+    arxiv_id: "2503.14476"
+    title: "DAPO: An Open-Source LLM Reinforcement Learning System at Scale"
+    year: 2025
+    org: "ByteDance Seed"
+    pillar: "post_training"
+    pillar_group: "post_training_rlvr"
+    seed_set: false
+  - paper_id: "qwen_2025_gspo"
+    arxiv_id: "2507.18071"
+    title: "Group Sequence Policy Optimization (GSPO)"
+    year: 2025
+    org: "Alibaba Qwen"
+    pillar: "post_training"
+    pillar_group: "post_training_rlvr"
+    seed_set: false
+  - paper_id: "oapl_2026_offpolicy_rlvr"
+    arxiv_id: "2602.19362"
+    title: "LLMs Can Learn to Reason Via Off-Policy RL (OAPL)"
+    year: 2026
+    org: "Microsoft Research"
+    pillar: "post_training"
+    pillar_group: "post_training_rlvr"
+    seed_set: false
+
+  # ============================================================================
+  # PILLAR 5: Inference Systems & GPU Kernels (6 Papers)
+  # ============================================================================
+  - paper_id: "kwon_2023_pagedattention"
+    arxiv_id: "2309.06180"
+    title: "Efficient Memory Management for Large Language Model Serving with PagedAttention (vLLM)"
+    year: 2023
+    org: "UC Berkeley"
+    pillar: "inference"
+    pillar_group: "inference_kernels"
+    seed_set: true
+  - paper_id: "lin_2023_awq"
+    arxiv_id: "2306.00978"
+    title: "AWQ: Activation-Aware Weight Quantization for LLM Compression and Acceleration"
+    year: 2023
+    org: "MIT / NVIDIA"
+    pillar: "inference"
+    pillar_group: "inference_kernels"
+    seed_set: false
+  - paper_id: "zheng_2023_sglang"
+    arxiv_id: "2312.07104"
+    title: "SGLang: Efficient Execution of Structured Language Model Programs (RadixAttention)"
+    year: 2023
+    org: "LMSYS / Stanford"
+    pillar: "inference"
+    pillar_group: "inference_kernels"
+    seed_set: false
+  - paper_id: "shah_2024_flashattention3"
+    arxiv_id: "2407.08608"
+    title: "FlashAttention-3: Fast and Accurate Attention with Asynchrony and Low-Precision"
+    year: 2024
+    org: "Together AI / Princeton"
+    pillar: "inference"
+    pillar_group: "inference_kernels"
+    seed_set: false
+  - paper_id: "li_2025_eagle3"
+    arxiv_id: "2503.01840"
+    title: "EAGLE-3: Scaling up Inference Acceleration of Large Language Models via Training-Time Test"
+    year: 2025
+    org: "SafeAILab"
+    pillar: "inference"
+    pillar_group: "inference_kernels"
+    seed_set: false
+  - paper_id: "shah_2026_flashattention4"
+    arxiv_id: "2603.05451"
+    title: "FlashAttention-4: Algorithm and Kernel Pipelining Co-Design for Asymmetric Hardware Scaling"
+    year: 2026
+    org: "Together AI / NVIDIA"
+    pillar: "inference"
+    pillar_group: "inference_kernels"
+    seed_set: false

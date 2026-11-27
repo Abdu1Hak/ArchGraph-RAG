@@ -1,0 +1,27 @@
+paper_id: jiang_2024_mixtral
+markdown: |
+  # Mixtral of Experts
+
+  {BANNER}
+
+  ## Abstract
+
+  Mixtral 8x7B is a Sparse Mixture of Experts (SMoE) language model with the same architecture as Mistral 7B, except that each layer is composed of 8 feedforward blocks (experts).
+
+  For every token, at each layer, a router network selects two experts to process the current state and combine their outputs.
+
+  ## 2 Architecture
+
+  Each token has access to 47B parameters but only uses 13B active parameters during inference.
+
+  Mixtral uses grouped-query attention, SwiGLU experts and a context window of 32k tokens.
+
+  ## 3 Results
+
+  Mixtral outperforms Llama 2 70B and matches or exceeds GPT-3.5 across most benchmarks, with a large lead on mathematics and code generation.
+relationships:
+  - [jiang_2024_mixtral, Paper, INTRODUCES, Mixtral 8x7B, ModelFamily, "Mixtral 8x7B is a Sparse Mixture of Experts (SMoE) language model"]
+  - [Mixtral 8x7B, ModelFamily, ADOPTS_COMPONENT, Mixture-of-Experts, ArchComponent, "each layer is composed of 8 feedforward blocks (experts)"]
+  - [Mixtral 8x7B, ModelFamily, ADOPTS_COMPONENT, Top-2 Expert Routing, ArchComponent, "a router network selects two experts to process the current state and combine their outputs"]
+  - [Mixtral 8x7B, ModelFamily, ADOPTS_COMPONENT, Grouped-Query Attention, ArchComponent, "Mixtral uses grouped-query attention, SwiGLU experts and a context window of 32k tokens."]
+  - [Mixtral 8x7B, ModelFamily, ADOPTS_COMPONENT, SwiGLU, ArchComponent, "Mixtral uses grouped-query attention, SwiGLU experts and a context window of 32k tokens."]

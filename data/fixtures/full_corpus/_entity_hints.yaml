@@ -1,0 +1,89 @@
+# Aliases / descriptions / categories the recorded extractor attaches to an entity name (full corpus only).
+# Descriptions feed query-time Tier-2 overlap and Tier-3 node embeddings ("name: description (aliases)").
+entities:
+  Post-LN:
+    aliases: [Post-LN Transformer, Post-Norm, Post-Layer Normalization, Post-LayerNorm]
+    category: norm
+    description: "Original Transformer placement (Attention Is All You Need): LayerNorm applied after the residual addition of each sub-layer."
+  Pre-LN:
+    aliases: [Pre-LN Transformer, Pre-Norm, Pre-Layer Normalization, Pre-LayerNorm]
+    category: norm
+    description: "Xiong et al. 2020 placement: layer normalization moved inside the residual branch, before each attention and feed-forward sub-layer."
+  Pre-RMSNorm:
+    aliases: [Pre-normalization with RMSNorm, RMSNorm pre-normalization]
+    category: norm
+    description: "LLaMA normalization: RMSNorm applied to the input of every transformer sub-layer (Pre-LN placement with RMSNorm instead of LayerNorm)."
+  RMSNorm:
+    description: "Root mean square layer normalization: rescales activations by their RMS without mean-centering, cheaper than LayerNorm."
+  LayerNorm:
+    description: "Layer normalization: normalizes summed inputs by their mean and variance with a learned gain and bias."
+  QK-Norm:
+    aliases: [Query-Key Normalization, QK Normalization]
+    category: norm
+    description: "Normalizes queries and keys before the dot product so attention logits stay bounded."
+  Reordered Norm:
+    category: norm
+    description: "OLMo 2 placement: RMSNorm applied to the outputs of the attention and feed-forward blocks instead of their inputs."
+  Learning Rate Warm-up Instability:
+    aliases: [Warm-up Dependence, Post-LN Gradient Instability]
+    description: "Large gradients near the output layer at initialization force a learning-rate warm-up stage to avoid divergence."
+  Mixture-of-Experts:
+    aliases: [MoE, Mixture of Experts, Sparse Mixture of Experts]
+    category: moe_routing
+    description: "Replaces the dense feed-forward layer with many expert networks and a router that activates a few experts per token."
+  Top-1 Expert Routing:
+    aliases: [Switch Routing]
+    category: moe_routing
+    description: "Each token is routed to a single expert."
+  Top-2 Expert Routing:
+    category: moe_routing
+    description: "A router selects two experts per token and combines their outputs."
+  Auxiliary Load Balancing Loss:
+    category: moe_routing
+    description: "Extra loss term that pushes the router toward a uniform token distribution across experts."
+  Shared Expert Isolation:
+    category: moe_routing
+    description: "Some experts are always active to capture common knowledge."
+  Fine-Grained Expert Segmentation:
+    category: moe_routing
+    description: "Splits each expert into smaller experts and activates proportionally more of them."
+  Selective State Space Model:
+    aliases: [Selective SSM, S6]
+    category: ssm
+    description: "State space layer whose parameters depend on the input, giving linear-time sequence modeling."
+  Relative Position Bias:
+    aliases: [T5 Relative Position Bias]
+    category: positional
+    description: "A learned scalar per head added to attention logits based on the bucketed query-key offset."
+  Sparse Attention:
+    category: attention
+    description: "Attention restricted to locally banded or strided patterns."
+  Gated Linear Unit:
+    category: activation
+    description: "Component-wise product of two linear projections, one passed through a gate nonlinearity."
+  ReLU:
+    category: activation
+    description: "Rectified linear unit activation."
+  Attention Sinks:
+    aliases: [Attention Sink]
+    category: attention
+    description: "Initial tokens that receive a large share of attention regardless of their content."
+  Sliding Window Attention:
+    aliases: [Window Attention]
+    category: attention
+    description: "Attention that only caches the most recent key-value states."
+  Tree Attention:
+    category: attention
+    description: "Attention mask that verifies several candidate continuations in one forward pass."
+  Blockwise Parallel Transformer:
+    category: attention
+    description: "Computes self-attention and feed-forward block by block to cut activation memory."
+  RLHF:
+    aliases: [Reinforcement Learning from Human Feedback, RL from Human Feedback]
+    description: "Fine-tunes a policy against a reward model trained on human preference rankings, usually with PPO."
+  Group Relative Policy Optimization (GRPO):
+    description: "PPO variant without a critic; the baseline is the mean reward of a group of sampled outputs."
+  Speculative Decoding:
+    description: "A small draft model proposes tokens that the large target model verifies in parallel."
+  FlashAttention:
+    description: "IO-aware exact attention that tiles the computation in on-chip SRAM and never materializes the attention matrix in HBM."

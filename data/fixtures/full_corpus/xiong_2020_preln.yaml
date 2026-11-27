@@ -1,0 +1,29 @@
+paper_id: xiong_2020_preln
+markdown: |
+  # On Layer Normalization in the Transformer Architecture
+
+  {BANNER}
+
+  ## Abstract
+
+  We show that the location of layer normalization matters: the original Post-LN Transformer places layer normalization between the residual blocks, which makes the expected gradients of the parameters near the output layer large at initialization.
+
+  We study the Pre-LN Transformer, which puts the layer normalization inside the residual blocks, before each sub-layer.
+
+  ## 3 Analysis of the Placement
+
+  Pre-LN replaces Post-LN in the Transformer layer: x_{l+1} = x_l + F(LN(x_l)) instead of x_{l+1} = LN(x_l + F(x_l)).
+
+  For the Post-LN Transformer the learning-rate warm-up stage is essential to avoid divergence, which slows optimization and adds a hyper-parameter to tune.
+
+  With Pre-LN the gradients are well-behaved at initialization, so the warm-up stage can be safely removed.
+
+  ## 4 Experiments
+
+  Pre-LN Transformers without the warm-up stage reach results comparable to Post-LN baselines with significantly less training time and hyper-parameter tuning on BERT pre-training and machine translation.
+relationships:
+  - [xiong_2020_preln, Paper, INTRODUCES, Pre-LN, ArchComponent, "We study the Pre-LN Transformer, which puts the layer normalization inside the residual blocks, before each sub-layer."]
+  - [Pre-LN, ArchComponent, REPLACES_IN, Post-LN, ArchComponent, "Pre-LN replaces Post-LN in the Transformer layer", Transformer]
+  - [Pre-LN, ArchComponent, REQUIRES, LayerNorm, ArchComponent, "puts the layer normalization inside the residual blocks, before each sub-layer"]
+  - [Post-LN, ArchComponent, CAUSES_BOTTLENECK, Learning Rate Warm-up Instability, Bottleneck, "For the Post-LN Transformer the learning-rate warm-up stage is essential to avoid divergence"]
+  - [Pre-LN, ArchComponent, MITIGATES, Learning Rate Warm-up Instability, Bottleneck, "With Pre-LN the gradients are well-behaved at initialization, so the warm-up stage can be safely removed."]
