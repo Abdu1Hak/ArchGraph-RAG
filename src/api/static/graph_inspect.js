@@ -2,9 +2,22 @@
 "use strict";
 
 function chunkChips(ids) {
-  if (!ids || !ids.length) return el("div", { class: "empty" }, "no source chunks recorded");
-  return el("div", {}, [...new Set(ids)].slice(0, 24).map((c) =>
-    el("div", { class: "chip", "data-chunk": c, onclick: () => App.highlight(c, { source: "graph" }) }, el("span", { class: "cid" }, c))));
+  const uniq = [...new Set(ids || [])];
+  if (!uniq.length) return el("div", { class: "empty" }, "no source chunks recorded");
+  const makeChip = (c) =>
+    el("div", { class: "chip", "data-chunk": c, onclick: () => App.highlight(c, { source: "graph" }) }, el("span", { class: "cid" }, c));
+  const head = uniq.slice(0, 5).map(makeChip);
+  const rest = uniq.slice(5);
+  if (!rest.length) return el("div", {}, head);
+  return el(
+    "div",
+    {},
+    head,
+    el("details", { class: "more-chunks" },
+      el("summary", {}, `+ ${rest.length} more chunk${rest.length === 1 ? "" : "s"}`),
+      rest.slice(0, 25).map(makeChip)
+    )
+  );
 }
 
 function openInspector(target, ...content) {
@@ -12,13 +25,18 @@ function openInspector(target, ...content) {
   GraphUI.selEl = target; if (target) target.classList.add("sel");
   const box = $("inspector");
   box.innerHTML = ""; box.hidden = false;
-  box.append(el("span", { class: "x", onclick: () => { box.hidden = true; if (GraphUI.selEl) GraphUI.selEl.classList.remove("sel"); } }, "✕"), ...content);
+  const items = content.flat(Infinity).filter((x) => x !== null && x !== undefined && x !== false);
+  box.append(el("span", { class: "x", onclick: () => { box.hidden = true; if (GraphUI.selEl) GraphUI.selEl.classList.remove("sel"); } }, "✕"), ...items);
 }
 
 function inspectNode(n) {
   const m = n.meta || {};
-  let chunks = m.source_chunk_ids || [];
-  if (!chunks.length) chunks = View.edges.filter((e) => e.source === n.id || e.target === n.id).flatMap((e) => e.source_chunk_ids || []);
+  let chunks = [...(m.source_chunk_ids || [])];
+  for (const e of View.edges) {
+    if (e.source === n.id && e.relation_type === "MENTIONED_IN") chunks.push(e.target);
+    else if (e.target === n.id && e.relation_type === "IN_PAPER") chunks.push(e.source);
+    else if ((e.source === n.id || e.target === n.id) && (e.source_chunk_ids || []).length) chunks.push(...e.source_chunk_ids);
+  }
   if (n.type === "Chunk") chunks = [n.id];
   openInspector(n.el,
     el("h4", {}, n.name),
@@ -82,10 +100,11 @@ document.addEventListener("DOMContentLoaded", () => {
     GraphUI.view = b.dataset.view; if (App.last) window.showGraph();
   }));
   $("chunks").addEventListener("change", () => { if (GraphUI.view === "full" && App.last) renderFull(); });
+  $("hide-labels").addEventListener("change", () => { $("graph").classList.toggle("hide-labels", $("hide-labels").checked); });
   $("fit").addEventListener("click", () => View.fit());
   $("graph-filter").addEventListener("input", applyFilter);
   $("graph-filter").addEventListener("keydown", (ev) => { if (ev.key === "Enter") { const h = applyFilter(); if (h.size) View.fit(h); } });
   $("graph").addEventListener("click", (ev) => { if (ev.target === $("graph")) $("inspector").hidden = true; });
   let t = null;
-  window.addEventListener("resize", () => { clearTimeout(t); t = setTimeout(() => { if (App.last) window.showGraph(); }, 300); });
+  window.addEventListener("resize", () => { clearTimeout(t); t = setTimeout(() => { if (App.last && View.fit) View.fit(); }, 300); });
 });

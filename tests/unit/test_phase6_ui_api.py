@@ -130,7 +130,7 @@ def test_norm_placement_chain(full) -> None:
 def test_ui_and_static_assets_are_served(full_svc) -> None:
     client = TestClient(create_app(full_svc))
     page = client.get("/")
-    assert page.status_code == 200 and all(s in page.text for s in ("Search Subgraph", "Full 50-Paper Graph", "Retrieval Flow", 'id="composer"'))
+    assert page.status_code == 200 and all(s in page.text for s in ("Search Subgraph", "Full 35-Paper Graph", 'id="hide-labels"', "Retrieval Flow", 'id="composer"'))
     for asset in re.findall(r'(?:src|href)="(/static/[^"]+)"', page.text):
         assert client.get(asset).status_code == 200, asset
 
@@ -143,7 +143,7 @@ def test_examples_and_ui_config(full_svc) -> None:
     cfg = client.get("/ui-config").json()
     assert {m["id"] for m in cfg["modes"]} == {"offline", "gemini", "live"} and cfg["generation_models"]
     assert cfg["default_mode"] == "live" and cfg["default_generation_model"] == cfg["generation_models"][0]
-    assert "gemini-3.8-flash" in cfg["generation_models"]
+    assert cfg["generation_models"] == ["gemini-3.5-flash-lite", "gemini-3.1-flash-lite"]
 
 
 def test_graph_full_without_chunks(full_svc) -> None:
@@ -190,6 +190,8 @@ def test_query_graph_trace_nodes_roles_and_evidence(full_svc) -> None:
     assert j["citation_gate"]["status"] == "PASS" and j["mode"] == "default"
     node = next(n for n in gt["nodes"] if n["entity_id"] == "arch_component::pre_ln")
     assert node["entity_type"] == "ArchComponent" and "Pre-Norm" in node["aliases"]
+    assert all(c["full_text"] for c in j["citations"])
+    assert any(c["pdf_url"] and c["pdf_url"].startswith("https://arxiv.org/pdf/") for c in j["citations"])
 
 
 def test_mode_and_generation_model_validation(full_svc, monkeypatch) -> None:
@@ -234,6 +236,7 @@ def test_corpus_endpoint_and_ui_sidebar(full_svc) -> None:
     resp = client.get("/corpus")
     assert resp.status_code == 200
     body = resp.json()
+    assert body["title"] == "Research Corpus" and "—" not in body["title"]
     assert body["total_papers"] == 35
     assert body["year_range"] == "2017–2026"
     assert len(body["pillars"]) == 5
@@ -315,3 +318,74 @@ def test_tier3_live_node_embed_guard_and_sqlite_cache_load(tmp_path) -> None:
     )
     assert hits and hits[0].entity_id == "arch_component::pre_ln"
     assert hits[0].tier == "TIER_3_SEMANTIC"
+
+
+def test_clean_section_and_passage_and_no_revisit_frames(full_svc) -> None:
+    from src.generation.synthesizer import clean_passage_for_prompt, clean_section_path
+
+    sec = "**_m_ HC: Manifold-Constrained Hyper-Connections** > **2.3 Relative position embedding* > **"
+    assert clean_section_path(sec) == "m HC: Manifold-Constrained Hyper-Connections > 2.3 Relative position embedding"
+    assert clean_section_path("core_block > snake_case_name") == "core_block > snake_case_name"
+
+    raw = (
+        "In addition to attention sub-layers.\n\n"
+        "<!-- Start of picture text -->\nFFN( x ) = max(0 , xW 1 + b 1) W 2 + b 2 (2)<br><!-- End of picture text -->\n\n"
+        "The dimensionality is _d_ model = 512."
+    )
+    cleaned = clean_passage_for_prompt(raw)
+    assert "<!--" not in cleaned and "<br>" not in cleaned
+    assert "FFN(" in cleaned and ("xW_1 + b_1" in cleaned or "xW 1 + b 1" in cleaned)
+
+    client = TestClient(create_app(full_svc))
+    page = client.get("/")
+    assert page.status_code == 200 and "?v=9" in page.text
+    core_js = client.get("/static/core.js").text
+    assert "Showing in frames below" not in core_js and "revisit-btn" not in core_js
+
+
+def test_query_response_pipeline_trace_and_refusal_rungs(full_svc, tmp_path) -> None:
+    from src.api.main import load_research_corpus
+
+    client = TestClient(create_app(full_svc))
+
+    # Hybrid query: full pipeline_trace + resolved_entities + 6-rung citation_gate
+    j0 = client.post("/query", json={"question": EXAMPLES[0]["question"]}).json()
+    assert j0["resolved_entities"] and all(
+        {"entity_id", "canonical_name", "entity_type", "tier", "phrase", "score"} <= set(e)
+        for e in j0["resolved_entities"]
+    )
+    assert all("entity_type" in l for l in j0["entity_links"])
+    pt0 = j0["pipeline_trace"]
+    expected_keys = {
+        "flow_pattern", "entity_resolution", "routing", "vector_pass1", "vector_seeded_entry",
+        "cypher_template", "endpoint_bridging", "hipporag_ppr", "floor_short_circuit",
+        "path_selection", "graph_chunk_fetch", "evidence_gap", "context_merge", "citation_gate",
+    }
+    assert expected_keys <= set(pt0)
+    assert pt0["flow_pattern"]["code"] == "HYBRID_DIRECT"
+    assert pt0["hipporag_ppr"]["alpha"] == pytest.approx(0.85)
+    assert pt0["graph_chunk_fetch"]["ran"] and pt0["graph_chunk_fetch"]["kept_count"] > 0
+    assert [r["id"] for r in pt0["citation_gate"]["rungs"]] == [
+        "generate", "validate", "repair", "crop", "fallback", "deliver"
+    ]
+    assert pt0["citation_gate"]["status"] == "PASS" and pt0["citation_gate"]["short_circuited_refusal"] is False
+
+    # Aggregation short-circuit query
+    j4 = client.post("/query", json={"question": EXAMPLES[4]["question"]}).json()
+    pt4 = j4["pipeline_trace"]
+    assert pt4["flow_pattern"]["code"] == "AGGREGATION_SHORT_CIRCUIT"
+    assert pt4["floor_short_circuit"]["triggered"] is True
+
+    # Refusal short-circuit query (unverified subject Gemini 1.5 Pro)
+    j5 = client.post("/query", json={"question": EXAMPLES[5]["question"]}).json()
+    assert j5["refused"] is True and j5["unverified_subjects"]
+    pt5 = j5["pipeline_trace"]
+    assert pt5["flow_pattern"]["code"] == "REFUSAL_SHORT_CIRCUIT"
+    assert pt5["citation_gate"]["short_circuited_refusal"] is True
+    assert pt5["citation_gate"]["rungs"][0]["status"] == "skip"
+    assert pt5["citation_gate"]["rungs"][-1]["status"] == "fail"
+
+    # Default title fallback in load_research_corpus() omits em dash
+    mini = tmp_path / "mini.yaml"
+    mini.write_text("papers: []\npillars: []\n", encoding="utf-8")
+    assert load_research_corpus(mini)["title"] == "Research Corpus"

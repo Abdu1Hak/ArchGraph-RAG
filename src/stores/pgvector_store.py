@@ -140,7 +140,9 @@ class _VectorStoreBase:
         if candidate_k < top_k:
             raise ValueError("candidate_k must be >= top_k")
         reranker = reranker or getattr(self, "default_reranker", None) or TokenInteractionReranker()
-        cands = self.search_hybrid_rrf(query_text, top_k=candidate_k, rrf_k=rrf_k, ef_search=ef_search, filters=filters)
+        cap = getattr(reranker, "max_candidates", None)
+        eff_candidate_k = min(candidate_k, max(top_k, int(cap))) if cap is not None else candidate_k
+        cands = self.search_hybrid_rrf(query_text, top_k=eff_candidate_k, rrf_k=rrf_k, ef_search=ef_search, filters=filters)
         scores = reranker.score(query_text, [c.context_prefixed_text for c in cands])
         order = sorted(range(len(cands)), key=lambda i: (-scores[i], cands[i].rank))
         return [

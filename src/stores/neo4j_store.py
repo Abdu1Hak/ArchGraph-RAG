@@ -349,13 +349,18 @@ class Neo4jGraphStore:
     def export_graph(self, include_chunks: bool = False) -> Dict[str, Any]:
         """Whole graph for visualization (see `InMemoryGraphStore.export_graph` for the shape)."""
         nodes = self._read(
-            "MATCH (e:Entity) OPTIONAL MATCH (e)-[m:MENTIONED_IN]->(:Chunk) "
-            "WITH e, count(m) AS mentions OPTIONAL MATCH (ch:Chunk)-[:IN_PAPER]->(e) "
-            "WITH e, mentions, count(ch) AS paper_chunks "
+            "MATCH (e:Entity) OPTIONAL MATCH (e)-[:MENTIONED_IN]->(mc:Chunk) "
+            "WITH e, collect(DISTINCT mc.chunk_id) AS mention_chunks "
+            "OPTIONAL MATCH (ch:Chunk)-[:IN_PAPER]->(e) "
+            "WITH e, mention_chunks, collect(DISTINCT ch.chunk_id) AS paper_chunk_ids "
             "RETURN e.entity_id AS entity_id, coalesce(e.canonical_name, e.title, e.entity_id) AS canonical_name, "
             "coalesce(e.entity_type, CASE WHEN e:Paper THEN 'Paper' ELSE 'Entity' END) AS entity_type, "
             "e.category AS category, coalesce(e.aliases, []) AS aliases, e.paper_id AS paper_id, "
-            "mentions + paper_chunks AS chunk_count ORDER BY entity_id", {})
+            "coalesce(e.description, '') AS description, "
+            "coalesce(e.source_chunk_ids, []) + mention_chunks + paper_chunk_ids AS source_chunk_ids, "
+            "size(mention_chunks) + size(paper_chunk_ids) AS chunk_count ORDER BY entity_id", {})
+        for row in nodes:
+            row["source_chunk_ids"] = _dedupe(row.get("source_chunk_ids") or [])
         rel_filter = "" if include_chunks else "WHERE NOT type(r) IN ['IN_PAPER', 'MENTIONED_IN'] "
         edges = self._read(
             "MATCH (s)-[r]->(t) " + rel_filter +
@@ -493,17 +498,22 @@ class InMemoryGraphStore:
         plumbing only with include_chunks.
         """
         chunk_count: Dict[str, int] = {}
+        plumbing_chunks: Dict[str, List[str]] = {}
         for (s, rt, t) in self.rels:
             if rt == "MENTIONED_IN":
                 chunk_count[s] = chunk_count.get(s, 0) + 1
+                plumbing_chunks.setdefault(s, []).append(t)
             elif rt == "IN_PAPER":
                 chunk_count[t] = chunk_count.get(t, 0) + 1
+                plumbing_chunks.setdefault(t, []).append(s)
         nodes: List[Dict[str, Any]] = []
         for nid, n in sorted(self.nodes.items()):
             if "Entity" in n["labels"]:
                 nodes.append({"entity_id": nid, "canonical_name": n.get("canonical_name") or n.get("title") or nid,
                               "entity_type": n.get("entity_type") or ("Paper" if "Paper" in n["labels"] else "Entity"),
                               "category": n.get("category"), "aliases": list(n.get("aliases", [])),
+                              "description": n.get("description") or "",
+                              "source_chunk_ids": _dedupe(list(n.get("source_chunk_ids", [])) + plumbing_chunks.get(nid, [])),
                               "paper_id": n.get("paper_id"), "chunk_count": chunk_count.get(nid, 0)})
             elif include_chunks and "Chunk" in n["labels"]:
                 nodes.append({"entity_id": nid, "canonical_name": nid, "entity_type": "Chunk", "category": None,

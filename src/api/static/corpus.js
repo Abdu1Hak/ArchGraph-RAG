@@ -1,9 +1,9 @@
-// Collapsible ChatGPT-style sidebar + dedicated Research Corpus page (35-paper 2017-2026 spine).
+// Collapsible ChatGPT-style sidebar + editorial Research Corpus page (35-paper 2017-2026 spine).
 "use strict";
 
 (() => {
   const SB_STORAGE_KEY = "archgraph.sidebar";
-  const state = { page: "ask", filterPillar: "all", query: "" };
+  const state = { page: "ask", filterPillar: "all" };
 
   function setSidebarOpen(open, { persist = true } = {}) {
     document.body.classList.toggle("sidebar-open", !!open);
@@ -17,48 +17,50 @@
     }
   }
 
+  function renderPillarHeading(name) {
+    const m = String(name || "").match(/^(\d+)\.\s*(.+)$/);
+    if (!m) return el("h2", {}, name);
+    return el("h2", {},
+      el("span", { class: "pillar-idx" }, m[1].padStart(2, "0")),
+      m[2]
+    );
+  }
+
   function renderCorpusLists() {
     const data = App.corpusData;
     const lists = $("corpus-lists");
     const matchEl = $("corpus-match");
     if (!data || !lists) return;
 
-    const q = state.query.trim().toLowerCase();
     lists.innerHTML = "";
     let shown = 0;
 
     for (const pillar of data.pillars || []) {
       if (state.filterPillar !== "all" && pillar.id !== state.filterPillar) continue;
-      const matched = (pillar.papers || []).filter((p) => {
-        if (!q) return true;
-        return (
-          p.title.toLowerCase().includes(q) ||
-          (p.org || "").toLowerCase().includes(q) ||
-          String(p.year).includes(q) ||
-          p.arxiv_id.toLowerCase().includes(q)
-        );
-      });
-      if (!matched.length) continue;
-      shown += matched.length;
+      const papers = pillar.papers || [];
+      if (!papers.length) continue;
+      shown += papers.length;
 
       lists.append(
-        el("section", { class: "pillar-card", "data-pillar": pillar.id },
+        el("section", { class: "pillar-section", "data-pillar": pillar.id },
           el("div", { class: "pillar-head" },
-            el("h2", {}, pillar.name),
-            el("span", { class: "pillar-count" }, `${matched.length} ${matched.length === 1 ? "paper" : "papers"}`)
+            renderPillarHeading(pillar.name),
+            el("span", { class: "pillar-count" }, `${papers.length} ${papers.length === 1 ? "paper" : "papers"}`)
           ),
           pillar.summary ? el("p", { class: "pillar-summary" }, pillar.summary) : null,
           el("ul", { class: "paper-list" },
-            matched.map((p) =>
+            papers.map((p) =>
               el("li", { class: "paper-row" },
+                el("span", { class: "paper-year" }, String(p.year)),
                 el("div", { class: "paper-main" },
                   el("a", { class: "paper-link", href: p.abs_url, target: "_blank", rel: "noopener noreferrer" }, p.title)
                 ),
                 el("div", { class: "paper-meta" },
-                  el("span", { class: "paper-year" }, String(p.year)),
                   p.org ? el("span", { class: "paper-org" }, p.org) : null,
-                  el("a", { class: "paper-arxiv", href: p.abs_url, target: "_blank", rel: "noopener noreferrer", title: `Open arXiv abstract ${p.arxiv_id}` }, `arXiv:${p.arxiv_id}`),
-                  el("a", { class: "paper-pdf", href: p.pdf_url, target: "_blank", rel: "noopener noreferrer", title: `Open PDF for ${p.arxiv_id}` }, "PDF \u2197")
+                  el("span", { class: "paper-links" },
+                    el("a", { class: "paper-arxiv", href: p.abs_url, target: "_blank", rel: "noopener noreferrer", title: `Open arXiv abstract ${p.arxiv_id}` }, `arXiv:${p.arxiv_id}`),
+                    el("a", { class: "paper-pdf", href: p.pdf_url, target: "_blank", rel: "noopener noreferrer", title: `Open PDF for ${p.arxiv_id}` }, "PDF \u2197")
+                  )
                 )
               )
             )
@@ -68,10 +70,13 @@
     }
 
     if (!shown) {
-      lists.append(el("div", { class: "corpus-empty" }, "No papers match that filter. Try clearing the search box or pillar filter."));
+      lists.append(el("div", { class: "corpus-empty" }, "No papers indexed for this pillar."));
     }
     if (matchEl) {
-      matchEl.textContent = shown === data.total_papers ? `${data.total_papers} papers` : `${shown} / ${data.total_papers} papers`;
+      const range = data.year_range || "2017\u20132026";
+      matchEl.textContent = shown === data.total_papers
+        ? `${data.total_papers} papers \u00b7 ${range}`
+        : `${shown} of ${data.total_papers} papers`;
     }
   }
 
@@ -81,19 +86,21 @@
     if (!data || !pills) return;
     pills.innerHTML = "";
 
-    const makePill = (id, label) => {
-      const btn = el("button", {
+    const makeTab = (id, label, count) => {
+      const active = state.filterPillar === id;
+      return el("button", {
         type: "button",
-        class: "corpus-pill" + (state.filterPillar === id ? " on" : ""),
+        role: "tab",
+        "aria-selected": active ? "true" : "false",
+        class: "corpus-pill" + (active ? " on" : ""),
         onclick: () => { state.filterPillar = id; renderCorpusPills(); renderCorpusLists(); },
-      }, label);
-      return btn;
+      }, label, el("span", { class: "corpus-tab-count" }, String(count)));
     };
 
-    pills.append(makePill("all", `All (${data.total_papers})`));
+    pills.append(makeTab("all", "All", data.total_papers));
     for (const pillar of data.pillars || []) {
       const shortName = pillar.name.replace(/^\d+\.\s*/, "").split("&")[0].trim();
-      pills.append(makePill(pillar.id, `${shortName} (${pillar.count})`));
+      pills.append(makeTab(pillar.id, shortName, pillar.count));
     }
   }
 
@@ -107,8 +114,11 @@
     const titleEl = $("corpus-title");
     const subEl = $("corpus-sub");
     const badgeEl = $("sb-corpus-count");
-    if (titleEl && data.title) titleEl.textContent = data.title;
-    if (subEl) subEl.textContent = data.subtitle || `${data.total_papers} papers across ${data.year_range}`;
+    if (titleEl && data.title) titleEl.textContent = String(data.title).split("\u2014")[0].trim() || "Research Corpus";
+    if (subEl) {
+      const range = data.year_range || "2017\u20132026";
+      subEl.textContent = data.subtitle || `${data.total_papers} papers \u00b7 ${range}`;
+    }
     if (badgeEl) badgeEl.textContent = String(data.total_papers);
 
     renderCorpusPills();
@@ -165,22 +175,20 @@
     const newBtn = $("nav-new");
     if (newBtn) {
       newBtn.addEventListener("click", () => {
-        document.body.classList.remove("is-active");
+        document.body.classList.remove("is-active", "is-loading");
         document.body.classList.add("is-landing");
+        const hist = $("history");
+        if (hist) hist.innerHTML = "";
+        App.turns = [];
+        App.activeTurnId = null;
         App.last = null;
+        App.lastQuestion = null;
         App.highlighted = null;
+        if (typeof GraphUI !== "undefined") GraphUI.renderedKey = null;
         toast("");
         App.setPage("ask");
         const q = $("question");
         if (q) { q.value = ""; autosize(); q.focus(); }
-      });
-    }
-
-    const search = $("corpus-search");
-    if (search) {
-      search.addEventListener("input", () => {
-        state.query = search.value;
-        renderCorpusLists();
       });
     }
 

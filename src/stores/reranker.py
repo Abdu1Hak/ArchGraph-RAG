@@ -292,7 +292,8 @@ class GeminiApiReranker:
         client: Any = None,
         model: Optional[str] = None,
         governor: Any = None,
-        max_passage_chars: int = 1200,
+        max_passage_chars: int = 480,
+        max_candidates: int = 8,
         api_key: Optional[str] = None,
         name: Optional[str] = None,
     ) -> None:
@@ -301,6 +302,7 @@ class GeminiApiReranker:
         self._client = client
         self.governor = governor
         self.max_passage_chars = max(100, int(max_passage_chars))
+        self.max_candidates = max(1, int(max_candidates))
         self._api_key = api_key if api_key is not None else settings.gemini_api_key
         self.api_calls = 0
         self.last_model_used: Optional[str] = None

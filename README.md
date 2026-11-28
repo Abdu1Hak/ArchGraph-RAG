@@ -153,34 +153,42 @@ $env:RAG_MODE="live"; .\.venv\Scripts\python.exe -m uvicorn src.api.main:app
   | PostgreSQL `text_exists` SQL | Checked only against a recording connection |
   | Live Gemini routing and generation | Not run anywhere |
 
-## Architecture
+## Architecture & Graph Retrieval Flow
 
 ```mermaid
 flowchart LR
-    subgraph Ingestion["Phase 1: Ingestion (one-time)"]
-        A[arXiv PDFs] --> B[pymupdf4llm -> Markdown]
-        B --> C[Structure-aware chunker<br/>shared chunk_id]
-        C --> D{Cost budget guard<br/>+ SHA-256 cache}
-        D --> E[Gemini Flash extraction<br/>8 entity / 12 relation types]
-        E --> F[3-tier entity resolver<br/>typed + version guard]
+    subgraph Ingestion["Phase 1: Ingestion (35-Paper Spine, Core-Body Filtered)"]
+        A["arXiv PDFs (2017-2026)"] --> B["pymupdf4llm -> Markdown + Core-Body Filter (max 18 chunks)"]
+        B --> C["Structure-Aware Chunker (shared chunk_id)"]
+        C --> D{"Cost Budget Guard + SQLite Cache"}
+        D --> E["Gemini Flash Extraction (8 entity / 12 rel types)"]
+        E --> F["3-Tier Entity Resolver (version + contrast guards)"]
     end
-    F --> G[(Neo4j graph<br/>MERGE, source_chunk_ids)]
-    C --> H[(pgvector + tsvector<br/>HNSW, keyed by chunk_id)]
-    subgraph Query["Phases 3-5: Query time"]
-        Q[Question] --> SG{Subject-entity gate}
-        SG --> R[Router + structural signals<br/>+ sub-query split]
-        R -->|graph| T[Cypher T1-T5<br/>cascade -> T6 subgraph]
-        R -->|always| V[Dense + BM25 RRF<br/>+ cross-encoder rerank]
+    F --> G[("Neo4j Graph: MERGE + source_chunk_ids")]
+    C --> H[("PostgreSQL pgvector + tsvector: shared chunk_id")]
+    subgraph Query["Phases 2-6 + Agentic Upgrades: Query Time"]
+        Q["Question"] --> R["Agent Router + 3-Tier Entity Linker + Subject & Structural Gates"]
+        R -->|"runs first: vector_subquery"| V["Dense + BM25 RRF -> GeminiApiReranker (top 3)"]
+        V -.->|"Endpoint B + 0-Entity T6 Seeds"| T
+        R -->|"graph_subquery: T1-T6 + $params"| T["Cypher T1-T6 + Endpoint Bridging + HippoRAG PPR"]
         T --> G
         V --> H
-        T --> S[Ranked paths -> per-hop<br/>stratified supporting chunks]
-        S --> M[Score-driven dedup by chunk_id]
-        V --> M
-        M --> L[Grounded generator]
-        L --> X{Citation gate<br/>retry -> crop -> extractive fallback}
-        X --> Y[Cited answer + graph_trace + funnel_trace]
+        T -->|"Top 3 paths -> per-hop stratified chunks"| S["Supporting Graph Chunks (max 3)"]
+        S --> EG{"2-Turn Evidence-Gap Check (max_turns = 2)"}
+        V --> EG
+        EG -->|"Pass 2 (1 loop max)"| V
+        EG --> M["Score-Driven Dedup (+0.05 tie-breaker, max 6)"]
+        M --> L["Gemini Generator + 4-Rung Citation Gate"]
+        L --> Y["Cited Answer + Claim Faithfulness + Traces"]
     end
 ```
+
+**How Graph Retrieval Connects to Vector Search ([full end-to-end breakdown -> `docs/graph_flow_end_to_end.md`](docs/graph_flow_end_to_end.md)):**
+- **Agent Router & 3-Tier Linker (`QueryRouter.route()`):** Runs Gemini classification alongside exact alias lookup, paper-title `INTRODUCES` expansion, fuzzy lexical overlap, and batched semantic embedding (`>= 0.78`), guarded by the Subject Gate, Confidence Floor (`< 0.78`), and Union-Find Structural Upgrade.
+- **Vector-First Endpoint B (`4a–4d → 3a/3b`):** The Vector + BM25 + RRF + `GeminiApiReranker` lane executes *before* graph traversal so top-2 chunks immediately feed **Vector-Seeded `T6` Entry** (when 0 question entities resolve) and **Endpoint B** targets (when concepts aren't named in the prompt).
+- **Multi-Strategy Graph Pool (`T1–T6` + Bridging + HippoRAG PPR):** On `T1`–`T4`/`T6`, Neo4j template paths (`+ T6` cascade if weak), `T4` Endpoint Bridging (`<= 3 × 4 = 12` pairs), and single-pass weighted NetworkX PageRank (`alpha = 0.85`, excluding `IN_PAPER`/`MENTIONED_IN`, damping `INTRODUCES = 0.35`) merge and rank with a `-0.25×` per-extra-hop penalty (`T5` Aggregation short-circuits bridging/PPR to preserve exact counts).
+- **Per-Hop Chunks, 2-Turn Gap Check & Verification:** Top-`3` paths yield `<= 3` hop-stratified chunks (`fetch_chunks_by_ids`); `EvidenceGapRefiner` optionally fires at most 1 Pass-2 loop (`HARD_MAX_TURNS = 2`); `assemble_context()` deduplicates with a bounded `+0.05` corroboration bonus before the 4-rung Citation Gate (`PASS` → 1 repair → crop → extractive fallback / abstention).
+- **Deep Dive & V2 Audit:** See [**`docs/graph_flow_end_to_end.md`**](docs/graph_flow_end_to_end.md) for all 6 traversal branches, funnel math (`4` user + `5` vector entities), worked examples, and V2 improvements (greedy diverse-coverage MMR path selection, UI flow sync).
 
 ## Reproducibility
 
@@ -213,4 +221,5 @@ git diff data/benchmark/phase5_eval_questions.json      # must be empty
 | Held-out questions | `data/benchmark/phase5_heldout_questions.json` |
 | Runner and grading | `src/evaluation/benchmark_runner.py` |
 | Subject gate | `src/retrieval/subject_gate.py` |
+| Graph retrieval flow (end-to-end) | `docs/graph_flow_end_to_end.md` |
 | Offline corpus fixtures | `src/ingestion/offline_fixtures.py` |

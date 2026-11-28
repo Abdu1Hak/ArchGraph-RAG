@@ -2,8 +2,9 @@
 // with the current search's seeds and winning path drawn on top. Inspector, filter, fit, chunk highlight.
 "use strict";
 
-const GraphUI = { view: "search", fullCache: new Map(), selEl: null };
+const GraphUI = { view: "search", fullCache: new Map(), selEl: null, renderedKey: null };
 const ekey = (e) => `${e.source}|${e.relation_type}|${e.target}`;
+const currentGraphKey = () => `${App.activeTurnId || "none"}|${GraphUI.view}|${GraphUI.view === "full" ? $("chunks").checked : false}`;
 
 function traceIndex() {
   const gt = (App.last && App.last.graph_trace) || {};
@@ -90,17 +91,29 @@ function renderSearch() {
     spring: (e) => (e.kind === "selected" ? 0.05 : 0.03), anchorX: (n) => n.ax });
   drawGraph(nodes, edges);
   View.fit();
-  $("graph-stats").textContent = nodes.length
-    ? `${nodes.length} nodes · ${(gt.selected_path_edges || []).length} selected hops · ${(gt.explored_rejected_edges || []).length} rejected edges` +
-      (gt.rejected_edges_truncated ? ` (+${gt.rejected_edges_truncated} not drawn)` : "")
-    : "No graph traversal for this question (vector-only route or refused)";
+  const statsEl = $("graph-stats");
+  if (statsEl) {
+    statsEl.textContent = nodes.length
+      ? `${nodes.length} nodes · ${(gt.selected_path_edges || []).length} selected hops · ${(gt.explored_rejected_edges || []).length} rejected edges` +
+        (gt.rejected_edges_truncated ? ` (+${gt.rejected_edges_truncated} extra neighbor edges hidden)` : "")
+      : "No graph traversal for this question (vector-only route or refused)";
+    statsEl.title = nodes.length
+      ? "Display capped at 8 rejected neighbor edges per node / 60 total for legibility"
+      : "";
+  }
+  GraphUI.renderedKey = currentGraphKey();
   setLegend("search");
 }
 
 async function renderFull() {
-  const chunks = $("chunks").checked, mode = App.last ? App.last.mode : currentMode();
+  const chunksEl = $("chunks");
+  const chunks = !!(chunksEl && chunksEl.checked), mode = App.last ? App.last.mode : currentMode();
   const key = `${mode}|${chunks}`;
-  $("graph-stats").textContent = "Loading the full knowledge graph...";
+  const statsEl = $("graph-stats");
+  if (statsEl) {
+    statsEl.textContent = "Loading the full knowledge graph...";
+    statsEl.title = "";
+  }
   let data = GraphUI.fullCache.get(key);
   if (!data) {
     const params = new URLSearchParams({ include_chunks: chunks });
@@ -136,7 +149,11 @@ async function renderFull() {
   drawGraph(nodes, edges, { full: true });
   View.fit();
   const s = data.stats;
-  $("graph-stats").textContent = `${s.papers} papers · ${s.entities} entities · ${s.chunks} chunks · ${s.relationships} relationships · showing ${s.returned_nodes} nodes / ${s.returned_edges} edges (${data.backend})`;
+  if (statsEl) {
+    statsEl.textContent = `${s.papers} papers · ${s.entities} entities · ${s.chunks} chunks · ${s.relationships} relationships · showing ${s.returned_nodes} nodes / ${s.returned_edges} edges (${data.backend})`;
+    statsEl.title = "";
+  }
+  GraphUI.renderedKey = currentGraphKey();
   setLegend("full");
   applyFilter();
 }
@@ -145,14 +162,30 @@ function setLegend(view) {
   const box = $("legend"); box.innerHTML = "";
   const dot = (c, t) => el("span", {}, el("i", { style: `background:${c}` }), t);
   const ln = (c, t, dash) => el("span", {}, el("i", { class: "ln", style: `border-color:${c};${dash ? "border-top-style:dashed" : ""}` }), t);
-  box.append(dot("var(--seed)", "Seed"), dot("var(--path)", "Winning path"), ln("var(--cyan)", "[Hop n] selected"), ln("var(--rej)", "Rejected neighbor", true));
-  if (view === "full") for (const [t, c] of Object.entries(TYPE_COLORS)) if (t !== "Chunk" || $("chunks").checked) box.append(dot(c, t));
+  box.append(
+    dot("var(--seed)", "Seed"),
+    dot("var(--path)", "Winning path"),
+    ln("var(--cyan)", "[Hop n] selected"),
+    ln("var(--rej)", "Rejected neighbor", true),
+    el("span", {}, el("i", { class: "dot-ring" }), "Filter match")
+  );
+  if (view === "full") {
+    box.append(ln("#475266", "Corpus edge"));
+    const entries = Object.entries(TYPE_COLORS).filter(([t]) => t !== "Chunk" || $("chunks").checked);
+    box.append(
+      el("details", { class: "legend-types" },
+        el("summary", {}, `Entity colors (${entries.length})`),
+        el("div", { class: "legend-types-body" }, entries.map(([t, c]) => dot(c, t)))
+      )
+    );
+  }
 }
 
-window.showGraph = function () {
+window.showGraph = function ({ force = false } = {}) {
   document.querySelectorAll("#graph-view button").forEach((b) => b.classList.toggle("on", b.dataset.view === GraphUI.view));
   $("chunks-toggle").classList.toggle("disabled", GraphUI.view !== "full");
   $("graph-filter").style.display = GraphUI.view === "full" ? "" : "none";
+  if (!force && GraphUI.renderedKey === currentGraphKey()) return;
   $("inspector").hidden = true;
   return GraphUI.view === "full" ? renderFull() : renderSearch();
 };

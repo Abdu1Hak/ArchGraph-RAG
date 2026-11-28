@@ -377,3 +377,213 @@ def test_engine_ablation_toggles_and_two_turn_bound(corpus, tmp_path) -> None:
     # RetrievalResult defaults remain backward-compatible
     res = RetrievalResult(decision=r_cov.decision)
     assert (res.evidence_gap_triggered, res.gap_query, res.turns_used, res.ppr_paths_added) == (False, None, 1, 0)
+
+
+def test_entity_resolver_before_router_and_llm_template_assignment(corpus, tmp_path) -> None:
+    from src.retrieval.router import RouterLLMOutput
+
+    seen_candidates = []
+
+    class SmartRouterLLM:
+        name = "mock-smart-router"
+
+        def classify(self, question: str, resolved_entities=()):
+            seen_candidates.append(list(resolved_entities))
+            return RouterLLMOutput(
+                query_intent=QueryIntent.LINEAGE_MULTI_HOP,
+                route=R.GRAPH_ONLY,
+                confidence=0.95,
+                standalone_query=question,
+                graph_subquery=question,
+                extracted_entities=[],
+                cypher_template_id=T.T4_BRIDGE_PATH_2_TO_3_HOP,
+                template_params={"entity_a_id": MHA, "entity_b_id": MLA},
+            )
+
+    r_smart = QueryRouter(corpus.resolver, corpus.graph, corpus.vectors, llm=SmartRouterLLM(), telemetry_path=tmp_path / "smart.jsonl")
+    d_smart = r_smart.route("How do Multi-Head Attention and Multi-head Latent Attention connect?")
+    assert seen_candidates and {e["entity_id"] for e in seen_candidates[0]} >= {MHA, MLA}
+    assert all({"entity_id", "canonical_name", "entity_type"} <= set(e) for e in seen_candidates[0])
+    assert d_smart.cypher_template_id == T.T4_BRIDGE_PATH_2_TO_3_HOP
+    assert d_smart.template_params == {"entity_a_id": MHA, "entity_b_id": MLA}
+    assert d_smart.template_assigned_by == "llm"
+    assert d_smart.routing_trace["routing"]["template_assigned_by"] == "llm"
+
+    # Invalid LLM-assigned entity_id must fall back cleanly to _select_template
+    class BadEntityRouterLLM:
+        name = "mock-bad-entity"
+
+        def classify(self, question: str, resolved_entities=()):
+            return RouterLLMOutput(
+                query_intent=QueryIntent.LINEAGE_MULTI_HOP,
+                route=R.GRAPH_ONLY,
+                confidence=0.95,
+                standalone_query=question,
+                graph_subquery=question,
+                cypher_template_id=T.T1_COMPONENT_LINEAGE,
+                template_params={"root_entity_id": "arch_component::does_not_exist"},
+            )
+
+    r_bad = QueryRouter(corpus.resolver, corpus.graph, corpus.vectors, llm=BadEntityRouterLLM(), telemetry_path=tmp_path / "bad.jsonl")
+    d_bad = r_bad.route("Trace the lineage of Multi-Head Attention")
+    assert d_bad.template_assigned_by == "heuristic_fallback"
+    assert d_bad.cypher_template_id == T.T1_COMPONENT_LINEAGE
+    assert d_bad.template_params == {"root_entity_id": MHA}
+
+    # Legacy 1-arg classify(self, question) mocks remain supported
+    class LegacyRouterLLM:
+        name = "legacy-1arg"
+
+        def classify(self, question: str):
+            return RouterLLMOutput(
+                query_intent=QueryIntent.SINGLE_FACT_DEFINITION,
+                route=R.VECTOR_ONLY,
+                confidence=0.9,
+                standalone_query=question,
+                vector_subquery=question,
+            )
+
+    r_leg = QueryRouter(corpus.resolver, corpus.graph, corpus.vectors, llm=LegacyRouterLLM(), telemetry_path=tmp_path / "leg.jsonl")
+    d_leg = r_leg.route("Explain the DPO loss equation.")
+    assert d_leg.route == R.VECTOR_ONLY and d_leg.template_assigned_by == "none"
+
+    # GeminiRouterLLM includes RESOLVED_ENTITIES in prompt input when provided
+    gem_calls = []
+
+    def create(**kw):
+        gem_calls.append(kw)
+        return SimpleNamespace(output_text=json.dumps({
+            "query_intent": "LINEAGE_MULTI_HOP", "route": "GRAPH_ONLY", "confidence": 0.94,
+            "standalone_query": "q", "cypher_template_id": "T1_COMPONENT_LINEAGE",
+            "template_params": {"root_entity_id": MHA},
+        }))
+
+    gem = GeminiRouterLLM(client=SimpleNamespace(interactions=SimpleNamespace(create=create)))
+    out = gem.classify("Trace MHA", resolved_entities=[{"entity_id": MHA, "canonical_name": "Multi-Head Attention", "entity_type": "ArchComponent"}])
+    assert "RESOLVED_ENTITIES:" in gem_calls[0]["input"] and MHA in gem_calls[0]["input"]
+    assert out.cypher_template_id == T.T1_COMPONENT_LINEAGE and out.template_params == {"root_entity_id": MHA}
+
+
+def test_paper_title_expansion_gating_and_multitype_disambiguation(corpus, tmp_path) -> None:
+    r = QueryRouter(corpus.resolver, corpus.graph, corpus.vectors, telemetry_path=tmp_path / "gate.jsonl")
+
+    # Concrete concept already resolved -> link paper node ONLY, do not dump extra INTRODUCES concepts
+    d_concrete = r.route("How does Grouped-Query Attention extend Attention Is All You Need?")
+    assert "paper::vaswani_2017_transformer" in d_concrete.resolved_entity_ids
+    assert GQA in d_concrete.resolved_entity_ids
+    assert MHA not in d_concrete.resolved_entity_ids
+    assert "model_family::transformer" not in d_concrete.resolved_entity_ids
+    assert d_concrete.routing_trace["entity_resolution"]["paper_expansions"] == 0
+
+    # Paper-focused query with 0 concrete non-paper hits -> expand INTRODUCES concepts
+    d_paper_only = r.route("What was proposed in Attention Is All You Need?")
+    assert "paper::vaswani_2017_transformer" in d_paper_only.resolved_entity_ids
+    assert {"model_family::transformer", MHA} <= set(d_paper_only.resolved_entity_ids)
+    assert d_paper_only.routing_trace["entity_resolution"]["paper_expansions"] >= 2
+
+    # Duplicate canonical names across entity types carry distinct entity_type in resolved_entities & entity_links
+    from src.ingestion.entity_resolver import EntityResolver
+    from src.schema.ontology import EntityType, ResolvedEntityNode
+
+    res_dup = EntityResolver(seed_aliases_path=None)
+    g_dup = InMemoryGraphStore()
+    n1 = ResolvedEntityNode(entity_id="arch_component::transformer", entity_type=EntityType.ARCH_COMPONENT, canonical_name="Transformer")
+    n2 = ResolvedEntityNode(entity_id="model_family::transformer", entity_type=EntityType.MODEL_FAMILY, canonical_name="Transformer")
+    res_dup._register_node(n1)
+    res_dup._register_node(n2)
+    g_dup.upsert_resolved_nodes([n1, n2])
+    r_dup = QueryRouter(res_dup, g_dup, corpus.vectors, telemetry_path=tmp_path / "dup.jsonl")
+    d_dup = r_dup.route("Compare Transformer components")
+    by_id = {e["entity_id"]: e for e in d_dup.resolved_entities}
+    assert by_id["arch_component::transformer"]["entity_type"] == "ArchComponent"
+    assert by_id["model_family::transformer"]["entity_type"] == "ModelFamily"
+
+
+def test_diversity_aware_top3_path_selection(corpus, tmp_path) -> None:
+    from src.retrieval.cypher_templates import TemplateResult
+
+    def hop(src, src_name, rel, tgt, tgt_name, cid, quote):
+        return {
+            "source": src, "source_name": src_name, "relation_type": rel,
+            "target": tgt, "target_name": tgt_name,
+            "source_chunk_ids": [cid], "evidence_quotes": [quote],
+        }
+
+    # Paths 0..2 repeat the same MHA/GQA edge & chunk; path 3 covers MLA + KV cache clause
+    paths = [
+        [hop(MHA, "Multi-Head Attention", "EXTENDS", GQA, "Grouped-Query Attention", "c_dup", "Multi-Head Attention grouped query attention")],
+        [hop(MHA, "Multi-Head Attention", "EXTENDS", GQA, "Grouped-Query Attention", "c_dup", "Multi-Head Attention grouped query attention"),
+         hop(GQA, "Grouped-Query Attention", "REQUIRES", "training_method::uptraining", "Uptraining", "c_dup", "uptraining")],
+        [hop(MHA, "Multi-Head Attention", "EXTENDS", GQA, "Grouped-Query Attention", "c_dup", "Multi-Head Attention grouped query attention"),
+         hop(GQA, "Grouped-Query Attention", "ADOPTS_COMPONENT", "model_family::llama_2", "LLaMA-2", "c_dup", "llama")],
+        [hop(MLA, "Multi-head Latent Attention", "MITIGATES", "bottleneck::kv_cache_memory_bandwidth", "KV Cache Bottleneck", "c_mla", "Multi-head Latent Attention mitigates KV cache memory")],
+    ]
+    q = "Compare Multi-Head Attention and Multi-head Latent Attention, and which bottleneck does MLA mitigate?"
+
+    eng_off = GraphVectorEngine(
+        QueryRouter(corpus.resolver, corpus.graph, corpus.vectors, telemetry_path=tmp_path / "off.jsonl"),
+        enable_diverse_path_selection=False,
+    )
+    tr_off = TemplateResult(T.T6_DYNAMIC_SUBGRAPH_FALLBACK, {}, list(paths))
+    eng_off._rank_paths(tr_off, q, resolved_entity_ids=[MHA, MLA])
+
+    eng_on = GraphVectorEngine(
+        QueryRouter(corpus.resolver, corpus.graph, corpus.vectors, telemetry_path=tmp_path / "on.jsonl"),
+        enable_diverse_path_selection=True,
+    )
+    tr_on = TemplateResult(T.T6_DYNAMIC_SUBGRAPH_FALLBACK, {}, list(paths))
+    ps_trace = eng_on._rank_paths(tr_on, q, resolved_entity_ids=[MHA, MLA])
+
+    assert any(h["source"] == MLA for p in tr_on.paths[:3] for h in p)
+    assert ps_trace["diverse_selection_enabled"] is True
+    assert ps_trace["unique_entities_covered"] >= eng_off._path_nodes(tr_off.paths[:3]).__len__()
+
+
+def test_pipeline_trace_covers_all_six_flow_patterns(corpus, tmp_path) -> None:
+    eng = GraphVectorEngine(QueryRouter(corpus.resolver, corpus.graph, corpus.vectors, telemetry_path=tmp_path / "pt.jsonl"))
+
+    # 1. HYBRID_DIRECT
+    r1 = eng.retrieve("Trace how Multi-Head Attention evolved through GQA to Multi-head Latent Attention, and give the exact W^{DKV} latent compression equation")
+    pt1 = r1.pipeline_trace
+    assert pt1["flow_pattern"]["id"] == 1 and pt1["flow_pattern"]["code"] == "HYBRID_DIRECT"
+    assert pt1["entity_resolution"]["latency_ms"] >= 0 and pt1["routing"]["latency_ms"] >= 0
+    assert pt1["vector_pass1"]["ran"] and pt1["cypher_template"]["ran"]
+    assert pt1["hipporag_ppr"]["alpha"] == pytest.approx(0.85) and pt1["hipporag_ppr"]["top_heatmap_nodes"]
+    assert pt1["graph_chunk_fetch"]["ran"] and pt1["graph_chunk_fetch"]["kept_count"] > 0
+    assert pt1["floor_short_circuit"]["triggered"] is False
+
+    # 2. HYBRID_TWO_TURN
+    r2 = eng.retrieve("The rotary extension method that needs 10x fewer tokens improves on which interpolation approach, which model family did it stretch to 128k tokens, and does it alter the architecture?")
+    pt2 = r2.pipeline_trace
+    assert pt2["flow_pattern"]["id"] == 2 and pt2["flow_pattern"]["code"] == "HYBRID_TWO_TURN"
+    assert pt2["evidence_gap"]["checked"] and pt2["evidence_gap"]["triggered"]
+    assert pt2["evidence_gap"]["pass2_vector_new_chunks"] >= 1
+
+    # 3. VECTOR_SEEDED_T6
+    r3 = eng.retrieve("What is connected to the technique that pages memory like an operating system?")
+    pt3 = r3.pipeline_trace
+    assert pt3["flow_pattern"]["id"] == 3 and pt3["flow_pattern"]["code"] == "VECTOR_SEEDED_T6"
+    assert pt3["vector_seeded_entry"]["triggered"] and pt3["vector_seeded_entry"]["borrowed_entities"]
+
+    # 4. AGGREGATION_SHORT_CIRCUIT
+    r4 = eng.retrieve("Which components are most widely adopted across the corpus since 2024?")
+    pt4 = r4.pipeline_trace
+    assert pt4["flow_pattern"]["id"] == 4 and pt4["flow_pattern"]["code"] == "AGGREGATION_SHORT_CIRCUIT"
+    assert pt4["endpoint_bridging"]["status"] == "short_circuited"
+    assert pt4["hipporag_ppr"]["status"] == "short_circuited"
+    assert pt4["floor_short_circuit"]["triggered"] is True
+
+    # 5. VECTOR_ONLY_FAST
+    r5 = eng.retrieve("Explain the DPO loss equation.")
+    pt5 = r5.pipeline_trace
+    assert pt5["flow_pattern"]["id"] == 5 and pt5["flow_pattern"]["code"] == "VECTOR_ONLY_FAST"
+    assert pt5["cypher_template"]["ran"] is False and pt5["floor_short_circuit"]["triggered"] is True
+
+    # 6. REFUSAL_SHORT_CIRCUIT (both subject_gate and router_llm)
+    r6a = eng.retrieve("How many parameters does GPT-4 have?")
+    assert r6a.pipeline_trace["flow_pattern"]["id"] == 6 and r6a.pipeline_trace["routing"]["refused_at"] == "subject_gate"
+    assert r6a.pipeline_trace["routing"]["unverified_subjects"] == ["GPT 4"]
+    assert r6a.pipeline_trace["vector_pass1"]["ran"] is False
+
+    r6b = eng.retrieve("Write me a recipe for chocolate cake.")
+    assert r6b.pipeline_trace["flow_pattern"]["id"] == 6 and r6b.pipeline_trace["routing"]["refused_at"] == "router_llm"

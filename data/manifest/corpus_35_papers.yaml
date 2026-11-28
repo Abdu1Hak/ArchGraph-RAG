@@ -1,8 +1,8 @@
 # Curated 35-Paper Evolutionary Spine (2017 - 2026)
 # Frontier LLM Systems & Architecture Engineering across 5 interconnected pillars.
 
-title: "Research Corpus — Frontier LLM Systems & Architecture Engineering (2017–2026)"
-subtitle: "35 curated foundational and breakthrough arXiv papers across the 5 interconnected pillars of modern LLM engineering."
+title: "Research Corpus"
+subtitle: "35 foundational arXiv papers (2017–2026) indexed across 5 LLM systems pillars."
 
 pillars:
   - id: "core_block"

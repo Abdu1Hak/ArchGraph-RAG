@@ -37,23 +37,26 @@ from src.generation.synthesizer import (
     GroundedAnswer,
     GroundedAnswerSynthesizer,
     OfflineGroundedGeneratorLLM,
+    clean_section_path,
 )
 from src.retrieval.router import GraphVectorEngine, QueryRouter, RetrievalResult, RouterUnavailableError, RouteType
+from src.retrieval.subject_gate import unverified_subjects
 from src.stores.pgvector_store import RetrievedChunk
 
 
 _MODEL_NAME_RE = r"^[A-Za-z0-9][A-Za-z0-9.\-_]{0,79}$"
 
 
-EXTRA_GENERATION_MODELS = ("gemini-3.8-flash",)
+EXTRA_GENERATION_MODELS: tuple[str, ...] = ()
+UI_ALLOWED_MODELS: tuple[str, ...] = ("gemini-3.5-flash-lite", "gemini-3.1-flash-lite")
 
 
 def generation_models() -> List[str]:
-    """Models the UI may request: GENERATION_MODEL, the fallback chain, then extra selectable models."""
+    """UI model dropdown: restricted to Gemini 3.5 Flash Lite and Gemini 3.1 Flash Lite."""
     from src.config import settings
 
-    chain = settings.text_model_chain(settings.generation_model)
-    return list(dict.fromkeys(chain[:2] + list(EXTRA_GENERATION_MODELS) + chain[2:]))
+    primary = settings.generation_model if settings.generation_model in UI_ALLOWED_MODELS else UI_ALLOWED_MODELS[0]
+    return list(dict.fromkeys([primary, *UI_ALLOWED_MODELS]))
 
 
 class InvalidRequestError(ValueError):
@@ -76,6 +79,10 @@ class CitationOut(BaseModel):
     source_origin: str
     score: Optional[float] = None
     text_snippet: str
+    full_text: str = ""
+    pub_year: Optional[int] = None
+    arxiv_id: Optional[str] = None
+    pdf_url: Optional[str] = None
 
 
 class TraceEdge(BaseModel):
@@ -155,9 +162,12 @@ class QueryResponse(BaseModel):
     mode: str = ""
     backend: str = ""
     resolved_entity_ids: List[str] = Field(default_factory=list)
+    resolved_entities: List[Dict[str, Any]] = Field(default_factory=list)
     entity_links: List[Dict[str, Any]] = Field(default_factory=list)
+    unverified_subjects: List[str] = Field(default_factory=list)
     fallback_reasons: List[str] = Field(default_factory=list)
     citation_gate: Dict[str, Any] = Field(default_factory=dict)
+    pipeline_trace: Dict[str, Any] = Field(default_factory=dict)
 
 
 _PREFIX_TYPES = {"paper": "Paper", "model_family": "ModelFamily", "arch_component": "ArchComponent",
@@ -187,6 +197,127 @@ def citation_gate_status(g: GroundedAnswer) -> Dict[str, Any]:
             "valid_claim_count": int(getattr(v, "valid_claim_count", 0) or 0) if v else 0,
             "repair_attempts": g.repair_attempts, "cropped_sentences": g.cropped_sentences_count,
             "generator_calls": g.generator_calls}
+
+
+def build_citation_gate_trace(
+    g: GroundedAnswer,
+    d: Any,
+    base_gate: Optional[Dict[str, Any]] = None,
+    unverified: Optional[List[str]] = None,
+) -> Dict[str, Any]:
+    """Structured 6-rung Citation Gate trace (`generate -> validate -> repair -> crop -> fallback -> deliver`)."""
+    gate = base_gate or citation_gate_status(g)
+    status = gate["status"]
+    subj = unverified if unverified is not None else list(getattr(d, "unverified_subjects", None) or [])
+
+    if g.refused:
+        if subj:
+            refusal_reason = f"Unindexed subject(s): {', '.join(subj)}"
+        elif getattr(d, "fallback_reasons", None):
+            refusal_reason = "; ".join(d.fallback_reasons)
+        else:
+            refusal_reason = "Out-of-scope or unsupported domain"
+        rungs = [
+            {"id": "generate", "label": "Generate", "status": "skip", "detail": "0 calls (refusal short-circuit)"},
+            {"id": "validate", "label": "Validate", "status": "skip", "detail": "Skipped on refusal"},
+            {"id": "repair", "label": "Repair", "status": "skip", "detail": "Skipped on refusal"},
+            {"id": "crop", "label": "Crop", "status": "skip", "detail": "Skipped on refusal"},
+            {"id": "fallback", "label": "Fallback", "status": "skip", "detail": "Skipped on refusal"},
+            {"id": "deliver", "label": "Refused", "status": "fail", "detail": refusal_reason},
+        ]
+        return {
+            "status": status,
+            "short_circuited_refusal": True,
+            "refusal_reason": refusal_reason,
+            "rungs": rungs,
+        }
+
+    if g.abstained and g.generator_calls == 0:
+        rungs = [
+            {"id": "generate", "label": "Generate", "status": "skip", "detail": "0 context passages retrieved"},
+            {"id": "validate", "label": "Validate", "status": "skip", "detail": "No output to validate"},
+            {"id": "repair", "label": "Repair", "status": "skip", "detail": "Not needed"},
+            {"id": "crop", "label": "Crop", "status": "skip", "detail": "Not needed"},
+            {"id": "fallback", "label": "Fallback", "status": "skip", "detail": "Not needed"},
+            {"id": "deliver", "label": "Abstained", "status": "warn", "detail": "Abstained cleanly (empty context)"},
+        ]
+        return {"status": status, "short_circuited_refusal": False, "refusal_reason": None, "rungs": rungs}
+
+    if g.abstained and g.final_validation is None:
+        rungs = [
+            {"id": "generate", "label": "Generate", "status": "pass", "detail": f"{g.generator_calls} call(s) (honest abstention)"},
+            {"id": "validate", "label": "Validate", "status": "skip", "detail": "Abstention accepted directly"},
+            {"id": "repair", "label": "Repair", "status": "skip", "detail": "Not needed"},
+            {"id": "crop", "label": "Crop", "status": "skip", "detail": "Not needed"},
+            {"id": "fallback", "label": "Fallback", "status": "skip", "detail": "Not needed"},
+            {"id": "deliver", "label": "Abstained", "status": "warn", "detail": "Abstained (insufficient context)"},
+        ]
+        return {"status": status, "short_circuited_refusal": False, "refusal_reason": None, "rungs": rungs}
+
+    first_v = g.attempt_validations[0] if g.attempt_validations else g.final_validation
+    first_ok = bool(first_v is not None and first_v.valid)
+    if g.abstained:
+        val_detail = (
+            f"0 valid claims ({len(first_v.invented_ids)} invented, {len(first_v.uncited_claims)} uncited)"
+            if first_v is not None
+            else "No valid claims"
+        )
+        rungs = [
+            {"id": "generate", "label": "Generate", "status": "pass", "detail": f"{g.generator_calls} call(s)"},
+            {"id": "validate", "label": "Validate", "status": "fail", "detail": val_detail},
+            {"id": "repair", "label": "Repair", "status": "fail" if g.repair_attempts else "skip",
+             "detail": f"{g.repair_attempts} attempt(s) still invalid" if g.repair_attempts else "Skipped"},
+            {"id": "crop", "label": "Crop", "status": "fail" if g.cropped_sentences_count else "skip",
+             "detail": f"Cropped {g.cropped_sentences_count}; 0 survived" if g.cropped_sentences_count else "Skipped"},
+            {"id": "fallback", "label": "Fallback", "status": "fail" if g.used_extractive_fallback else "skip",
+             "detail": "0 supported claims in fallback" if g.used_extractive_fallback else "Skipped"},
+            {"id": "deliver", "label": "Abstained", "status": "warn", "detail": "Abstained (0 supported claims survived)"},
+        ]
+        return {"status": status, "short_circuited_refusal": False, "refusal_reason": None, "rungs": rungs}
+
+    # Answered (PASS / REPAIRED_PASS / CROPPED / EXTRACTIVE_FALLBACK)
+    if first_ok and g.repair_attempts == 0:
+        val_status = "pass"
+        val_detail = f"{first_v.valid_claim_count} valid claim(s), 0 invented"
+    elif first_v is not None:
+        val_status = "warn"
+        val_detail = f"Failed Rung 1: {len(first_v.invented_ids)} invented, {len(first_v.uncited_claims)} uncited"
+    else:
+        val_status = "pass"
+        val_detail = "Validated"
+
+    if g.repair_attempts == 0:
+        rep_status, rep_detail = "skip", "Not needed (passed Rung 1)"
+    elif not g.cropped_sentences_count and not g.used_extractive_fallback and gate["valid"]:
+        rep_status, rep_detail = "pass", f"Repaired in {g.repair_attempts} attempt(s)"
+    else:
+        rep_status, rep_detail = "warn", f"{g.repair_attempts} attempt(s) still invalid"
+
+    if g.cropped_sentences_count > 0:
+        crop_status = "warn"
+        crop_detail = (
+            f"Cropped {g.cropped_sentences_count} unit(s)"
+            + ("; fell back to extractive" if g.used_extractive_fallback else "")
+        )
+    else:
+        crop_status, crop_detail = "skip", "Not needed"
+
+    if g.used_extractive_fallback:
+        fb_status, fb_detail = "warn", "Used deterministic extractive fallback"
+    else:
+        fb_status, fb_detail = "skip", "Not needed"
+
+    rungs = [
+        {"id": "generate", "label": "Generate", "status": "pass",
+         "detail": f"{g.generator_calls} call(s), {len(g.citations)} cited"},
+        {"id": "validate", "label": "Validate", "status": val_status, "detail": val_detail},
+        {"id": "repair", "label": "Repair", "status": rep_status, "detail": rep_detail},
+        {"id": "crop", "label": "Crop", "status": crop_status, "detail": crop_detail},
+        {"id": "fallback", "label": "Fallback", "status": fb_status, "detail": fb_detail},
+        {"id": "deliver", "label": "Deliver", "status": "pass",
+         "detail": f"{status} ({len(g.citations)} resolved citations)"},
+    ]
+    return {"status": status, "short_circuited_refusal": False, "refusal_reason": None, "rungs": rungs}
 
 
 def _summ(chunks: List[RetrievedChunk]) -> List[ChunkSummary]:
@@ -339,13 +470,53 @@ class RagService:
         if synth is not self.synthesizer and not usage.generator_requests:
             usage.generator_model = synth.generator.name
         d = result.decision
+        links_by_paper = _paper_links_by_id()
+        gate = citation_gate_status(g)
+        unverified_list = list(getattr(d, "unverified_subjects", None) or ())
+        if g.refused and not unverified_list:
+            unverified_list = unverified_subjects(req.question, self.corpus.vectors)
+        resolved_entities = list(getattr(d, "resolved_entities", None) or ())
+        if not resolved_entities and d.resolved_entity_ids:
+            resolved_entities = [
+                {
+                    "entity_id": n.entity_id,
+                    "canonical_name": n.canonical_name,
+                    "entity_type": n.entity_type,
+                    "tier": "TIER_1_ALIAS",
+                    "phrase": n.canonical_name,
+                    "score": 1.0,
+                }
+                for n in (self._node_meta(eid, "seed") for eid in d.resolved_entity_ids)
+            ]
+        ptrace = dict(getattr(result, "pipeline_trace", None) or {})
+        ptrace["citation_gate"] = build_citation_gate_trace(g, d, base_gate=gate, unverified=unverified_list)
+        if g.context is not None:
+            vec_ids = {c.chunk_id for c in result.vector_chunks}
+            graph_ids = {c.chunk_id for c in result.supporting_chunks}
+            ptrace["context_merge"] = {
+                "vector_in": len(result.vector_chunks),
+                "graph_in": len(result.supporting_chunks),
+                "duplicates_merged": len(vec_ids & graph_ids),
+                "final_count": len(g.context.passages),
+            }
+        if g.refused:
+            ptrace["flow_pattern"] = {
+                "id": 6,
+                "total": 6,
+                "code": "REFUSAL_SHORT_CIRCUIT",
+                "label": "Refusal Short-Circuit",
+            }
         return QueryResponse(
             answer=g.answer, refused=g.refused, route=d.route.value, query_intent=d.query_intent.value,
             confidence=d.confidence, fallback_triggered=d.fallback_triggered, graph_subquery=d.graph_subquery,
             vector_subquery=d.vector_subquery,
             cypher_template_id=d.cypher_template_id.value if d.cypher_template_id else None,
             template_params=d.template_params, verbalized_graph_facts=g.verbalized_graph_facts,
-            citations=[CitationOut(**c.__dict__) for c in g.citations], repair_attempts=g.repair_attempts,
+            citations=[
+                CitationOut(**c.__dict__, **(links_by_paper.get(c.paper_id) or {}))
+                for c in g.citations
+            ],
+            repair_attempts=g.repair_attempts,
             cropped_sentences_count=g.cropped_sentences_count, used_extractive_fallback=g.used_extractive_fallback,
             abstained=g.abstained,
             generator_calls=g.generator_calls, latency_ms=round(ms, 3),
@@ -353,8 +524,9 @@ class RagService:
             generation_latency_ms=round((t2 - t1) * 1000, 3),
             graph_trace=graph_trace, funnel_trace=funnel_trace,
             usage_telemetry=usage, mode=mode, backend=self.backend,
-            resolved_entity_ids=list(d.resolved_entity_ids), entity_links=list(d.entity_links),
-            fallback_reasons=list(d.fallback_reasons), citation_gate=citation_gate_status(g),
+            resolved_entity_ids=list(d.resolved_entity_ids), resolved_entities=resolved_entities,
+            entity_links=list(d.entity_links), unverified_subjects=unverified_list,
+            fallback_reasons=list(d.fallback_reasons), citation_gate=gate, pipeline_trace=ptrace,
         )
 
     MAX_REJECTED_EDGES = 60
@@ -443,8 +615,10 @@ class RagService:
         data = g.export_graph(include_chunks=include_chunks)
         nodes = [{"entity_id": n["entity_id"], "canonical_name": n["canonical_name"], "entity_type": n["entity_type"],
                   "category": n.get("category"), "aliases": list(n.get("aliases") or [])[:8],
+                  "description": n.get("description") or "",
+                  "source_chunk_ids": list(n.get("source_chunk_ids") or [])[:30],
                   "chunk_count": int(n.get("chunk_count") or 0), "paper_id": n.get("paper_id"),
-                  **({"section_path": n.get("section_path")} if n["entity_type"] == "Chunk" else {})}
+                  **({"section_path": clean_section_path(n.get("section_path") or "")} if n["entity_type"] == "Chunk" else {})}
                  for n in data["nodes"]]
         edges = [{"source": e["source"], "relation_type": e["relation_type"], "target": e["target"],
                   "source_chunk_ids": list(e.get("source_chunk_ids") or []),
@@ -465,6 +639,24 @@ class RagService:
 
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
+
+_PAPER_LINKS_CACHE: Optional[Dict[str, Dict[str, Any]]] = None
+
+
+def _paper_links_by_id() -> Dict[str, Dict[str, Any]]:
+    """Cached `{paper_id: {arxiv_id, pdf_url, pub_year}}` lookup from corpus_35_papers.yaml."""
+    global _PAPER_LINKS_CACHE
+    if _PAPER_LINKS_CACHE is None:
+        try:
+            corpus = load_research_corpus()
+            _PAPER_LINKS_CACHE = {
+                p["paper_id"]: {"arxiv_id": p["arxiv_id"], "pdf_url": p["pdf_url"]}
+                for grp in corpus.get("pillars", [])
+                for p in grp.get("papers", [])
+            }
+        except Exception:
+            _PAPER_LINKS_CACHE = {}
+    return _PAPER_LINKS_CACHE
 
 
 def load_research_corpus(manifest_path: Optional[Path] = None) -> Dict[str, Any]:
@@ -524,7 +716,7 @@ def load_research_corpus(manifest_path: Optional[Path] = None) -> Dict[str, Any]
     years = [p.year for p in papers]
     year_range = f"{min(years)}–{max(years)}" if years else "2017–2026"
     return {
-        "title": raw.get("title", "Research Corpus — Frontier LLM Systems & Architecture Engineering (2017–2026)"),
+        "title": raw.get("title", "Research Corpus"),
         "subtitle": raw.get("subtitle", ""),
         "total_papers": len(papers),
         "year_range": year_range,
@@ -539,8 +731,8 @@ MODES: Dict[str, str] = {
 
 EXAMPLES: List[Dict[str, str]] = [
     {"id": "norm-placement", "tag": "Pre-LN vs Post-LN", "label": "Post-LN -> Pre-LN -> Pre-RMSNorm",
-     "question": "How did the post-norm layer of Attention Is All You Need evolve into the pre-norm layer and "
-                 "LLaMA's Pre-RMSNorm, and why did Post-LN need a learning-rate warm-up?"},
+     "question": "How did the post-norm layer of Attention Is All You Need evolve into the pre-norm layer, "
+                 "RMSNorm, and Pre-RMSNorm, and why did Post-LN need a learning-rate warm-up?"},
     {"id": "critic-bridge", "tag": "Implicit Bridge", "label": "PPO -> Critic -> GRPO -> R1-Zero",
      "question": "Which bottleneck connects PPO and GRPO, and which DeepSeek model was trained with GRPO "
                  "without supervised fine-tuning?"},

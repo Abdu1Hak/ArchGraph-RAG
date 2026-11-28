@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ArchGraph-RAG · AI Engineering Workbench</title>
-<link rel="stylesheet" href="/static/app.css">
-<link rel="stylesheet" href="/static/workspace.css">
+<link rel="stylesheet" href="/static/app.css?v=9">
+<link rel="stylesheet" href="/static/workspace.css?v=9">
 </head>
 <body class="is-landing">
 <div class="ambient" aria-hidden="true"></div>
@@ -53,39 +53,52 @@
   </section>
 
   <section id="workspace" class="workspace" aria-live="polite">
-    <article class="turn">
+    <div id="history" class="history"></div>
+
+    <article id="active-turn" class="turn">
       <div class="q-row"><div id="q-text" class="q-bubble"></div></div>
       <div class="answer-card">
         <div class="answer-head"><span class="logo-dot"></span><span>ArchGraph-RAG</span><span id="ans-meta" class="meta"></span></div>
         <div id="answer" class="answer"></div>
         <div id="cite-pop" class="cite-pop" hidden></div>
         <footer id="meter" class="meter"></footer>
-        <details id="sources" class="sources"><summary>Sources &amp; verbalized graph facts</summary><div id="citations"></div></details>
       </div>
     </article>
 
-    <div class="split">
+    <div id="frames" class="split">
       <section class="screen graph-screen">
         <div class="screen-head">
           <div class="seg" id="graph-view" role="tablist">
             <button type="button" data-view="search" class="on" role="tab">Search Subgraph</button>
-            <button type="button" data-view="full" role="tab">Full 50-Paper Graph</button>
+            <button type="button" data-view="full" role="tab">Full 35-Paper Graph</button>
           </div>
           <label class="chk" id="chunks-toggle" title="Include :Chunk nodes and MENTIONED_IN / IN_PAPER links">
             <input type="checkbox" id="chunks"> + Chunk Nodes</label>
+          <label class="chk" id="labels-toggle" title="Hide node and edge text labels">
+            <input type="checkbox" id="hide-labels"> Hide Labels</label>
           <input id="graph-filter" class="filter" type="search" placeholder="Filter nodes..." aria-label="Filter graph nodes">
           <button type="button" id="fit" class="ghost" title="Zoom to fit">Fit</button>
         </div>
         <div class="graph-wrap">
           <svg id="graph" role="img" aria-label="Knowledge graph"></svg>
-          <div id="legend" class="legend"></div>
-          <div id="graph-stats" class="graph-stats"></div>
           <div id="inspector" class="inspector" hidden></div>
         </div>
+        <footer class="graph-foot">
+          <div id="legend" class="legend"></div>
+          <div id="graph-stats" class="graph-stats"></div>
+        </footer>
       </section>
 
       <section class="screen funnel-screen">
-        <div class="screen-head"><h2>Retrieval Flow</h2><span id="flow-sub" class="muted"></span></div>
+        <div class="screen-head">
+          <h2>Retrieval Flow</h2>
+          <div class="seg" id="flow-view" role="tablist">
+            <button type="button" data-flow-view="trace" class="on" role="tab">This Query's Flow</button>
+            <button type="button" data-flow-view="full" role="tab">Full Architecture</button>
+          </div>
+          <span id="flow-pattern-badge" class="pattern-badge" hidden></span>
+          <span id="flow-sub" class="muted"></span>
+        </div>
         <div class="flow-scroll"><div id="flow" class="flow"></div></div>
       </section>
     </div>
@@ -93,14 +106,12 @@
 
   <section id="corpus-view" class="corpus-view" aria-label="Research Corpus" hidden>
     <header class="corpus-head">
-      <div class="corpus-eyebrow">RESEARCH CORPUS</div>
-      <h1 id="corpus-title">Research Corpus — Frontier LLM Systems &amp; Architecture Engineering (2017–2026)</h1>
-      <p id="corpus-sub" class="corpus-sub">Loading curated 35-paper evolutionary spine across the 5 interconnected pillars...</p>
+      <h1 id="corpus-title">Research Corpus</h1>
+      <p id="corpus-sub" class="corpus-sub"></p>
     </header>
-    <div class="corpus-controls">
-      <input id="corpus-search" class="corpus-search" type="search" placeholder="Filter by title, lab, year, or arXiv ID..." aria-label="Filter research corpus papers">
+    <div class="corpus-bar">
       <div id="corpus-pills" class="corpus-pills" role="tablist" aria-label="Filter by pillar"></div>
-      <span id="corpus-match" class="corpus-match muted"></span>
+      <span id="corpus-match" class="corpus-match"></span>
     </div>
     <div id="corpus-lists" class="corpus-lists"></div>
   </section>
@@ -113,18 +124,17 @@
   <div class="composer-row">
     <label class="pill-select" title="Generation model"><select id="model"></select></label>
     <div class="right">
-      <label class="pill-select" title="Backend mode"><select id="mode"></select></label>
       <button id="send" class="send" type="submit" aria-label="Send">&#8594;</button>
     </div>
   </div>
 </form>
 
-<script src="/static/core.js"></script>
-<script src="/static/graph.js"></script>
-<script src="/static/graph_render.js"></script>
-<script src="/static/graph_inspect.js"></script>
-<script src="/static/funnel.js"></script>
-<script src="/static/panels.js"></script>
-<script src="/static/corpus.js"></script>
+<script src="/static/core.js?v=9"></script>
+<script src="/static/graph.js?v=9"></script>
+<script src="/static/graph_render.js?v=9"></script>
+<script src="/static/graph_inspect.js?v=9"></script>
+<script src="/static/funnel.js?v=9"></script>
+<script src="/static/panels.js?v=9"></script>
+<script src="/static/corpus.js?v=9"></script>
 </body>
 </html>
